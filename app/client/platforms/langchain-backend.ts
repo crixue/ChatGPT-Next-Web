@@ -1,19 +1,24 @@
+import {DEFAULT_MODELS, LangchainBackendPath, REQUEST_TIMEOUT_MS,} from "@/app/constant";
 import {
-    DEFAULT_API_HOST,
-    DEFAULT_MODELS,
-    OpenaiPath,
-    REQUEST_TIMEOUT_MS,
-} from "@/app/constant";
-import {useAccessStore, useAppConfig, useChatStore} from "@/app/store";
+    DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+    DEFAULT_SETUP_MODEL_CONFIG,
+    useAccessStore,
+    useAppConfig,
+    useChatStore
+} from "@/app/store";
 
-import {BaseSetupModelConfig, ChatOptions, getHeaders, LLMApi, LLMModel, LLMUsage} from "../api";
-import Locale from "../../locales";
 import {
-    EventStreamContentType,
-    fetchEventSource,
-} from "@fortaine/fetch-event-source";
+    ChatOptions,
+    getBackendApiHeaders,
+    getHeaders,
+    LangchainRelevantDocsSearchOptions,
+    LLMModel,
+    LLMUsage
+} from "../api";
+import Locale from "../../locales";
+import {EventStreamContentType, fetchEventSource,} from "@fortaine/fetch-event-source";
 import {prettyObject} from "@/app/utils/format";
-import {getClientConfig} from "@/app/config/client";
+import {StartupMaskRequestVO, StartUpModelRequestVO} from "@/app/trypes/model-vo";
 
 export interface OpenAIListModelResponse {
     object: string;
@@ -24,32 +29,41 @@ export interface OpenAIListModelResponse {
     }>;
 }
 
-export class ChatGPTApi {
-    startupModel(options: BaseSetupModelConfig): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-
+export class LangchainBackendApi {
     private disableListModels = true;
 
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().openaiUrl;
-        const apiPath = "/api/openai";
-
-        if (openaiUrl.length === 0) {
-            const isApp = !!getClientConfig()?.isApp;
-            openaiUrl = isApp ? DEFAULT_API_HOST : apiPath;
-        }
-        if (openaiUrl.endsWith("/")) {
-            openaiUrl = openaiUrl.slice(0, openaiUrl.length - 1);
-        }
-        if (!openaiUrl.startsWith("http") && !openaiUrl.startsWith(apiPath)) {
-            openaiUrl = "https://" + openaiUrl;
-        }
+        // console.log("openaiUrl:" + openaiUrl)
         return [openaiUrl, path].join("/");
     }
 
     extractMessage(res: any) {
         return res.choices?.at(0)?.message?.content ?? "";
+    }
+
+    async startUpModel(request: StartUpModelRequestVO) {
+        const res = await fetch(this.path(LangchainBackendPath.SetupModelPath), {
+            method: "POST",
+            body: JSON.stringify(request),
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+    }
+
+    async startUpMask(request: StartupMaskRequestVO) {
+        const res = await fetch(this.path(LangchainBackendPath.StartupMaskPath), {
+            method: "POST",
+            body: JSON.stringify(request),
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
     }
 
     async chat(options: ChatOptions) {
@@ -67,28 +81,23 @@ export class ChatGPTApi {
         };
 
         const requestPayload = {
-            messages,
-            stream: options.config.stream,
-            model: modelConfig.model,
-            temperature: modelConfig.temperature,
-            // presence_penalty: modelConfig.presence_penalty,
-            frequencyPenalty: modelConfig.frequencyPenalty,
-            top_p: modelConfig.topP,
+            query: messages.at(-1)?.content ?? "",
+            context_docs: options.contextDocs,
         };
 
-        console.log("[Request] openai payload: ", requestPayload);
+        console.log("[Request] langchain backend payload: ", requestPayload);
 
         const shouldStream = !!options.config.stream;
         const controller = new AbortController();
         options.onController?.(controller);
 
         try {
-            const chatPath = this.path(OpenaiPath.ChatPath);
+            const chatPath = this.path(LangchainBackendPath.ChatPath);
             const chatPayload = {
                 method: "POST",
                 body: JSON.stringify(requestPayload),
                 signal: controller.signal,
-                headers: getHeaders(),
+                headers: getBackendApiHeaders(),
             };
 
             // make a fetch request
@@ -160,7 +169,7 @@ export class ChatGPTApi {
                         const text = msg.data;
                         try {
                             const json = JSON.parse(text);
-                            const delta = json.choices[0].delta.content;
+                            const delta = json.content;
                             if (delta) {
                                 responseText += delta;
                                 options.onUpdate?.(responseText, delta);
@@ -192,6 +201,25 @@ export class ChatGPTApi {
         }
     }
 
+    async searchRelevantDocs(options: LangchainRelevantDocsSearchOptions) {
+        const payload = {
+            ...DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+            ...options,
+        };
+
+        const res = await fetch(this.path(LangchainBackendPath.SearchRelevantDocsPath), {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+
+        return await res.json();
+    }
+
     async usage() {
         const formatDate = (d: Date) =>
             `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
@@ -207,14 +235,14 @@ export class ChatGPTApi {
         const [used, subs] = await Promise.all([
             fetch(
                 this.path(
-                    `${OpenaiPath.UsagePath}?start_date=${startDate}&end_date=${endDate}`,
+                    `${LangchainBackendPath.UsagePath}?start_date=${startDate}&end_date=${endDate}`,
                 ),
                 {
                     method: "GET",
                     headers: getHeaders(),
                 },
             ),
-            fetch(this.path(OpenaiPath.SubsPath), {
+            fetch(this.path(LangchainBackendPath.SubsPath), {
                 method: "GET",
                 headers: getHeaders(),
             }),
@@ -263,7 +291,7 @@ export class ChatGPTApi {
             return DEFAULT_MODELS.slice();
         }
 
-        const res = await fetch(this.path(OpenaiPath.ListModelPath), {
+        const res = await fetch(this.path(LangchainBackendPath.ListModelPath), {
             method: "GET",
             headers: {
                 ...getHeaders(),
@@ -285,4 +313,4 @@ export class ChatGPTApi {
     }
 }
 
-export {OpenaiPath};
+export {LangchainBackendPath};

@@ -1,5 +1,6 @@
 import { getClientConfig } from "../config/client";
 import { SubmitKey } from "../store/config";
+import {ConversationMemoryType, MemoryTypeName} from "@/app/client/api";
 
 const isApp = !!getClientConfig()?.isApp;
 
@@ -75,7 +76,7 @@ const cn = {
     Send: "发送",
     Config: {
       Reset: "清除记忆",
-      SaveAs: "存为面具",
+      SaveAs: "应用面具",
     },
     IsContext: "预设提示词",
   },
@@ -206,13 +207,33 @@ const cn = {
         Title: "编辑提示词",
       },
     },
-    HistoryCount: {
+    ConversationMemoryType: {
+      Title: "对话历史缓存类型",
+      SubTitle: "对话历史按照什么类型作为上下文给模型处理",
+      MemoryTypes: [{
+        name: "ConversationBufferWindowMemory",
+        label: "最近n条对话历史缓存",
+        available: true
+      },
+        {
+          name: "ConversationSummaryBufferMemory",
+          label: "压缩对话历史缓存",
+          available: true
+        },
+        {
+          name: "ConversationBufferMemory",
+          label: "无限制历史缓存（慎用）",
+          available: true
+        }
+      ] as ConversationMemoryType[]
+    },
+    HistoryWindowCount: {
       Title: "附带历史消息数",
       SubTitle: "每次请求携带的历史消息数",
     },
     CompressThreshold: {
-      Title: "历史消息长度压缩阈值",
-      SubTitle: "当未压缩的历史消息超过该值时，将进行压缩",
+      Title: "历史消息长度最大token数",
+      SubTitle: "最大可以压缩的历史消息长度",
     },
     Token: {
       Title: "API Key",
@@ -263,6 +284,10 @@ const cn = {
       Title: "频率惩罚度 (frequency_penalty)",
       SubTitle: "值越大，越有可能降低重复字词",
     },
+    ApplyModel: {
+        Title: "应用模型",
+        SubTitle: "使用当前模型参数配置重新构建模型",
+    }
   },
   Store: {
     DefaultTopic: "新的聊天",
@@ -323,9 +348,24 @@ const cn = {
         SubTitle: "当前对话是否使用全局模型设置",
         Confirm: "当前对话的自定义设置将会被自动覆盖，确认启用全局设置？",
       },
+      PromptPath: {
+        Title: "提示文本路径",
+        // SubTitle: "隐藏后预设对话不会出现在聊天界面",
+      },
+      IsChineseText: {
+        Title: "对话是否为中文",
+        SubTitle: "目前支持中文和英文两种语言，不同语言查询和使用到的上下文不同",
+      },
+      PromptId: {
+        Title: "提示id(prompt id)",
+      },
       HideContext: {
         Title: "隐藏预设对话",
         SubTitle: "隐藏后预设对话不会出现在聊天界面",
+      },
+      HaveContext: {
+        Title: "是否引入上下文",
+        SubTitle: "使用本地文件或网络查找的文本内容能更准确为模型提供信息",
       },
       Share: {
         Title: "分享此面具",
@@ -362,6 +402,10 @@ const cn = {
     Topic: "主题",
     Time: "时间",
   },
+  MakeLocalVSStore: {
+    Title: "本地知识库",
+    SubTitle: "上传本地文件，构建属于你的独家知识库",
+  }
 };
 
 type DeepPartial<T> = T extends object

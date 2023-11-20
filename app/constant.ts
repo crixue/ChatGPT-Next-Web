@@ -10,31 +10,32 @@ export const RUNTIME_CONFIG_DOM = "danger-runtime-config";
 export const DEFAULT_API_HOST = "https://chatgpt1.nextweb.fun/api/proxy";
 
 export enum Path {
-  Home = "/",
-  Chat = "/chat",
-  Settings = "/settings",
-  NewChat = "/new-chat",
-  Masks = "/masks",
-  Auth = "/auth",
+    Home = "/",
+    Chat = "/chat",
+    Settings = "/settings",
+    NewChat = "/new-chat",
+    Masks = "/masks",
+    Auth = "/auth",
+    MakeLocalVSStore = "/make-local-vs-store"
 }
 
 export enum SlotID {
-  AppBody = "app-body",
+    AppBody = "app-body",
 }
 
 export enum FileName {
-  Masks = "masks.json",
-  Prompts = "prompts.json",
+    Masks = "masks.json",
+    Prompts = "prompts.json",
 }
 
 export enum StoreKey {
-  Chat = "chat-next-web-store",
-  Access = "access-control",
-  Config = "app-config",
-  Mask = "mask-store",
-  Prompt = "prompt-store",
-  Update = "chat-update",
-  Sync = "sync",
+    Chat = "chat-next-web-store",
+    Access = "access-control",
+    Config = "app-config",
+    Mask = "mask-store",
+    Prompt = "prompt-store",
+    Update = "chat-update",
+    Sync = "sync",
 }
 
 export const MAX_SIDEBAR_WIDTH = 500;
@@ -50,11 +51,21 @@ export const REQUEST_TIMEOUT_MS = 60000;
 
 export const EXPORT_MESSAGE_CLASS_NAME = "export-markdown";
 
+export const LangchainBackendPath = {
+    ChatPath: "llm-backend/v1/chat-stream/completions",
+    UsagePath: "dashboard/billing/usage",
+    SubsPath: "dashboard/billing/subscription",
+    ListModelPath: "v1/models",
+    SetupModelPath: "llm-backend/v1/start-up-model",
+    StartupMaskPath: "llm-backend/v1/start-up-mask",
+    SearchRelevantDocsPath: "llm-backend/v1/search-relevant-documents",
+}
+
 export const OpenaiPath = {
-  ChatPath: "v1/chat/completions",
-  UsagePath: "dashboard/billing/usage",
-  SubsPath: "dashboard/billing/subscription",
-  ListModelPath: "v1/models",
+    ChatPath: "v1/chat/completions",
+    UsagePath: "dashboard/billing/usage",
+    SubsPath: "dashboard/billing/subscription",
+    ListModelPath: "v1/models",
 };
 
 export const DEFAULT_INPUT_TEMPLATE = `{{input}}`; // input / time / model / lang
@@ -67,51 +78,39 @@ Current time: {{time}}`;
 export const SUMMARIZE_MODEL = "gpt-3.5-turbo";
 
 export const DEFAULT_MODELS = [
-  {
-    name: "gpt-4",
-    available: true,
-  },
-  {
-    name: "gpt-4-0314",
-    available: true,
-  },
-  {
-    name: "gpt-4-0613",
-    available: true,
-  },
-  {
-    name: "gpt-4-32k",
-    available: true,
-  },
-  {
-    name: "gpt-4-32k-0314",
-    available: true,
-  },
-  {
-    name: "gpt-4-32k-0613",
-    available: true,
-  },
-  {
-    name: "gpt-3.5-turbo",
-    available: true,
-  },
-  {
-    name: "gpt-3.5-turbo-0301",
-    available: true,
-  },
-  {
-    name: "gpt-3.5-turbo-0613",
-    available: true,
-  },
-  {
-    name: "gpt-3.5-turbo-16k",
-    available: true,
-  },
-  {
-    name: "gpt-3.5-turbo-16k-0613",
-    available: true,
-  },
+    {
+        name: "chatglm2-6b",
+        available: true,
+    },
+    {
+        name: "chinese-alpaca-2-lora-7b-llamacpp",
+        available: true,
+    },
+    {
+        name: "chinese-alpaca-2-lora-13b-llamacpp",
+        available: true,
+    },
+    // {
+    //   name: "gpt-3.5-turbo-16k-0613",
+    //   available: false,
+    // },
 ] as const;
+
+export const DEFAULT_MEMORY_TYPES = [
+    {
+        name: "ConversationBufferWindowMemory",
+        available: true,
+    },
+    {
+        name: "ConversationBufferMemory",
+        available: true,
+    },
+    {
+        name: "ConversationSummaryBufferMemory",
+        available: true,
+    }
+] as const;
+
 
 export const CHAT_PAGE_SIZE = 15;
 export const MAX_RENDER_MSG_COUNT = 45;

@@ -243,7 +243,7 @@ export type InputProps = React.HTMLProps<HTMLTextAreaElement> & {
   rows?: number;
 };
 
-export function Input(props: InputProps) {
+export function CustomTextAreaInput(props: InputProps) {
   return (
     <textarea
       {...props}
@@ -275,7 +275,7 @@ export function PasswordInput(props: HTMLProps<HTMLInputElement>) {
   );
 }
 
-export function Select(
+export function CustomSelect(
   props: React.DetailedHTMLProps<
     React.SelectHTMLAttributes<HTMLSelectElement>,
     HTMLSelectElement

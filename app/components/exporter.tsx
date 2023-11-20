@@ -6,7 +6,7 @@ import {
   List,
   ListItem,
   Modal,
-  Select,
+  CustomSelect,
   showImageModal,
   showModal,
   showToast,
@@ -188,7 +188,7 @@ export function MessageExporter() {
             title={Locale.Export.Format.Title}
             subTitle={Locale.Export.Format.SubTitle}
           >
-            <Select
+            <CustomSelect
               value={exportConfig.format}
               onChange={(e) =>
                 updateExportConfig(
@@ -202,7 +202,7 @@ export function MessageExporter() {
                   {f}
                 </option>
               ))}
-            </Select>
+            </CustomSelect>
           </ListItem>
           <ListItem
             title={Locale.Export.IncludeContext.Title}
