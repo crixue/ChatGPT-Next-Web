@@ -15,18 +15,14 @@ import {
     List,
     ListItem,
     Modal,
-    PasswordInput,
     Popover,
     CustomSelect,
     showConfirm,
 } from "./ui-lib";
-import {ModelConfigList} from "./model-config";
 
 import {IconButton} from "./button";
 import {
-    SubmitKey,
     useChatStore,
-    Theme,
     useUpdateStore,
     useAccessStore,
     useAppConfig,
@@ -40,7 +36,7 @@ import Locale, {
 } from "../locales";
 import {copyToClipboard} from "../utils";
 import Link from "next/link";
-import {Path, RELEASE_URL, UPDATE_URL} from "../constant";
+import {Path, RELEASE_URL, SubmitKey, Theme, UPDATE_URL} from "../constant";
 import {Prompt, SearchService, usePromptStore} from "../store/prompt";
 import {ErrorBoundary} from "./error";
 import {InputRange} from "./input-range";
@@ -49,6 +45,7 @@ import {Avatar, AvatarPicker} from "./emoji";
 import {getClientConfig} from "../config/client";
 import {useSyncStore} from "../store/sync";
 import {nanoid} from "nanoid";
+import {Button} from "antd";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
     const promptStore = usePromptStore();
@@ -213,29 +210,32 @@ function DangerItems() {
                 title={Locale.Settings.Danger.Reset.Title}
                 subTitle={Locale.Settings.Danger.Reset.SubTitle}
             >
-                <IconButton
-                    text={Locale.Settings.Danger.Reset.Action}
+                <Button
+                    danger={true}
                     onClick={async () => {
                         if (await showConfirm(Locale.Settings.Danger.Reset.Confirm)) {
                             appConfig.reset();
                         }
                     }}
-                    type="danger"
-                />
+                >
+                    {Locale.Settings.Danger.Reset.Action}
+                </Button>
             </ListItem>
             <ListItem
                 title={Locale.Settings.Danger.Clear.Title}
                 subTitle={Locale.Settings.Danger.Clear.SubTitle}
             >
-                <IconButton
-                    text={Locale.Settings.Danger.Clear.Action}
+                <Button
+                    danger={true}
                     onClick={async () => {
                         if (await showConfirm(Locale.Settings.Danger.Clear.Confirm)) {
                             chatStore.clearAllData();
                         }
+
                     }}
-                    type="danger"
-                />
+                >
+                    {Locale.Settings.Danger.Clear.Action}
+                </Button>
             </ListItem>
         </List>
     );
@@ -598,143 +598,34 @@ export function Settings() {
                     </ListItem>
                 </List>
 
-                <List>
-                    <ListItem
-                        title={Locale.Settings.Prompt.Disable.Title}
-                        subTitle={Locale.Settings.Prompt.Disable.SubTitle}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={config.disablePromptHint}
-                            onChange={(e) =>
-                                updateConfig(
-                                    (config) =>
-                                        (config.disablePromptHint = e.currentTarget.checked),
-                                )
-                            }
-                        ></input>
-                    </ListItem>
-
-                    <ListItem
-                        title={Locale.Settings.Prompt.List}
-                        subTitle={Locale.Settings.Prompt.ListCount(
-                            builtinCount,
-                            customCount,
-                        )}
-                    >
-                        <IconButton
-                            icon={<EditIcon/>}
-                            text={Locale.Settings.Prompt.Edit}
-                            onClick={() => setShowPromptModal(true)}
-                        />
-                    </ListItem>
-                </List>
-
-                <List>
-                    {showAccessCode ? (
-                        <ListItem
-                            title={Locale.Settings.AccessCode.Title}
-                            subTitle={Locale.Settings.AccessCode.SubTitle}
-                        >
-                            <PasswordInput
-                                value={accessStore.accessCode}
-                                type="text"
-                                placeholder={Locale.Settings.AccessCode.Placeholder}
-                                onChange={(e) => {
-                                    accessStore.updateCode(e.currentTarget.value);
-                                }}
-                            />
-                        </ListItem>
-                    ) : (
-                        <></>
-                    )}
-
-                    {!accessStore.hideUserApiKey ? (
-                        <>
-                            <ListItem
-                                title={Locale.Settings.Endpoint.Title}
-                                subTitle={Locale.Settings.Endpoint.SubTitle}
-                            >
-                                <input
-                                    type="text"
-                                    value={accessStore.openaiUrl}
-                                    placeholder="https://api.openai.com/"
-                                    onChange={(e) =>
-                                        accessStore.updateOpenAiUrl(e.currentTarget.value)
-                                    }
-                                ></input>
-                            </ListItem>
-                            <ListItem
-                                title={Locale.Settings.Token.Title}
-                                subTitle={Locale.Settings.Token.SubTitle}
-                            >
-                                <PasswordInput
-                                    value={accessStore.token}
-                                    type="text"
-                                    placeholder={Locale.Settings.Token.Placeholder}
-                                    onChange={(e) => {
-                                        accessStore.updateToken(e.currentTarget.value);
-                                    }}
-                                />
-                            </ListItem>
-                        </>
-                    ) : null}
-
-                    {!accessStore.hideBalanceQuery ? (
-                        <ListItem
-                            title={Locale.Settings.Usage.Title}
-                            subTitle={
-                                showUsage
-                                    ? loadingUsage
-                                        ? Locale.Settings.Usage.IsChecking
-                                        : Locale.Settings.Usage.SubTitle(
-                                            usage?.used ?? "[?]",
-                                            usage?.subscription ?? "[?]",
-                                        )
-                                    : Locale.Settings.Usage.NoAccess
-                            }
-                        >
-                            {!showUsage || loadingUsage ? (
-                                <div/>
-                            ) : (
-                                <IconButton
-                                    icon={<ResetIcon></ResetIcon>}
-                                    text={Locale.Settings.Usage.Check}
-                                    onClick={() => checkUsage(true)}
-                                />
-                            )}
-                        </ListItem>
-                    ) : null}
-
-                    <ListItem
-                        title={Locale.Settings.CustomModel.Title}
-                        subTitle={Locale.Settings.CustomModel.SubTitle}
-                    >
-                        <input
-                            type="text"
-                            value={config.customModels}
-                            placeholder="model1,model2,model3"
-                            onChange={(e) =>
-                                config.update(
-                                    (config) => (config.customModels = e.currentTarget.value),
-                                )
-                            }
-                        ></input>
-                    </ListItem>
-                </List>
-
                 <SyncItems/>
 
                 <List>
-                    <ModelConfigList
-                        modelConfig={config.modelConfig}
-                        updateConfig={(updater) => {
-                            const modelConfig = {...config.modelConfig};
-                            updater(modelConfig);
-                            config.update((config) => (config.modelConfig = modelConfig));
-                        }}
-                    />
+                    <ListItem
+                        title={Locale.Settings.MakingLocalVS.Title}
+                        subTitle={Locale.Settings.MakingLocalVS.SubTitle}
+                    >
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                navigate(Path.MakeLocalVSStore);
+                            }}
+                        >
+                            {Locale.Settings.MakingLocalVS.ButtonContent}
+                        </Button>
+                    </ListItem>
                 </List>
+
+                {/*<List>*/}
+                {/*    <ModelConfigList*/}
+                {/*        modelConfig={config.modelConfig}*/}
+                {/*        updateConfig={(updater) => {*/}
+                {/*            const modelConfig = {...config.modelConfig};*/}
+                {/*            updater(modelConfig);*/}
+                {/*            config.update((config) => (config.modelConfig = modelConfig));*/}
+                {/*        }}*/}
+                {/*    />*/}
+                {/*</List>*/}
 
                 {shouldShowPromptModal && (
                     <UserPromptModal onClose={() => setShowPromptModal(false)}/>

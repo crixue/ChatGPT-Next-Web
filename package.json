@@ -3,7 +3,7 @@
   "private": false,
   "license": "mit",
   "scripts": {
-    "dev": "cross-env NODE_ENV=local next dev -p 13000",
+    "dev": "cross-env next dev -p 13000",
     "build": "cross-env NODE_ENV=production BUILD_MODE=standalone next build",
     "start": " next start -p 13100",
     "lint": "next lint",
@@ -56,7 +56,6 @@
     "eslint-config-next": "13.4.19",
     "eslint-config-prettier": "^8.8.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "husky": "^8.0.0",
     "lint-staged": "^13.2.2",
     "prettier": "^3.0.2",
     "typescript": "4.9.5",

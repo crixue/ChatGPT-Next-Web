@@ -43,18 +43,19 @@ export function Card(props: { children: JSX.Element[]; className?: string }) {
 
 export function ListItem(props: {
   title: string;
-  subTitle?: string;
+  subTitle?: string | JSX.Element;
   children?: JSX.Element | JSX.Element[];
   icon?: JSX.Element;
   className?: string;
   onClick?: () => void;
+  isSubList?: boolean
 }) {
   return (
     <div
       className={styles["list-item"] + ` ${props.className || ""}`}
       onClick={props.onClick}
     >
-      <div className={styles["list-header"]}>
+      <div className={styles[`${props.isSubList === true ? "sub-" : ""}` + "list-header"]}>
         {props.icon && <div className={styles["list-icon"]}>{props.icon}</div>}
         <div className={styles["list-item-title"]}>
           <div>{props.title}</div>
@@ -69,6 +70,7 @@ export function ListItem(props: {
     </div>
   );
 }
+
 
 export function List(props: {
   children:

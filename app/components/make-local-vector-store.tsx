@@ -30,7 +30,7 @@ const makeLocalVSService = new MakeLocalVectorStoreApi();
 const useInitUserFolders = () => {
     useEffect(() => {
         (async () => {
-            await useUserFolderStore.getState().initUserFolders();
+            await useUserFolderStore.getState().initUserLocalVSFolders();
         })();
     },[]);
 }
@@ -195,7 +195,7 @@ export const MakeLocalVectorStorePage = () => {
                     <div className="window-action-button">
                         <IconButton
                             icon={<CloseIcon/>}
-                            onClick={() => navigate(Path.Home)}
+                            onClick={() => navigate(-1)}
                             bordered
                         />
                     </div>
@@ -234,7 +234,9 @@ export const MakeLocalVectorStorePage = () => {
                         <>
                             <Button
                                 type="primary"
-
+                                onClick={() => {
+                                    navigate(-1);}
+                                }
                             >
                                 完成
                             </Button>
@@ -247,7 +249,7 @@ export const MakeLocalVectorStorePage = () => {
                             </Button>
                         </>
                     )}
-                    {current <= 1 && (
+                    {current > 0 && current <= 1 && (
                         <Button style={{ margin: '0 8px' }} onClick={() => prev()}>
                             上一步
                         </Button>

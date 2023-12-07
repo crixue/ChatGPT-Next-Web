@@ -9,7 +9,6 @@ export const GlobalLoading = () => {
     const globalSettingStore = useGlobalSettingStore();
     const isLoading = globalSettingStore.showGlobalLoading;
     const loadingText = globalSettingStore.showGlobalLoadingText;
-    console.log('isLoading', isLoading)
     if (isLoading) {
         return (
             <div style={{display: "flex"}}>

@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { FETCH_COMMIT_URL, FETCH_TAG_URL, StoreKey } from "../constant";
-import { api } from "../client/api";
 import { getClientConfig } from "../config/client";
+import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
 
 export interface UpdateStore {
   versionType: "date" | "tag";
@@ -54,6 +54,8 @@ async function getVersion(type: "date" | "tag") {
     return data.at(0)?.name;
   }
 }
+
+const api = new LangchainBackendApi();
 
 export const useUpdateStore = create<UpdateStore>()(
   persist(
@@ -108,7 +110,7 @@ export const useUpdateStore = create<UpdateStore>()(
         }));
 
         try {
-          const usage = await api.llm.usage();
+          const usage = await api.usage();
 
           if (usage) {
             set(() => ({

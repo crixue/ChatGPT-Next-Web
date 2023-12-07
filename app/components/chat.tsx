@@ -37,12 +37,10 @@ import RobotIcon from "../icons/robot.svg";
 
 import {
     ChatMessage,
-    SubmitKey,
     useChatStore,
     BOT_HELLO,
     createMessage,
     useAccessStore,
-    Theme,
     useAppConfig,
     DEFAULT_TOPIC,
     ModelType,
@@ -79,18 +77,15 @@ import {
     LAST_INPUT_KEY,
     MAX_RENDER_MSG_COUNT,
     Path,
-    REQUEST_TIMEOUT_MS,
+    REQUEST_TIMEOUT_MS, SubmitKey, Theme,
     UNFINISHED_INPUT,
 } from "../constant";
 import {Avatar} from "./emoji";
 import {ContextPrompts, MaskAvatar, MaskConfig} from "./mask";
-import {useMaskStore} from "../store/mask";
 import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
 import {ExportMessageModal} from "./exporter";
 import {getClientConfig} from "../config/client";
-import {api, LangchainSetupModelConfig} from "@/app/client/api";
-import {StartupMaskRequestVO} from "@/app/trypes/model-vo";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
@@ -99,27 +94,10 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
 export function SessionConfigModel(props: { onClose: () => void }) {
     const chatStore = useChatStore();
     const session = chatStore.currentSession();
-    const maskStore = useMaskStore();
     const navigate = useNavigate();
 
     const handleOnApplyMask = () => {
-        // create or update mask setting
-        const mask = session.mask;
-        const maskModelConfig = mask.modelConfig;
-        // before start to chat, we should startup the model
-        api.llm.startUpMask({
-            memory_type: maskModelConfig.memoryType.name,
-            is_chinese_text: mask?.isChineseText ?? true,
-            prompt_path: mask?.promptPath ?? "",
-            have_context: mask?.haveContext ?? false,
-            prompt_serialized_type: "default"
-        } as StartupMaskRequestVO)
-            .then(() => {
-                navigate(Path.Masks);
-                setTimeout(() => {
-                    maskStore.create(session.mask);
-                }, 500);
-        })
+        navigate(Path.Masks);
     }
 
     return (
@@ -453,15 +431,8 @@ export function ChatActions(props: {
     const stopAll = () => ChatControllerPool.stopAll();
 
     // switch model
+    const models = config.supportedModels;
     const currentModel = chatStore.currentSession().mask.modelConfig.model;
-    const models = useMemo(
-        () =>
-            config
-                .allModels()
-                .filter((m) => m.available)
-                .map((m) => m.name),
-        [config],
-    );
     const [showModelSelector, setShowModelSelector] = useState(false);
 
     return (
@@ -543,8 +514,8 @@ export function ChatActions(props: {
                 <Selector
                     defaultSelectedValue={currentModel}
                     items={models.map((m) => ({
-                        title: m,
-                        value: m,
+                        title: m.alias,
+                        value: m.name,
                     }))}
                     onClose={() => setShowModelSelector(false)}
                     onSelection={(s) => {

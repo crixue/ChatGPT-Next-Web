@@ -1,23 +1,29 @@
 import {create} from "zustand";
-import {BUILTIN_MASKS} from "../masks";
 import {getLang, Lang} from "../locales";
 import {DEFAULT_TOPIC, ChatMessage} from "./chat";
-import {ModelConfig, useAppConfig} from "./config";
-import {StoreKey} from "../constant";
+
+import {
+    DEFAULT_CONFIG,
+    DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+    ModelConfig,
+    SearchContextSourceConfig,StoreKey} from "../constant";
 import {nanoid} from "nanoid";
-import {maskApi} from "@/app/client/mask/mask-api";
+import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {persist} from "zustand/middleware";
+import {MaskItemResponseVO} from "@/app/trypes/mask-vo";
 
 export type Mask = {
     id: string;
     createdAt: number;
+    updateAt: number;
     avatar: string;
     name: string;
     hideContext?: boolean;
     isChineseText?: boolean;
     haveContext?: boolean;
+    relevantSearchOptions: SearchContextSourceConfig;
+    relevantSearchOptionsJsonStr?: string;
     promptId?: string,
-    promptPath?: string,
     context: ChatMessage[];
     syncGlobalConfig?: boolean;
     modelConfig: ModelConfig;
@@ -33,7 +39,7 @@ export const DEFAULT_MASK_STATE = {
 export type MaskState = typeof DEFAULT_MASK_STATE;
 type MaskStore = MaskState & {
     initMasks: () => void;
-    create: (mask?: Partial<Mask>) => Mask;
+    create: (mask?: Partial<Mask>) => Promise<Mask>;
     update: (id: string, updater: (mask: Mask) => void) => void;
     delete: (id: string) => void;
     search: (text: string) => Mask[];
@@ -49,14 +55,16 @@ export const createEmptyMask = () =>
         name: DEFAULT_TOPIC,
         isChineseText: true,
         haveContext: true,
+        relevantSearchOptions: DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
         promptId: "",
-        context: [],
+        context: DEFAULT_CONFIG.chatMessages,
         syncGlobalConfig: true, // use global config as default
-        modelConfig: {...useAppConfig.getState().modelConfig},
+        modelConfig: {...DEFAULT_CONFIG.modelConfig},
         lang: getLang(),
         builtin: false,
         createdAt: Date.now(),
     } as Mask);
+
 
 export const useMaskStore = create<MaskStore>()(
     persist(
@@ -64,29 +72,35 @@ export const useMaskStore = create<MaskStore>()(
             // ...DEFAULT_MASK_STATE,
             masks: {} as Record<string, Mask>,
             async initMasks() {
-                const masks = get().masks;
+                const masks =  {} as Record<string, Mask>;
                 const allMasks = await maskApi.getAllMasks();
                 allMasks.forEach((m) => {
                     const modelConfigJsonStr = m.modelConfigJsonStr;
                     if(modelConfigJsonStr) {
                         m.modelConfig = JSON.parse(modelConfigJsonStr);
+                    } else {
+                        m.modelConfig = DEFAULT_CONFIG["modelConfig"];
+                    }
+
+                    if (m.relevantSearchOptionsJsonStr) {
+                        m.relevantSearchOptions = JSON.parse(m.relevantSearchOptionsJsonStr,);
+                    } else {
+                        m.relevantSearchOptions = DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
                     }
                     masks[m.id] = m;
                 });
                 set(() => ({masks}));
             },
-            create(mask) {
+            async create(mask) {
                 const masks = get().masks;
-                const id = mask?.id ?? nanoid(6);
-                masks[id] = {
-                    ...createEmptyMask(),
-                    ...mask,
-                    builtin: false,
-                };
-
+                const newMask = {...createEmptyMask(), ...mask};
+                const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
+                const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
+                const createdMask = resp.mask;
+                masks[createdMask.id] = createdMask;
                 set(() => ({masks}));
 
-                return masks[id];
+                return masks[createdMask.id];
             },
             update(id, updater: (mask: Mask) => void) {
                 const masks = get().masks;
@@ -107,26 +121,7 @@ export const useMaskStore = create<MaskStore>()(
                 return get().masks[id ?? 1145141919810];
             },
             getAll() {
-                const userMasks = Object.values(get().masks).sort(
-                    (a, b) => b.createdAt - a.createdAt,
-                );
-                return userMasks;
-                // const userMasks = Object.values(get().masks).sort(
-                //     (a, b) => b.createdAt - a.createdAt,
-                // );
-                // const config = useAppConfig.getState();
-                // if (config.hideBuiltinMasks) return userMasks;
-                // const buildinMasks = BUILTIN_MASKS.map(
-                //     (m) =>
-                //         ({
-                //             ...m,
-                //             modelConfig: {
-                //                 ...config.modelConfig,
-                //                 ...m.modelConfig,
-                //             },
-                //         } as Mask),
-                // );
-                // return userMasks.concat(buildinMasks);
+                return Object.values(get().masks).sort((a, b) => a.updateAt - b.updateAt);
             },
             search(text) {
                 return Object.values(get().masks);

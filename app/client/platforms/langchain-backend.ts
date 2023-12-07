@@ -1,24 +1,19 @@
-import {DEFAULT_MODELS, LangchainBackendPath, REQUEST_TIMEOUT_MS,} from "@/app/constant";
+import {LangchainBackendPath, REQUEST_TIMEOUT_MS,} from "@/app/constant";
 import {
-    DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
-    DEFAULT_SETUP_MODEL_CONFIG,
+    ChatMessage,
     useAccessStore,
     useAppConfig,
-    useChatStore
 } from "@/app/store";
 
 import {
-    ChatOptions,
     getBackendApiHeaders,
     getHeaders,
-    LangchainRelevantDocsSearchOptions,
-    LLMModel,
     LLMUsage
 } from "../api";
 import Locale from "../../locales";
-import {EventStreamContentType, fetchEventSource,} from "@fortaine/fetch-event-source";
-import {prettyObject} from "@/app/utils/format";
-import {StartupMaskRequestVO, StartUpModelRequestVO} from "@/app/trypes/model-vo";
+import {StartupMaskRequestVO, StartUpModelRequestVO, SupportedModelVO} from "@/app/trypes/model-vo";
+import {handleServerResponse} from "../../common-api";
+import {getClientConfig} from "@/app/config/client";
 
 export interface OpenAIListModelResponse {
     object: string;
@@ -30,6 +25,7 @@ export interface OpenAIListModelResponse {
 }
 
 export class LangchainBackendApi {
+
     private disableListModels = true;
 
     path(path: string): string {
@@ -38,187 +34,42 @@ export class LangchainBackendApi {
         return [openaiUrl, path].join("/");
     }
 
-    extractMessage(res: any) {
-        return res.choices?.at(0)?.message?.content ?? "";
-    }
-
-    async startUpModel(request: StartUpModelRequestVO) {
-        const res = await fetch(this.path(LangchainBackendPath.SetupModelPath), {
-            method: "POST",
-            body: JSON.stringify(request),
-            headers: getBackendApiHeaders(),
-        });
-
-        if (!res.ok) {
-            throw new Error(await res.text());
-        }
-    }
-
-    async startUpMask(request: StartupMaskRequestVO) {
-        const res = await fetch(this.path(LangchainBackendPath.StartupMaskPath), {
-            method: "POST",
-            body: JSON.stringify(request),
-            headers: getBackendApiHeaders(),
-        });
-
-        if (!res.ok) {
-            throw new Error(await res.text());
-        }
-    }
-
-    async chat(options: ChatOptions) {
-        const messages = options.messages.map((v) => ({
-            role: v.role,
-            content: v.content,
-        }));
-
-        const modelConfig = {
-            ...useAppConfig.getState().modelConfig,
-            ...useChatStore.getState().currentSession().mask.modelConfig,
-            ...{
-                model: options.config.model,
+    async triggerNewModel() {
+        const modelConfig = useAppConfig.getState().modelConfig;
+        const request: StartUpModelRequestVO = {
+            llm_type: modelConfig.model,
+            llm_model_config: {
+                max_tokens: modelConfig.maxTokens,
+                temperature: modelConfig.temperature,
+                top_p: modelConfig.topP,
+                repetition_penalty: modelConfig.frequencyPenalty,
+                streaming: true,  //暂时写死
             },
         };
 
-        const requestPayload = {
-            query: messages.at(-1)?.content ?? "",
-            context_docs: options.contextDocs,
-        };
-
-        console.log("[Request] langchain backend payload: ", requestPayload);
-
-        const shouldStream = !!options.config.stream;
-        const controller = new AbortController();
-        options.onController?.(controller);
-
-        try {
-            const chatPath = this.path(LangchainBackendPath.ChatPath);
-            const chatPayload = {
-                method: "POST",
-                body: JSON.stringify(requestPayload),
-                signal: controller.signal,
-                headers: getBackendApiHeaders(),
-            };
-
-            // make a fetch request
-            const requestTimeoutId = setTimeout(
-                () => controller.abort(),
-                REQUEST_TIMEOUT_MS,
-            );
-
-            if (shouldStream) {
-                let responseText = "";
-                let finished = false;
-
-                const finish = () => {
-                    if (!finished) {
-                        options.onFinish(responseText);
-                        finished = true;
-                    }
-                };
-
-                controller.signal.onabort = finish;
-
-                fetchEventSource(chatPath, {
-                    ...chatPayload,
-                    async onopen(res) {
-                        clearTimeout(requestTimeoutId);
-                        const contentType = res.headers.get("content-type");
-                        console.log(
-                            "[OpenAI] request response content type: ",
-                            contentType,
-                        );
-
-                        if (contentType?.startsWith("text/plain")) {
-                            responseText = await res.clone().text();
-                            return finish();
-                        }
-
-                        if (
-                            !res.ok ||
-                            !res.headers
-                                .get("content-type")
-                                ?.startsWith(EventStreamContentType) ||
-                            res.status !== 200
-                        ) {
-                            const responseTexts = [responseText];
-                            let extraInfo = await res.clone().text();
-                            try {
-                                const resJson = await res.clone().json();
-                                extraInfo = prettyObject(resJson);
-                            } catch {
-                            }
-
-                            if (res.status === 401) {
-                                responseTexts.push(Locale.Error.Unauthorized);
-                            }
-
-                            if (extraInfo) {
-                                responseTexts.push(extraInfo);
-                            }
-
-                            responseText = responseTexts.join("\n\n");
-
-                            return finish();
-                        }
-                    },
-                    onmessage(msg) {
-                        if (msg.data === "[DONE]" || finished) {
-                            return finish();
-                        }
-                        const text = msg.data;
-                        try {
-                            const json = JSON.parse(text);
-                            const delta = json.content;
-                            if (delta) {
-                                responseText += delta;
-                                options.onUpdate?.(responseText, delta);
-                            }
-                        } catch (e) {
-                            console.error("[Request] parse error", text, msg);
-                        }
-                    },
-                    onclose() {
-                        finish();
-                    },
-                    onerror(e) {
-                        options.onError?.(e);
-                        throw e;
-                    },
-                    openWhenHidden: true,
-                });
-            } else {
-                const res = await fetch(chatPath, chatPayload);
-                clearTimeout(requestTimeoutId);
-
-                const resJson = await res.json();
-                const message = this.extractMessage(resJson);
-                options.onFinish(message);
-            }
-        } catch (e) {
-            console.log("[Request] failed to make a chat request", e);
-            options.onError?.(e as Error);
-        }
-    }
-
-    async searchRelevantDocs(options: LangchainRelevantDocsSearchOptions) {
-        const payload = {
-            ...DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
-            ...options,
-        };
-
-        const res = await fetch(this.path(LangchainBackendPath.SearchRelevantDocsPath), {
+        const res = await fetch(this.path("llm-backend/v1/trigger-model"), {
             method: "POST",
-            body: JSON.stringify(payload),
+            body: JSON.stringify(request),
             headers: getBackendApiHeaders(),
         });
 
         if (!res.ok) {
             throw new Error(await res.text());
         }
-
-        return await res.json();
     }
+
+    async listAllModels() {
+        const res = await fetch(this.path("llm-backend/v1/llm-list"), {
+            method: "GET",
+            headers: getHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<SupportedModelVO[]>(await res.json());
+    }
+
 
     async usage() {
         const formatDate = (d: Date) =>
@@ -286,30 +137,43 @@ export class LangchainBackendApi {
         } as LLMUsage;
     }
 
-    async models(): Promise<LLMModel[]> {
-        if (this.disableListModels) {
-            return DEFAULT_MODELS.slice();
-        }
+    async share(messages: ChatMessage[], avatarUrl: string | null = null) {
+        const msgs = messages
+            .map((m) => ({
+                from: m.role === "user" ? "human" : "gpt",
+                value: m.content,
+            }))
+            .concat([
+                {
+                    from: "human",
+                    value:
+                        "Share from [ChatGPT Next Web]: https://github.com/Yidadaa/ChatGPT-Next-Web",
+                },
+            ]);
+        // 敬告二开开发者们，为了开源大模型的发展，请不要修改上述消息，此消息用于后续数据清洗使用
+        // Please do not modify this message
 
-        const res = await fetch(this.path(LangchainBackendPath.ListModelPath), {
-            method: "GET",
+        console.log("[Share]", messages, msgs);
+        const clientConfig = getClientConfig();
+        const proxyUrl = "/sharegpt";
+        const rawUrl = "https://sharegpt.com/api/conversations";
+        const shareUrl = clientConfig?.isApp ? rawUrl : proxyUrl;
+        const res = await fetch(shareUrl, {
+            body: JSON.stringify({
+                avatarUrl,
+                items: msgs,
+            }),
             headers: {
-                ...getHeaders(),
+                "Content-Type": "application/json",
             },
+            method: "POST",
         });
 
-        const resJson = (await res.json()) as OpenAIListModelResponse;
-        const chatModels = resJson.data?.filter((m) => m.id.startsWith("gpt-"));
-        console.log("[Models]", chatModels);
-
-        if (!chatModels) {
-            return [];
+        const resJson = await res.json();
+        console.log("[Share]", resJson);
+        if (resJson.id) {
+            return `https://shareg.pt/${resJson.id}`;
         }
-
-        return chatModels.map((m) => ({
-            name: m.id,
-            available: true,
-        }));
     }
 }
 

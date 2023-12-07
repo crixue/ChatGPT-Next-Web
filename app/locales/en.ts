@@ -1,6 +1,6 @@
 import { getClientConfig } from "../config/client";
-import { SubmitKey } from "../store/config";
 import { LocaleType } from "./index";
+import {SubmitKey} from "@/app/constant";
 
 // if you are adding a new translation, please use PartialLocaleType instead of LocaleType
 

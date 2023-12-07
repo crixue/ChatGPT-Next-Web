@@ -5,32 +5,28 @@ import {trimTopic} from "../utils";
 
 import Locale, {getLang} from "../locales";
 import {showToast} from "../components/ui-lib";
-import {ModelConfig, ModelType, useAppConfig} from "./config";
+import {useAppConfig} from "./config";
 import {createEmptyMask, Mask} from "./mask";
 import {
-    DEFAULT_INPUT_TEMPLATE,
-    DEFAULT_SYSTEM_TEMPLATE,
-    StoreKey,
+    ModelConfig, StoreKey,
     SUMMARIZE_MODEL,
 } from "../constant";
 import {
-    api,
     ChatOptions,
     LangchainRelevantDocsSearchOptions,
-    RelevantDocsResponse,
     RequestMessage
 } from "../client/api";
 import {ChatControllerPool} from "../client/controller";
 import {prettyObject} from "../utils/format";
 import {estimateTokenLength} from "../utils/token";
 import {nanoid} from "nanoid";
+import {ChatApi} from "@/app/client/chat-api";
 
 export type ChatMessage = RequestMessage & {
     date: string;
     streaming?: boolean;
     isError?: boolean;
     id: string;
-    model?: ModelType;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -63,10 +59,12 @@ export interface ChatSession {
     mask: Mask;
 }
 
-export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
+// export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
+export const DEFAULT_TOPIC = "新的聊天"
 export const BOT_HELLO: ChatMessage = createMessage({
     role: "assistant",
-    content: Locale.Store.BotHello,
+    // content: Locale.Store.BotHello,
+    content: "有什么可以帮你的吗",
 });
 
 function createEmptySession(): ChatSession {
@@ -124,27 +122,31 @@ function countMessages(msgs: ChatMessage[]) {
 }
 
 function fillTemplateWith(input: string, modelConfig: ModelConfig) {
-    const vars = {
-        model: modelConfig.model,
-        time: new Date().toLocaleString(),
-        lang: getLang(),
-        input: input,
-    };
+    // const vars = {
+    //     model: modelConfig.model,
+    //     time: new Date().toLocaleString(),
+    //     lang: getLang(),
+    //     input: input,
+    // };
+    //
+    // let output = modelConfig.template ?? DEFAULT_INPUT_TEMPLATE;
+    //
+    // // must contains {{input}}
+    // const inputVar = "{{input}}";
+    // if (!output.includes(inputVar)) {
+    //     output += "\n" + inputVar;
+    // }
+    //
+    // Object.entries(vars).forEach(([name, value]) => {
+    //     output = output.replaceAll(`{{${name}}}`, value);
+    // });
 
-    let output = modelConfig.template ?? DEFAULT_INPUT_TEMPLATE;
-
-    // must contains {{input}}
-    const inputVar = "{{input}}";
-    if (!output.includes(inputVar)) {
-        output += "\n" + inputVar;
-    }
-
-    Object.entries(vars).forEach(([name, value]) => {
-        output = output.replaceAll(`{{${name}}}`, value);
-    });
-
-    return output;
+    return input;
 }
+
+
+const chatApi = new ChatApi();
+
 
 export const useChatStore = create<ChatStore>()(
     persist(
@@ -288,12 +290,14 @@ export const useChatStore = create<ChatStore>()(
 
             async onUserInput(content) {
                 const session = get().currentSession();
+                // console.log("[User Input] before template: ", session)
                 const currentMask = session.mask;
                 const modelConfig = currentMask.modelConfig;
+                const relevantSearchOptions = currentMask.relevantSearchOptions;
 
                 const userContent = fillTemplateWith(content, modelConfig);
                 // console.log("[User Input] after template: ", userContent);
-                console.log("[User Input] current mask: ", JSON.stringify(currentMask));
+                // console.log("[User Input] current mask: ", JSON.stringify(currentMask));
 
                 const userMessage: ChatMessage = createMessage({
                     role: "user",
@@ -303,7 +307,6 @@ export const useChatStore = create<ChatStore>()(
                 const botMessage: ChatMessage = createMessage({
                     role: "assistant",
                     streaming: true,
-                    model: modelConfig.model,
                 });
 
                 // get recent messages
@@ -375,19 +378,17 @@ export const useChatStore = create<ChatStore>()(
                 } as ChatOptions;
 
                 if (currentMask.haveContext) {
-                    api.llm.searchRelevantDocs({  //TODO 这里设置请求的web_search || local_vector_stores || fixed
+                    chatApi.searchRelevantDocs({
                         query: sendMessages.at(-1)?.content ?? "",
+                        ...relevantSearchOptions,
                     } as LangchainRelevantDocsSearchOptions)
-                        .then((resp: RelevantDocsResponse) => {
-                            console.log("resp: ", JSON.stringify(resp));
-                            const contextDocs = resp.docs;
-
-                            chatRequest = { ...chatRequest, contextDocs };
-                            api.llm.chat(chatRequest);
-                        })
+                    .then((contextDocs) => {
+                        chatRequest = { ...chatRequest, contextDocs: contextDocs } as ChatOptions;
+                        chatApi.chat(chatRequest);
+                    })
                 } else {
                     // make request
-                    api.llm.chat(chatRequest);
+                    chatApi.chat(chatRequest);
                 }
             },
 
@@ -436,7 +437,6 @@ export const useChatStore = create<ChatStore>()(
 
                 // long term memory
                 const shouldSendLongTermMemory =
-                    modelConfig.sendMemory &&
                     session.memoryPrompt &&
                     session.memoryPrompt.length > 0 &&
                     session.lastSummarizeIndex > clearContextIndex;
@@ -527,7 +527,7 @@ export const useChatStore = create<ChatStore>()(
                             content: Locale.Store.Prompt.Topic,
                         }),
                     );
-                    api.llm.chat({
+                    chatApi.chat({
                         messages: topicMessages,
                         config: {
                             model: getSummarizeModel(session.mask.modelConfig.model),
@@ -565,40 +565,39 @@ export const useChatStore = create<ChatStore>()(
 
                 const lastSummarizeIndex = session.messages.length;
 
-                console.log(
-                    "[Chat History] ",
-                    toBeSummarizedMsgs,
-                    historyMsgLength,
-                    modelConfig.compressMessageLengthThreshold,
-                );
+                // console.log(
+                //     "[Chat History] ",
+                //     toBeSummarizedMsgs,
+                //     historyMsgLength,
+                // );
 
-                if (historyMsgLength > modelConfig.compressMessageLengthThreshold &&
-                    modelConfig.sendMemory) {
-                    api.llm.chat({
-                        messages: toBeSummarizedMsgs.concat(
-                            createMessage({
-                                role: "system",
-                                content: Locale.Store.Prompt.Summarize,
-                                date: "",
-                            }),
-                        ),
-                        config: {
-                            ...modelConfig,
-                            stream: true,
-                            model: getSummarizeModel(session.mask.modelConfig.model),
-                        },
-                        onUpdate(message) {
-                            session.memoryPrompt = message;
-                        },
-                        onFinish(message) {
-                            console.log("[Memory] ", message);
-                            session.lastSummarizeIndex = lastSummarizeIndex;
-                        },
-                        onError(err) {
-                            console.error("[Summarize] ", err);
-                        },
-                    });
-                }
+                // if (historyMsgLength > modelConfig.compressMessageLengthThreshold &&
+                //     modelConfig.sendMemory) {
+                //     chatApi.chat({
+                //         messages: toBeSummarizedMsgs.concat(
+                //             createMessage({
+                //                 role: "system",
+                //                 content: Locale.Store.Prompt.Summarize,
+                //                 date: "",
+                //             }),
+                //         ),
+                //         config: {
+                //             ...modelConfig,
+                //             stream: true,
+                //             model: getSummarizeModel(session.mask.modelConfig.model),
+                //         },
+                //         onUpdate(message) {
+                //             session.memoryPrompt = message;
+                //         },
+                //         onFinish(message) {
+                //             console.log("[Memory] ", message);
+                //             session.lastSummarizeIndex = lastSummarizeIndex;
+                //         },
+                //         onError(err) {
+                //             console.error("[Summarize] ", err);
+                //         },
+                //     });
+                // }
             },
 
             updateStat(message) {
@@ -622,53 +621,6 @@ export const useChatStore = create<ChatStore>()(
         }),
         {
             name: StoreKey.Chat,
-            version: 3.1,
-            migrate(persistedState, version) {
-                const state = persistedState as any;
-                const newState = JSON.parse(JSON.stringify(state)) as ChatStore;
-
-                if (version < 2) {
-                    newState.sessions = [];
-
-                    const oldSessions = state.sessions;
-                    for (const oldSession of oldSessions) {
-                        const newSession = createEmptySession();
-                        newSession.topic = oldSession.topic;
-                        newSession.messages = [...oldSession.messages];
-                        newSession.mask.modelConfig.sendMemory = true;
-                        newSession.mask.modelConfig.historyMessageCount = 4;
-                        newSession.mask.modelConfig.compressMessageLengthThreshold = 1000;
-                        newState.sessions.push(newSession);
-                    }
-                }
-
-                if (version < 3) {
-                    // migrate id to nanoid
-                    newState.sessions.forEach((s) => {
-                        s.id = nanoid();
-                        s.messages.forEach((m) => (m.id = nanoid()));
-                    });
-                }
-
-                // Enable `enableInjectSystemPrompts` attribute for old sessions.
-                // Resolve issue of old sessions not automatically enabling.
-                if (version < 3.1) {
-                    newState.sessions.forEach((s) => {
-                        if (
-                            // Exclude those already set by user
-                            !s.mask.modelConfig.hasOwnProperty("enableInjectSystemPrompts")
-                        ) {
-                            // Because users may have changed this configuration,
-                            // the user's current configuration is used instead of the default
-                            const config = useAppConfig.getState();
-                            // s.mask.modelConfig.enableInjectSystemPrompts =
-                            //     config.modelConfig.enableInjectSystemPrompts;
-                        }
-                    });
-                }
-
-                return newState;
-            },
         },
     ),
 );

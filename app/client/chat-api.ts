@@ -1,50 +1,20 @@
-import {
-    DEFAULT_API_HOST,
-    DEFAULT_MODELS,
-    OpenaiPath,
-    REQUEST_TIMEOUT_MS,
-} from "@/app/constant";
-import {useAccessStore, useAppConfig, useChatStore} from "@/app/store";
-
-import {BaseSetupModelConfig, ChatOptions, getHeaders, LLMApi, LLMModel, LLMUsage} from "../api";
-import Locale from "../../locales";
+import {useAccessStore, useChatStore} from "@/app/store";
+import {ChatOptions, getBackendApiHeaders, LangchainRelevantDocsSearchOptions} from "@/app/client/api";
+import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, REQUEST_TIMEOUT_MS} from "@/app/constant";
+import {prettyObject} from "@/app/utils/format";
+import Locale from "@/app/locales";
+import {StartupMaskRequestVO} from "@/app/trypes/model-vo";
+import {handleServerResponse} from "@/app/common-api";
+import {ChatCompletionRequestVO, ContextDoc} from "@/app/trypes/chat";
 import {
     EventStreamContentType,
     fetchEventSource,
 } from "@fortaine/fetch-event-source";
-import {prettyObject} from "@/app/utils/format";
-import {getClientConfig} from "@/app/config/client";
 
-export interface OpenAIListModelResponse {
-    object: string;
-    data: Array<{
-        id: string;
-        object: string;
-        root: string;
-    }>;
-}
-
-export class ChatGPTApi {
-    startupModel(options: BaseSetupModelConfig): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-
-    private disableListModels = true;
-
+export class ChatApi {
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().openaiUrl;
-        const apiPath = "/api/openai";
-
-        if (openaiUrl.length === 0) {
-            const isApp = !!getClientConfig()?.isApp;
-            openaiUrl = isApp ? DEFAULT_API_HOST : apiPath;
-        }
-        if (openaiUrl.endsWith("/")) {
-            openaiUrl = openaiUrl.slice(0, openaiUrl.length - 1);
-        }
-        if (!openaiUrl.startsWith("http") && !openaiUrl.startsWith(apiPath)) {
-            openaiUrl = "https://" + openaiUrl;
-        }
+        // console.log("openaiUrl:" + openaiUrl)
         return [openaiUrl, path].join("/");
     }
 
@@ -53,42 +23,47 @@ export class ChatGPTApi {
     }
 
     async chat(options: ChatOptions) {
+        const currentSession = useChatStore.getState().currentSession();
+        const mask = currentSession.mask;
+        const maskModelConfig = mask.modelConfig;
         const messages = options.messages.map((v) => ({
             role: v.role,
             content: v.content,
         }));
 
-        const modelConfig = {
-            ...useAppConfig.getState().modelConfig,
-            ...useChatStore.getState().currentSession().mask.modelConfig,
-            ...{
-                model: options.config.model,
-            },
-        };
-
         const requestPayload = {
-            messages,
-            stream: options.config.stream,
-            model: modelConfig.model,
-            temperature: modelConfig.temperature,
-            // presence_penalty: modelConfig.presence_penalty,
-            frequencyPenalty: modelConfig.frequencyPenalty,
-            top_p: modelConfig.topP,
-        };
+            // TODO history_messages
+            query: messages.at(-1)?.content ?? "",
+            context_docs: options.contextDocs ?? [],
+            startup_mask_request: {
+                is_chinese_text: mask?.isChineseText ?? true,
+                prompt_id: mask?.promptId ?? "",
+                have_context: mask?.haveContext ?? false,
+                prompt_serialized_type: "chat_prompt",
+                llm_type: maskModelConfig.model,
+                model_config: {
+                    temperature: maskModelConfig.temperature,
+                    top_p: maskModelConfig.topP,
+                    streaming: maskModelConfig.streaming,
+                    max_tokens: maskModelConfig.maxTokens,
+                    repetition_penalty: maskModelConfig.frequencyPenalty,
+                },
+            } as StartupMaskRequestVO
+        } as ChatCompletionRequestVO;
 
-        console.log("[Request] openai payload: ", requestPayload);
+        console.log("[Request] langchain backend payload: ", requestPayload);
 
         const shouldStream = !!options.config.stream;
         const controller = new AbortController();
         options.onController?.(controller);
 
         try {
-            const chatPath = this.path(OpenaiPath.ChatPath);
+            const chatPath = this.path("llm-backend/v1/chat-stream/completions");
             const chatPayload = {
                 method: "POST",
                 body: JSON.stringify(requestPayload),
                 signal: controller.signal,
-                headers: getHeaders(),
+                headers: getBackendApiHeaders(),
             };
 
             // make a fetch request
@@ -160,7 +135,7 @@ export class ChatGPTApi {
                         const text = msg.data;
                         try {
                             const json = JSON.parse(text);
-                            const delta = json.choices[0].delta.content;
+                            const delta = json.content;
                             if (delta) {
                                 responseText += delta;
                                 options.onUpdate?.(responseText, delta);
@@ -192,94 +167,40 @@ export class ChatGPTApi {
         }
     }
 
-    async usage() {
-        const formatDate = (d: Date) =>
-            `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d
-                .getDate()
-                .toString()
-                .padStart(2, "0")}`;
-        const ONE_DAY = 1 * 24 * 60 * 60 * 1000;
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const startDate = formatDate(startOfMonth);
-        const endDate = formatDate(new Date(Date.now() + ONE_DAY));
+    async searchRelevantDocs(options: LangchainRelevantDocsSearchOptions) {
+        const currentSession = useChatStore.getState().currentSession();
+        const mask = currentSession.mask;
+        const maskModelConfig = mask.modelConfig;
 
-        const [used, subs] = await Promise.all([
-            fetch(
-                this.path(
-                    `${OpenaiPath.UsagePath}?start_date=${startDate}&end_date=${endDate}`,
-                ),
-                {
-                    method: "GET",
-                    headers: getHeaders(),
+        const payload = {
+            ...DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+            ...options,
+            startupMaskRequest: {
+                prompt_serialized_type: "chat_prompt",
+                prompt_id: mask?.promptId ?? "",
+                is_chinese_text: mask?.isChineseText ?? true,
+                have_context: mask?.haveContext ?? false,
+                llm_type: maskModelConfig.model,
+                model_config: {
+                    temperature: maskModelConfig.temperature,
+                    top_p: maskModelConfig.topP,
+                    streaming: maskModelConfig.streaming,
+                    max_tokens: maskModelConfig.maxTokens,
+                    repetition_penalty: maskModelConfig.frequencyPenalty,
                 },
-            ),
-            fetch(this.path(OpenaiPath.SubsPath), {
-                method: "GET",
-                headers: getHeaders(),
-            }),
-        ]);
-
-        if (used.status === 401) {
-            throw new Error(Locale.Error.Unauthorized);
-        }
-
-        if (!used.ok || !subs.ok) {
-            throw new Error("Failed to query usage from openai");
-        }
-
-        const response = (await used.json()) as {
-            total_usage?: number;
-            error?: {
-                type: string;
-                message: string;
-            };
+            } as StartupMaskRequestVO
         };
 
-        const total = (await subs.json()) as {
-            hard_limit_usd?: number;
-        };
-
-        if (response.error && response.error.type) {
-            throw Error(response.error.message);
-        }
-
-        if (response.total_usage) {
-            response.total_usage = Math.round(response.total_usage) / 100;
-        }
-
-        if (total.hard_limit_usd) {
-            total.hard_limit_usd = Math.round(total.hard_limit_usd * 100) / 100;
-        }
-
-        return {
-            used: response.total_usage,
-            total: total.hard_limit_usd,
-        } as LLMUsage;
-    }
-
-    async models(): Promise<LLMModel[]> {
-        if (this.disableListModels) {
-            return DEFAULT_MODELS.slice();
-        }
-
-        const res = await fetch(this.path(OpenaiPath.ListModelPath), {
-            method: "GET",
-            headers: {
-                ...getHeaders(),
-            },
+        const res = await fetch(this.path("llm-backend/v1/search-relevant-documents"), {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: getBackendApiHeaders(),
         });
 
-        const resJson = (await res.json()) as OpenAIListModelResponse;
-        const chatModels = resJson.data?.filter((m) => m.id.startsWith("gpt-"));
-        console.log("[Models]", chatModels);
-
-        if (!chatModels) {
-            return [];
+        if (!res.ok) {
+            throw new Error(await res.text());
         }
 
-        return [];
+        return handleServerResponse<ContextDoc[]>(await res.json());
     }
 }
-
-export {OpenaiPath};

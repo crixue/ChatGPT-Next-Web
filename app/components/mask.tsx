@@ -15,13 +15,10 @@ import DragIcon from "../icons/drag.svg";
 
 import {DEFAULT_MASK_AVATAR, Mask, useMaskStore} from "../store/mask";
 import {
-    ChatMessage,
-    createMessage,
-    ModelConfig,
+    ChatMessage, createMessage,
     useAppConfig,
-    useChatStore,
+    useChatStore, useUserFolderStore,
 } from "../store";
-import {api, MemoryTypeName, ROLES} from "../client/api";
 import {
     List,
     ListItem,
@@ -34,28 +31,22 @@ import Locale, {AllLangs, ALL_LANG_OPTIONS, Lang} from "../locales";
 import {useNavigate} from "react-router-dom";
 
 import chatStyle from "./chat.module.scss";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {copyToClipboard, downloadAs, readFromFile} from "../utils";
 import {Updater} from "../typing";
-import {ConversationMemoryConfigList, ModelConfigList} from "./model-config";
-import {FileName, Path} from "../constant";
+import {ModelConfigList} from "./model-config";
+import {FileName, ModelConfig, Path} from "../constant";
 import {BUILTIN_MASK_STORE} from "../masks";
 import {
     OnDragEndResponder,
 } from "@hello-pangea/dnd";
-import {Button, Input, Modal, notification, Radio, Switch} from "antd";
+import {Button, Input, Modal, notification, Radio, Select, Switch, Tag} from "antd";
 import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import {
-    MaskCreationRequestVO,
     MaskItemResponseVO,
-    PromptInfoDict,
-    SerializeInfo,
-    SerializePromptRequestVO
 } from "@/app/trypes/mask-vo";
-import {maskApi} from "@/app/client/mask/mask-api";
-import {useInitMasks} from "@/app/components/home";
-import {StartupMaskRequestVO} from "@/app/trypes/model-vo";
+import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 
 // drag and drop helper function
@@ -70,7 +61,7 @@ export function MaskAvatar(props: { mask: Mask }) {
     return props.mask.avatar !== DEFAULT_MASK_AVATAR ? (
         <Avatar avatar={props.mask.avatar}/>
     ) : (
-        <Avatar model={props.mask.modelConfig.model}/>
+        <Avatar avatar={DEFAULT_MASK_AVATAR}/>
     );
 }
 
@@ -81,18 +72,36 @@ export function MaskConfig(props: {
     readonly?: boolean;
     shouldSyncFromGlobal?: boolean;
 }) {
+    // console.log("MaskConfig:" + JSON.stringify(props.mask));
     const [showPicker, setShowPicker] = useState(false);
+    const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
+    const [contextSourcesOptions, setContextSourcesOptions] = useState('web_search');
+
+    const userFolderStore = useUserFolderStore();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        needRetrieveUserLocalVSFolders && (async () => {
+            await userFolderStore.initUserLocalVSFolders();
+        })();
+    }, [needRetrieveUserLocalVSFolders]);
+
+    const localVSFoldersOptions = userFolderStore.userFolders.map((folder) => {
+        return {
+            label: folder.folderName,
+            value: folder.id,
+        }
+    })
 
     const updateConfig = (updater: (config: ModelConfig) => void) => {
         const config = {...props.mask.modelConfig};
-        console.log("update model config", config)
         updater(config);
         props.updateMask((mask) => {
             mask.modelConfig = config;
             // if user changed current session mask, it will disable auto sync
             mask.syncGlobalConfig = false;
         });
-        console.log("modelConfig:" + JSON.stringify(props.mask.modelConfig));
+        // console.log("modelConfig:" + JSON.stringify(props.mask.modelConfig));
     };
 
     const copyMaskLink = () => {
@@ -146,20 +155,6 @@ export function MaskConfig(props: {
                         }}/>
                 </ListItem>
                 <ListItem
-                    title={Locale.Mask.Config.HideContext.Title}
-                    subTitle={Locale.Mask.Config.HideContext.SubTitle}
-                >
-                    <Switch
-                        checkedChildren={<CheckOutlined/>}
-                        unCheckedChildren={<CloseOutlined/>}
-                        defaultChecked={props.mask.hideContext}
-                        onChange={(checked) => {
-                            props.updateMask((mask) => {
-                                mask.hideContext = checked;
-                            });
-                        }}/>
-                </ListItem>
-                <ListItem
                     title={Locale.Mask.Config.HaveContext.Title}
                     subTitle={Locale.Mask.Config.HaveContext.SubTitle}
                 >
@@ -173,6 +168,105 @@ export function MaskConfig(props: {
                             });
                         }}/>
                 </ListItem>
+                {
+                    props.mask.haveContext ? (
+                        <>
+                            <ListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
+                                <Select
+                                    defaultValue={props.mask.relevantSearchOptions.retriever_type ?? "web_search"}
+                                    value={props.mask.relevantSearchOptions.retriever_type}
+                                    options={[
+                                        {label: "网络搜索", value: "web_search"},
+                                        {label: "本地知识库", value: "local_vector_stores"},
+                                        {label: "混合模式", value: "fixed"},
+                                    ]}
+                                    onChange={(value) => {
+                                        props.updateMask((mask) => {
+                                            mask.relevantSearchOptions.retriever_type = value;
+                                        });
+                                        if (value === "web_search") {
+                                            props.updateMask((mask) => {
+                                                mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                                            });
+                                        } else if (value === "fixed" || value === "local_vector_stores") {
+                                            const userFolders = userFolderStore.userFolders;
+                                            if (userFolders.length === 0) {
+                                                props.updateMask((mask) => {  //先设置默认值，后续再修改
+                                                    mask.relevantSearchOptions.retriever_type = value;
+                                                    mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                                                });
+                                                //TODO 跳出弹窗要求用户创建本地知识库
+                                                return;
+                                            }
+                                            props.updateMask((mask) => {
+                                                mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "";
+                                                mask.relevantSearchOptions.userFolderId = userFolders[0].id;
+                                            });
+                                        }
+                                        setContextSourcesOptions(value);
+                                    }}
+                                    style={{width: 130}}
+                                />
+                            </ListItem>
+                            {
+                                props.mask.relevantSearchOptions.retriever_type === "local_vector_stores"
+                                    ||  props.mask.relevantSearchOptions.retriever_type === "fixed"? (
+                                    <>
+                                        {
+                                            localVSFoldersOptions.length > 0 ? (
+                                                <ListItem
+                                                    title={Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.Title}
+                                                    subTitle={
+                                                        <Button
+                                                            onClick={() => navigate(Path.MakeLocalVSStore)}
+                                                            type="link"
+                                                        >
+                                                            {Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.SubTitle}
+                                                        </Button>
+                                                    }
+                                                >
+                                                    <Select
+                                                        options={localVSFoldersOptions}
+                                                        defaultValue={localVSFoldersOptions[0].value}
+                                                        onChange={(selectedId: string) => {
+                                                            for (const userFolder of userFolderStore.userFolders) {
+                                                                if (userFolder.id === selectedId) {
+                                                                    props.updateMask((mask) => {
+                                                                        mask.relevantSearchOptions.local_vs_folder_name = userFolder.folderName ?? "";
+                                                                        mask.relevantSearchOptions.userFolderId = userFolder.id;
+                                                                    });
+                                                                    userFolderStore.setCurrentSelectedFolder(userFolder);
+                                                                    break;
+                                                                }
+                                                            }}
+                                                        }
+                                                    >
+
+                                                    </Select>
+                                                </ListItem>
+                                            ) : null  //TODO 跳出弹窗要求用户创建本地知识库
+                                        }
+                                    </>
+                                ) : null
+                            }
+                        </>
+                    ) : null
+                }
+                <ListItem
+                    title={Locale.Mask.Config.HideContext.Title}
+                    subTitle={Locale.Mask.Config.HideContext.SubTitle}
+                >
+                    <Switch
+                        checkedChildren={<CheckOutlined/>}
+                        unCheckedChildren={<CloseOutlined/>}
+                        defaultChecked={props.mask.hideContext}
+                        onChange={(checked) => {
+                            props.updateMask((mask) => {
+                                mask.hideContext = checked;
+                            });
+                        }}/>
+                </ListItem>
+
                 <ListItem
                     title={Locale.Mask.Config.IsChineseText.Title}
                     subTitle={Locale.Mask.Config.IsChineseText.SubTitle}
@@ -187,27 +281,18 @@ export function MaskConfig(props: {
                             });
                         }}/>
                 </ListItem>
-                <ListItem
-                    title={Locale.Mask.Config.PromptId.Title}
-                >
-                    <Input
-                        type={"text"}
-                        defaultValue={props.mask.promptId ?? "无"}
-                        disabled={true}
-                    />
-                </ListItem>
-                {!props.shouldSyncFromGlobal ? (
-                    <ListItem
-                        title={Locale.Mask.Config.Share.Title}
-                        subTitle={Locale.Mask.Config.Share.SubTitle}
-                    >
-                        <IconButton
-                            icon={<CopyIcon/>}
-                            text={Locale.Mask.Config.Share.Action}
-                            onClick={copyMaskLink}
-                        />
-                    </ListItem>
-                ) : null}
+                {/*{!props.shouldSyncFromGlobal ? (*/}
+                {/*    <ListItem*/}
+                {/*        title={Locale.Mask.Config.Share.Title}*/}
+                {/*        subTitle={Locale.Mask.Config.Share.SubTitle}*/}
+                {/*    >*/}
+                {/*        <IconButton*/}
+                {/*            icon={<CopyIcon/>}*/}
+                {/*            text={Locale.Mask.Config.Share.Action}*/}
+                {/*            onClick={copyMaskLink}*/}
+                {/*        />*/}
+                {/*    </ListItem>*/}
+                {/*) : null}*/}
 
                 {props.shouldSyncFromGlobal ? (
                     <ListItem
@@ -236,13 +321,18 @@ export function MaskConfig(props: {
                     </ListItem>
                 ) : null}
             </List>
-
             <List>
-                <ConversationMemoryConfigList
-                    modelConfig={{...props.mask.modelConfig}}
-                    updateConfig={updateConfig}
+                <ModelConfigList
+                    modelConfig={props.mask.modelConfig}
+                    updateConfig={(updater) => {
+                        const modelConfig = {...props.mask.modelConfig};
+                        updater(modelConfig);
+                        props.updateMask((mask) => {
+                            mask.modelConfig = modelConfig;
+                            mask.syncGlobalConfig = false;
+                        });
+                    }}
                 />
-                {props.extraListItems}
             </List>
         </>
     );
@@ -255,23 +345,39 @@ function ContextPromptItem(props: {
     remove: () => void;
 }) {
     const [promptContent, setPromptContent] = useState(props.prompt.content);
+    const roleName = props.prompt.role === "system" ? Locale.Mask.PromptItem.System.name : Locale.Mask.PromptItem.User.name;
+    const roleColor = props.prompt.role === "system" ? Locale.Mask.PromptItem.System.color : Locale.Mask.PromptItem.User.color;
 
     return (
         <div className={chatStyle["context-prompt-row"]}>
+            <div>
+                <Tag bordered={false} color={roleColor}>
+                    {roleName}
+                </Tag>
+            </div>
             <TextArea
                 value={promptContent}
+                minLength={2}
                 autoSize={true}
                 allowClear={true}
                 onChange={(e) => {
-                    const content = e.target.value as any;  //TODO update mask 未更新
+                    const content = e.target.value as any;
                     setPromptContent(content);
                     props.update({
                         ...props.prompt,
                         content: content,
-                    })
-                }
+                    })}
                 }
             />
+            {/*<div>*/}
+            {/*    <Button*/}
+            {/*        danger={true}*/}
+            {/*        disabled={props.prompt.role === "system"}*/}
+            {/*        onClick={() => props.remove()}*/}
+            {/*    >*/}
+            {/*        {Locale.Mask.PromptItem.Delete}*/}
+            {/*    </Button>*/}
+            {/*</div>*/}
         </div>
     );
 }
@@ -294,35 +400,53 @@ export function ContextPrompts(props: {
         props.updateContext((context) => (context[i] = prompt));
     };
 
-    const onDragEnd: OnDragEndResponder = (result) => {
-        if (!result.destination) {
-            return;
-        }
-        const newContext = reorder(
-            context,
-            result.source.index,
-            result.destination.index,
-        );
-        props.updateContext((context) => {
-            context.splice(0, context.length, ...newContext);
-        });
-    };
-
     return (
         <>
-            <div className={chatStyle["context-prompt"]} style={{marginBottom: 20}}>
+            <div className={chatStyle["context-prompt"]} style={{ marginBottom: 20 }}>
                 {context.map((c, i) => (
-                    <ContextPromptItem
-                        key={i}
-                        index={i}
-                        prompt={c}
-                        update={(prompt) => updateContextPrompt(i, prompt)}
-                        remove={() => removeContextPrompt(i)}
-                    />
+                    <div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
+                        <ContextPromptItem
+                            index={i}
+                            prompt={c}
+                            update={(prompt) => updateContextPrompt(i, prompt)}
+                            remove={() => removeContextPrompt(i)}
+                        />
+                    </div>
                 ))}
+
+                {props.context.length === 0 && (
+                    <div className={chatStyle["context-prompt-row"]}>
+                        <IconButton
+                            icon={<AddIcon />}
+                            text={Locale.Context.Add}
+                            bordered
+                            className={chatStyle["context-prompt-button"]}
+                            onClick={() =>
+                                addContextPrompt(
+                                    createMessage({
+                                        role: "user",
+                                        content: "",
+                                        date: "",
+                                    }),
+                                    props.context.length,
+                                )
+                            }
+                        />
+                    </div>
+                )}
             </div>
         </>
     );
+}
+
+export function useInitMasks() {
+    useEffect(() => {
+        (async () => {
+            await useMaskStore.getState().initMasks();
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return true;
 }
 
 export function MaskPage() {
@@ -332,14 +456,14 @@ export function MaskPage() {
 
     const maskStore = useMaskStore();
     const chatStore = useChatStore();
-    const globalSettingStore = useGlobalSettingStore();
 
     const session = chatStore.currentSession();
 
     const [filterLang, setFilterLang] = useState<Lang>();
     const allMasks = maskStore
         .getAll()
-        .filter((m) => !filterLang || m.lang === filterLang);
+        .filter((m) => !filterLang || m.lang === filterLang)
+    ;
 
     const [searchMasks, setSearchMasks] = useState<Mask[]>([]);
     const [searchText, setSearchText] = useState("");
@@ -361,6 +485,7 @@ export function MaskPage() {
 
     const editingMask =
         maskStore.get(editingMaskId) ?? BUILTIN_MASK_STORE.get(editingMaskId);
+    // console.log("editingMask:" + JSON.stringify(editingMask));
 
     const openMaskModal = (maskId: string) => {
         setIsModalOpen(true);
@@ -372,46 +497,15 @@ export function MaskPage() {
     };
 
     const deleteMask = (id: string) => {
+        maskStore.delete(id);
         maskApi.deleteMask(id).then((res) => {
-            maskStore.delete(id);
             closeMaskModal();
             notify['success']({
                 message: '删除成功',
             });
+        }).finally(() => {
+            maskStore.delete(id);
         });
-    }
-
-    const assembleSaveOrUpdateMaskRequest = (mask: Mask) => {
-        const context = mask.context[0];
-        // console.log("context:"+context.content);
-        const serializePromptRequestVO = {
-            title: mask.name + "-prompt",
-            prompt_folder_name: "default",  //TODO prompt_folder_name暂时写死
-            serialize_info: {
-                prompt_type: "default_prompt",  //TODO prompt_folder_name暂时写死
-                have_context: mask.haveContext,
-                prompt_info_dict: {
-                    template: context.content,
-                } as PromptInfoDict,
-            } as SerializeInfo,
-        } as SerializePromptRequestVO;
-        mask.modelConfig = {
-            ...mask.modelConfig,
-            haveContext: mask.haveContext ?? true,
-            memoryType: mask.modelConfig.memoryType ?? {
-                name: "ConversationBufferWindowMemory" as MemoryTypeName,
-                available: true
-            },
-        }
-        // console.log(JSON.stringify(mask.modelConfig));
-        mask = {...mask, modelConfigJsonStr: JSON.stringify(mask.modelConfig)}
-        const maskCreationRequestVO = {
-            mask,
-            serializePromptRequest: serializePromptRequestVO,
-            requiredPermIds: [632, 633]  //TODO 暂时写死
-        } as MaskCreationRequestVO;
-        // console.log(JSON.stringify(maskCreationRequestVO));
-        return maskCreationRequestVO;
     }
 
     const saveMask = (mask: Mask) => {
@@ -422,6 +516,7 @@ export function MaskPage() {
                 maskStore.update(mask.id, (mask) => {
                     mask = {...mask, ...updatedMask};
                 });
+                closeMaskModal();
                 notify['success']({
                     message: '保存成功',
                 });
@@ -434,37 +529,34 @@ export function MaskPage() {
             });
     }
 
-    const updateMask = (mask: Mask) => {
+    const updateMask = (mask?: Mask) => {
+        if (!mask) {
+            return;
+        }
         const maskUpdateRequestVO = assembleSaveOrUpdateMaskRequest(mask);
         maskApi.updateMask(maskUpdateRequestVO)
             .then((res: void) => {
+                maskStore.update(mask.id, (mask) => {
+                    mask = {...mask};
+                });
                 notify['success']({
                     message: '更新成功',
                 });
+            }).catch((err: Error) => {
+                console.log(err);
+                notify['error']({
+                    message: '更新失败，请稍后重试',
+                });
+            }).finally(() => {
+                closeMaskModal();
             });
     }
 
-    const handleOnApplyMask = (mask: Mask) => {
+    const handleOnApplyMask = async (mask: Mask) => {
         // create or update mask setting
-        const maskModelConfig = mask.modelConfig;
-        globalSettingStore.switchShowGlobalLoading();
-        // before start to chat, we should startup the model
-        api.llm.startUpMask({
-                memory_type: maskModelConfig.memoryType.name,
-                is_chinese_text: mask?.isChineseText ?? true,
-                prompt_path: mask?.promptPath ?? "",
-                have_context: mask?.haveContext ?? false,
-                prompt_serialized_type: "default"
-            } as StartupMaskRequestVO)
-        .then(() => {
-            navigate(Path.Chat);
-            chatStore.newSession(mask);
-            setTimeout(() => {
-                maskStore.create(mask);
-            }, 500);
-        }).finally(() => {
-            globalSettingStore.switchShowGlobalLoading();
-        });
+        navigate(Path.Chat);
+        chatStore.newSession(mask);
+
     }
 
     const downloadAll = () => {
@@ -514,13 +606,13 @@ export function MaskPage() {
                                 onClick={downloadAll}
                             />
                         </div>
-                        <div className="window-action-button">
-                            <IconButton
-                                icon={<UploadIcon/>}
-                                bordered
-                                onClick={() => importFromFile()}
-                            />
-                        </div>
+                        {/*<div className="window-action-button">*/}
+                        {/*    <IconButton*/}
+                        {/*        icon={<UploadIcon/>}*/}
+                        {/*        bordered*/}
+                        {/*        onClick={() => importFromFile()}*/}
+                        {/*    />*/}
+                        {/*</div>*/}
                         <div className="window-action-button">
                             <IconButton
                                 icon={<CloseIcon/>}
@@ -568,14 +660,22 @@ export function MaskPage() {
                             text={Locale.Mask.Page.Create}
                             bordered
                             onClick={() => {
-                                const createdMask = maskStore.create();
-                                setEditingMaskId(createdMask.id);
+                                maskStore.create().then((mask) => {
+                                    openMaskModal(mask.id);
+                                }).catch((err: Error) => {
+                                    console.log(err);
+                                    notify['error']({
+                                        message: '创建失败，请稍后重试',
+                                    });
+                                });
                             }}
                         />
                     </div>
 
                     <div>
-                        {masks.map((m) => (
+                        {masks
+                            .sort((a, b) =>  b?.updateAt -  a?.updateAt)
+                            .map((m) => (
                             <div className={styles["mask-item"]} key={m.id}>
                                 <div className={styles["mask-header"]}>
                                     <div className={styles["mask-icon"]}>
@@ -583,11 +683,11 @@ export function MaskPage() {
                                     </div>
                                     <div className={styles["mask-title"]}>
                                         <div className={styles["mask-name"]}>{m.name}</div>
-                                        {/*<div className={styles["mask-info"] + " one-line"}>*/}
-                                        {/*    {`${Locale.Mask.Item.Info(m.context.length)} / ${*/}
-                                        {/*        ALL_LANG_OPTIONS[m.lang]*/}
-                                        {/*    } / ${m.modelConfig.model}`}*/}
-                                        {/*</div>*/}
+                                        <div className={styles["mask-info"] + " one-line"}>
+                                            {`${Locale.Mask.Item.Info(m.context.length)} / ${
+                                                ALL_LANG_OPTIONS[m.lang]
+                                            } / ${m.modelConfig.model}`}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className={styles["mask-actions"]}>
@@ -595,8 +695,7 @@ export function MaskPage() {
                                         icon={<AddIcon/>}
                                         text={Locale.Mask.Item.Chat}
                                         onClick={() => {
-                                            chatStore.newSession(m);
-                                            navigate(Path.Chat);
+                                            handleOnApplyMask(m);
                                         }}
                                     />
                                     {m.builtin ? (
@@ -612,17 +711,17 @@ export function MaskPage() {
                                             onClick={() => openMaskModal(m.id)}
                                         />
                                     )}
-                                    {/*{!m.builtin && (*/}
-                                    {/*    <IconButton*/}
-                                    {/*        icon={<DeleteIcon/>}*/}
-                                    {/*        text={Locale.Mask.Item.Delete}*/}
-                                    {/*        onClick={async () => {*/}
-                                    {/*            if (await showConfirm(Locale.Mask.Item.DeleteConfirm)) {*/}
-                                    {/*                maskStore.delete(m.id);*/}
-                                    {/*            }*/}
-                                    {/*        }}*/}
-                                    {/*    />*/}
-                                    {/*)}*/}
+                                    {!m.builtin && (
+                                        <IconButton
+                                            icon={<DeleteIcon/>}
+                                            text={Locale.Mask.Item.Delete}
+                                            onClick={async () => {
+                                                if (await showConfirm(Locale.Mask.Item.DeleteConfirm)) {
+                                                    deleteMask(m.id);
+                                                }
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -634,7 +733,7 @@ export function MaskPage() {
                 <Modal
                     open={isModalOpen}
                     title={Locale.Mask.EditModal.Title(editingMask?.builtin)}
-                    onCancel={closeMaskModal}
+                    onCancel={() => updateMask(editingMask)}
                     width={"75vw"}
                     footer={[
                         <Button

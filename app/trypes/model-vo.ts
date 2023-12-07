@@ -9,9 +9,17 @@ export interface StartUpModelRequestVO {
 
 export interface StartupMaskRequestVO {
     memory_type: MemoryTypeName;
-    memory_additional_args: Map<string, string>;
+    memory_additional_args?: Map<string, string>;
     prompt_serialized_type: string;
-    prompt_path: string;
+    prompt_id: string;
     is_chinese_text: boolean;
     have_context: boolean;
+    llm_type: string;
+    model_config: LangchainBackendBaseLLMConfig;
+}
+
+
+export interface SupportedModelVO {
+    name: string;
+    alias: string;
 }

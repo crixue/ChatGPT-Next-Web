@@ -27,11 +27,8 @@ export interface AccessControlStore {
 
 let fetchState = 0; // 0 not fetch, 1 fetching, 2 done
 
-// const DEFAULT_OPENAI_URL =
-//   getClientConfig()?.buildMode === "export" ? DEFAULT_API_HOST : "/api/openai/";
 
 export const useAccessStore = create<AccessControlStore>()(
-    persist(
         (set, get) => ({
             token: "",
             accessCode: "",
@@ -40,9 +37,9 @@ export const useAccessStore = create<AccessControlStore>()(
             hideBalanceQuery: false,
             disableGPT4: false,
 
-            openaiUrl: getClientConfig()?.defaultOpenAiUrl ?? "",
-            backendCoreApiUrl: getClientConfig()?.backendCoreApiUrl ?? "",
-            backendUserApiUrl: getClientConfig()?.backendUserApiUrl ?? "",
+            openaiUrl: getClientConfig()?.defaultOpenAiUrl ?? "http://localhost:3000",
+            backendCoreApiUrl:  getClientConfig()?.backendCoreApiUrl ?? "http://localhost:3000",
+            backendUserApiUrl:  getClientConfig()?.backendUserApiUrl ?? "http://localhost:3000",
             enabledAccessControl() {
                 get().fetch();
 
@@ -77,7 +74,7 @@ export const useAccessStore = create<AccessControlStore>()(
                 })
                     .then((res) => res.json())
                     .then((res: DangerConfig) => {
-                        console.log("[Config] got config from server", res);
+                        // console.log("[Config] got config from server", res);
                         set(() => ({...res}));
 
                         if (res.disableGPT4) {
@@ -94,9 +91,4 @@ export const useAccessStore = create<AccessControlStore>()(
                     });
             },
         }),
-        {
-            name: StoreKey.Access,
-            version: 1,
-        },
-    ),
 );

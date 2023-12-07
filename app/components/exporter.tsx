@@ -29,10 +29,10 @@ import NextImage from "next/image";
 
 import { toBlob, toJpeg, toPng } from "html-to-image";
 import { DEFAULT_MASK_AVATAR } from "../store/mask";
-import { api } from "../client/api";
 import { prettyObject } from "../utils/format";
 import { EXPORT_MESSAGE_CLASS_NAME } from "../constant";
 import { getClientConfig } from "../config/client";
+import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -276,6 +276,9 @@ export function RenderExport(props: {
     </div>
   );
 }
+
+
+const api = new LangchainBackendApi();
 
 export function PreviewActions(props: {
   download: () => void;

@@ -1,14 +1,68 @@
-import {ChatMessage, useAccessStore} from "@/app/store";
-import {MaskCreationRequestVO, MaskItemResponseVO} from "@/app/trypes/mask-vo";
-import {getBackendApiHeaders} from "@/app/client/api";
+import {useAccessStore, useAppConfig} from "@/app/store";
+import {
+    MaskCreationRequestVO,
+    MaskItemResponseVO,
+    PromptInfoDict,
+    SerializeInfo,
+    SerializePromptRequestVO
+} from "@/app/trypes/mask-vo";
+import {getBackendApiHeaders, MemoryTypeName} from "@/app/client/api";
 import {handleServerResponse, ServerResponse} from "@/app/common-api";
 import {Mask} from "@/app/store/mask";
+import {DEFAULT_CONFIG} from "@/app/constant";
+
+export function assembleSaveOrUpdateMaskRequest(mask: Mask){
+    if(!mask.context || mask.context.length == 0){
+        mask.context = DEFAULT_CONFIG.chatMessages;
+    }
+    const chatMsgs = mask.context;
+    const promptInfoDict = {"user": {}, "system": {}} as PromptInfoDict;
+    for(const item of chatMsgs){
+        if (item.role == "user") {
+            promptInfoDict["user"] = {
+                template: item.content,
+            }
+        } else if (item.role == "system") {
+            promptInfoDict["system"] = {
+                template: item.content,
+            }
+        }
+    }
+
+    const serializePromptRequestVO = {
+        title: mask.name + "-prompt",
+        prompt_folder_name: "chat_prompt",  //TODO prompt_folder_name暂时写死
+        serialize_info: {
+            prompt_type: "chat_prompt",  //TODO prompt_folder_name暂时写死
+            have_context: mask.haveContext,
+            prompt_info_dict: promptInfoDict,
+        } as SerializeInfo,
+    } as SerializePromptRequestVO;
+
+    const modelName = useAppConfig.getState().defaultModel?.name ?? "";
+    mask.modelConfig = {
+        ...mask.modelConfig,
+        model: mask.modelConfig.model == "" ? modelName: mask.modelConfig.model,
+        haveContext: mask.haveContext ?? true,
+    }
+    mask = {...mask,
+        modelConfigJsonStr: JSON.stringify(mask.modelConfig),
+        relevantSearchOptionsJsonStr: JSON.stringify(mask.relevantSearchOptions)}
+    const maskCreationRequestVO = {
+        mask,
+        serializePromptRequest: serializePromptRequestVO,
+        requiredPermIds: [632, 633]  //TODO 暂时写死
+    } as MaskCreationRequestVO;
+    console.log(JSON.stringify(maskCreationRequestVO));
+    return maskCreationRequestVO;
+}
+
 
 class ClientApi {
 
     path(path: string): string {
         let backendApiUrl = useAccessStore.getState().backendCoreApiUrl;
-
+        // console.log("backendApiUrl:" + backendApiUrl)
         return [backendApiUrl, path].join("");
     }
 

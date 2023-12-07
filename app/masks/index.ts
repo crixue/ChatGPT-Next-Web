@@ -26,9 +26,3 @@ export const BUILTIN_MASK_STORE = {
     return Object.values(this.masks);
   },
 };
-
-
-export const BUILTIN_MASKS: BuiltinMask[] = BUILTIN_MASK_STORE.getAll();
-// export const BUILTIN_MASKS: BuiltinMask[] = [...CN_MASKS, ...EN_MASKS].map(
-//   (m) => BUILTIN_MASK_STORE.add(m),
-// );  //TODO 使用api 获取所有的masks 覆盖掉这里的builtin masks

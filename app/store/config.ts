@@ -1,108 +1,17 @@
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
 import {ConversationMemoryType, LLMModel, MemoryTypeName} from "../client/api";
-import {getClientConfig} from "../config/client";
-import {DEFAULT_INPUT_TEMPLATE, DEFAULT_MEMORY_TYPES, DEFAULT_MODELS, StoreKey} from "../constant";
+import {
+    ChatConfigStore,
+    DEFAULT_CONFIG,
+    DEFAULT_MODELS,
+    StoreKey
+} from "../constant";
 import Locale, { AllLangs, ALL_LANG_OPTIONS, Lang } from "../locales";
+import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
 
-export enum SubmitKey {
-    Enter = "Enter",
-    CtrlEnter = "Ctrl + Enter",
-    ShiftEnter = "Shift + Enter",
-    AltEnter = "Alt + Enter",
-    MetaEnter = "Meta + Enter",
-}
-
-export enum Theme {
-    Auto = "auto",
-    Dark = "dark",
-    Light = "light",
-}
-
-export const DEFAULT_CONFIG = {
-    submitKey: SubmitKey.CtrlEnter as SubmitKey,
-    avatar: "1f603",
-    fontSize: 14,
-    theme: Theme.Auto as Theme,
-    tightBorder: !!getClientConfig()?.isApp,
-    sendPreviewBubble: true,
-    enableAutoGenerateTitle: true,
-    sidebarWidth: 300,
-
-    disablePromptHint: false,
-
-    dontShowMaskSplashScreen: false, // dont show splash screen when create chat
-    hideBuiltinMasks: false, // dont add builtin masks
-
-    customModels: "",
-    models: DEFAULT_MODELS as any as LLMModel[],
-    memoryTypes: DEFAULT_MEMORY_TYPES as any as ConversationMemoryType[],
-
-    modelConfig: {
-        model: "chatglm2-6b" as ModelType,
-        temperature: 0.8,
-        topP: 0.9,
-        maxTokens: 2000,
-        // presence_penalty: 0,
-        frequencyPenalty: 1.2,
-        haveContext: true,
-        memoryType: {
-            name: "ConversationBufferWindowMemory" as MemoryTypeName,
-            available: true
-        },
-        sendMemory: true,
-        historyMessageCount: 4,
-        compressMessageLengthThreshold: 2000,
-        // enableInjectSystemPrompts: true,
-        template: DEFAULT_INPUT_TEMPLATE,
-    },
-};
-
-export const DEFAULT_SETUP_MODEL_CONFIG = {
-    llm_type: "chatglm2-6b",
-    llm_model_config: {
-        temperature: 0.8,
-        streaming: true,
-        max_token: 10000,
-        top_p: 0.9,
-    },
-    memory_type: "ConversationBufferWindowMemory",
-    memory_additional_args: {
-        memory_key: "chat_history",
-        windows_k: 5,
-        max_token_limit: 500,
-    },
-    prompt_serialized_type: "default",
-    prompt_path: "/mnt/l/temp/prompt_templates/default/guest0/test_default_chat_prompts/default_chat_prompts.json",
-    is_chinese_text: true,
-    have_context: true,
-}
-
-export const DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS = {
-    retriever_type:"web_search",
-    local_vs_folder_name:"web_search",
-    use_multi_query_assist:false,
-    // retriever_type: "local_vector_stores",
-    // local_vs_folder_name: "guest007/test_txt_file0",
-    search_type: "similarity",
-    search_top_k: 4,
-    use_embedding_filter_assist: false,
-    use_reorder_assist: false,
-}
-
-export type ChatConfig = typeof DEFAULT_CONFIG;
-
-export type ChatConfigStore = ChatConfig & {
-    reset: () => void;
-    update: (updater: (config: ChatConfig) => void) => void;
-    mergeModels: (newModels: LLMModel[]) => void;
-    allModels: () => LLMModel[];
-    allConversationMemoryTypes: () => ConversationMemoryType[];
-};
-
-export type ModelConfig = ChatConfig["modelConfig"];
 
 export function limitNumber(
     x: number,
@@ -138,11 +47,14 @@ export const ModalConfigValidator = {
     },
 };
 
+const langChainBackendService = new LangchainBackendApi();
+
 export const useAppConfig = create<ChatConfigStore>()(
     persist(
         (set, get) => ({
             ...DEFAULT_CONFIG,
-
+            supportedModels: [],
+            defaultModel: undefined,
             reset() {
                 set(() => ({...DEFAULT_CONFIG}));
             },
@@ -153,36 +65,20 @@ export const useAppConfig = create<ChatConfigStore>()(
                 set(() => config);
             },
 
-            mergeModels(newModels) {
-                if (!newModels || newModels.length === 0) {
-                    return;
-                }
-
-                const oldModels = get().models;
-                const modelMap: Record<string, LLMModel> = {};
-
-                for (const model of oldModels) {
-                    model.available = false;
-                    modelMap[model.name] = model;
-                }
-
-                for (const model of newModels) {
-                    model.available = true;
-                    modelMap[model.name] = model;
-                }
-
-                set(() => ({
-                    models: Object.values(modelMap),
-                }));
-            },
-
-            allModels() {
-                const customModels = get()
-                    .customModels.split(",")
-                    .filter((v) => !!v && v.length > 0)
-                    .map((m) => ({name: m, available: true}));
-
-                const models = get().models.concat(customModels);
+            async allModels() {
+                const config = {...get()};
+                const customModels = await langChainBackendService.listAllModels();
+                const models = customModels.map((m) => {
+                    return {
+                        name: m.name,
+                        available: true,
+                        alias: m.alias
+                    }
+                }) as LLMModel[];
+                config.modelConfig.model = models[0].name;
+                config.defaultModel = models[0];
+                config.supportedModels = models;
+                set(() => config);
                 return models;
             },
 

@@ -3,6 +3,8 @@ import {Prompt} from "@/app/store/prompt";
 
 
 export interface PromptInfoDict {
+    user?: PromptInfoDict;
+    system?: PromptInfoDict;
     template?: string;
     prefix?: string;
     example_prompt_template?: string;
@@ -13,7 +15,7 @@ export interface PromptInfoDict {
 
 export interface SerializeInfo {
     file_name?: string;
-    prompt_type: "default_prompt" | "few_shot_prompt";
+    prompt_type: "default_prompt" | "chat_prompt" | "few_shot_prompt";
     have_context?: boolean;
     prompt_info_dict?: PromptInfoDict;
 }

@@ -1,113 +1,110 @@
-import {DEFAULT_CONFIG, ModalConfigValidator, ModelConfig, useAppConfig} from "../store";
+import {ModalConfigValidator, useAppConfig} from "../store";
 
 import Locale from "../locales";
-import {InputRange} from "./input-range";
-import {ListItem, CustomSelect} from "./ui-lib";
-import {Button, Col, InputNumber, notification, Row, Select, Slider} from "antd";
+import {ListItem, } from "./ui-lib";
+import {Button, Col, Descriptions, InputNumber, notification, Row, Select, Slider} from "antd";
 import React from "react";
-import {api, ClientApi, ConversationMemoryType, LangchainBackendBaseLLMConfig, MemoryTypeName} from "@/app/client/api";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
-import {GlobalLoading} from "@/app/components/global";
+import {DEFAULT_CONFIG, ModelConfig} from "@/app/constant";
 
+// export function ConversationMemoryConfigList(props: {
+//     modelConfig: ModelConfig;
+//     updateConfig: (updater: (config: ModelConfig) => void) => void;
+// }) {
+//     const config = useAppConfig();
+//
+//     const [conversationMemoryType, setConversationMemoryType] = React.useState<string>(
+//         config.allConversationMemoryTypes()[0].name
+//     );
+//     const onConversationMemoryTypeChange = (val: string | null) => {
+//         const allMemoryTypes = config.allConversationMemoryTypes();
+//         let currentMemoryType = allMemoryTypes.find(item => item.name === val);
+//         currentMemoryType = currentMemoryType || DEFAULT_CONFIG.modelConfig.memoryType;
+//         // console.log(currentMemoryType)
+//         setConversationMemoryType(currentMemoryType.name);
+//         props.updateConfig(
+//             (config) =>
+//                 config.memoryType = {
+//                     name: currentMemoryType?.name || "ConversationBufferWindowMemory" as MemoryTypeName,
+//                     available: currentMemoryType?.available || true,
+//                 }
+//         );
+//     }
+//
+//     const [historyMessageCount, setHistoryMessageCount] = React.useState(props.modelConfig.historyMessageCount);
+//     const onHistoryMessageCountChange = (val: number | null) => {
+//         setHistoryMessageCount(val || 1);
+//         props.updateConfig(
+//             (config) =>
+//                 (config.historyMessageCount = val || 1),
+//         );
+//     }
+//     return (
+//         <>
+//             <ListItem
+//                 title={Locale.Settings.ConversationMemoryType.Title}
+//                 subTitle={Locale.Settings.ConversationMemoryType.SubTitle}
+//             >
+//                 <Select
+//                     defaultValue={conversationMemoryType}
+//                     options={config.allConversationMemoryTypes().map((v, i) => {
+//                         const item = {label: v.label, value: v.name};
+//                         // console.log(item);
+//                         return item;
+//                     })}
+//                     onChange={onConversationMemoryTypeChange}
+//                 />
+//             </ListItem>
+//             {conversationMemoryType === 'ConversationBufferWindowMemory' && (
+//                 <ListItem
+//                     title={Locale.Settings.HistoryWindowCount.Title}
+//                     subTitle={Locale.Settings.HistoryWindowCount.SubTitle}
+//                     isSubList={true}
+//                 >
+//                     <Col style={{marginLeft: "48px"}} span={10}>
+//                         <Slider
+//                             min={0}
+//                             max={20}
+//                             onChange={onHistoryMessageCountChange}
+//                             value={historyMessageCount}
+//                             step={1}
+//                         />
+//                     </Col>
+//                     <Col span={4}>
+//                         <InputNumber
+//                             min={0}
+//                             max={20} // lets limit it to 0-1
+//                             step={1}
+//                             style={{margin: '0 4px'}}
+//                             value={historyMessageCount}
+//                             onChange={onHistoryMessageCountChange}
+//                         />
+//                     </Col>
+//                 </ListItem>
+//             )}
+//             {conversationMemoryType === 'ConversationSummaryBufferMemory' && (
+//                 <ListItem
+//                     title={Locale.Settings.CompressThreshold.Title}
+//                     subTitle={Locale.Settings.CompressThreshold.SubTitle}
+//                 >
+//                     <InputNumber
+//                         defaultValue={props.modelConfig.compressMessageLengthThreshold}
+//                         min={500}
+//                         max={4000}
+//                         controls
+//                         onChange={(value) =>
+//                             props.updateConfig(
+//                                 (config) =>
+//                                     (config.compressMessageLengthThreshold = value || 2000),
+//                             )
+//                         }
+//                     />
+//                 </ListItem>
+//             )}
+//         </>
+//     );
+// }
 
-export function ConversationMemoryConfigList(props: {
-    modelConfig: ModelConfig;
-    updateConfig: (updater: (config: ModelConfig) => void) => void;
-}) {
-    const config = useAppConfig();
-
-    const [conversationMemoryType, setConversationMemoryType] = React.useState<string>(
-        config.allConversationMemoryTypes()[0].name
-    );
-    const onConversationMemoryTypeChange = (val: string | null) => {
-        const allMemoryTypes = config.allConversationMemoryTypes();
-        let currentMemoryType = allMemoryTypes.find(item => item.name === val);
-        currentMemoryType = currentMemoryType || DEFAULT_CONFIG.modelConfig.memoryType;
-        // console.log(currentMemoryType)
-        setConversationMemoryType(currentMemoryType.name);
-        props.updateConfig(
-            (config) =>
-                config.memoryType = {
-                    name: currentMemoryType?.name || "ConversationBufferWindowMemory" as MemoryTypeName,
-                    available: currentMemoryType?.available || true,
-                }
-        );
-    }
-
-    const [historyMessageCount, setHistoryMessageCount] = React.useState(props.modelConfig.historyMessageCount);
-    const onHistoryMessageCountChange = (val: number | null) => {
-        setHistoryMessageCount(val || 1);
-        props.updateConfig(
-            (config) =>
-                (config.historyMessageCount = val || 1),
-        );
-    }
-    return (
-        <>
-            <ListItem
-                title={Locale.Settings.ConversationMemoryType.Title}
-                subTitle={Locale.Settings.ConversationMemoryType.SubTitle}
-            >
-                <Select
-                    defaultValue={conversationMemoryType}
-                    options={config.allConversationMemoryTypes().map((v, i) => {
-                        const item = {label: v.label, value: v.name};
-                        // console.log(item);
-                        return item;
-                    })}
-                    onChange={onConversationMemoryTypeChange}
-                />
-            </ListItem>
-            {conversationMemoryType === 'ConversationBufferWindowMemory' && (
-                <ListItem
-                    title={Locale.Settings.HistoryWindowCount.Title}
-                    subTitle={Locale.Settings.HistoryWindowCount.SubTitle}
-                >
-                    <Col style={{marginLeft: "48px"}} span={10}>
-                        <Slider
-                            min={0}
-                            max={20}
-                            onChange={onHistoryMessageCountChange}
-                            value={historyMessageCount}
-                            step={1}
-                        />
-                    </Col>
-                    <Col span={4}>
-                        <InputNumber
-                            min={0}
-                            max={20} // lets limit it to 0-1
-                            step={1}
-                            style={{margin: '0 4px'}}
-                            value={historyMessageCount}
-                            onChange={onHistoryMessageCountChange}
-                        />
-                    </Col>
-                </ListItem>
-            )}
-            {conversationMemoryType === 'ConversationSummaryBufferMemory' && (
-                <ListItem
-                    title={Locale.Settings.CompressThreshold.Title}
-                    subTitle={Locale.Settings.CompressThreshold.SubTitle}
-                >
-                    <InputNumber
-                        defaultValue={props.modelConfig.compressMessageLengthThreshold}
-                        min={500}
-                        max={4000}
-                        controls
-                        onChange={(value) =>
-                            props.updateConfig(
-                                (config) =>
-                                    (config.compressMessageLengthThreshold = value || 2000),
-                            )
-                        }
-                    />
-                </ListItem>
-            )}
-        </>
-    );
-}
-
-export const llmApi = new ClientApi();
 
 export function ModelConfigList(props: {
     modelConfig: ModelConfig;
@@ -119,6 +116,8 @@ export function ModelConfigList(props: {
 
     const [notify, contextHolder] = notification.useNotification();
     const [temperature, setTemperature] = React.useState<number>(props.modelConfig.temperature);
+    const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(props.modelConfig.frequencyPenalty);
+
     const onTemperatureChange = (val: number | null) => {
         setTemperature(val || 1);
         props.updateConfig(
@@ -142,7 +141,6 @@ export function ModelConfigList(props: {
         setTopP(val || 1);
     }
 
-    const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(props.modelConfig.frequencyPenalty);
     const onFrequencyPenaltyChange = (val: number | null) => {
         setFrequencyPenalty(val || 1.1);
         props.updateConfig(
@@ -153,35 +151,24 @@ export function ModelConfigList(props: {
         );
     }
 
-    const applyModel = () => {
-        const modelCnf = config.modelConfig;
-        globalSettingStore.switchShowGlobalLoading("正在创建模型中，请不要刷新页面...");
-        llmApi.llm.startUpModel({  //这里应该使用切换模型的接口，不是创建模型的接口
-            llm_type: modelCnf.model,
-            llm_model_config: {
-                temperature: modelCnf.temperature,
-                top_p: modelCnf.topP,
-                max_tokens: modelCnf.maxTokens,
-                repetition_penalty: modelCnf.frequencyPenalty,
-                streaming: true,  //暂时写死
-            } as LangchainBackendBaseLLMConfig
-        }).then((res) => {
-            notify['success']({
-                message: '已成功应用模型',
-            });
-        }).finally(() => {
-            globalSettingStore.switchShowGlobalLoading();
-        });
+    const [historyMessageCount, setHistoryMessageCount] = React.useState(props.modelConfig.historyMessageCount);
+    const onHistoryMessageCountChange = (val: number | null) => {
+        setHistoryMessageCount(val || 1);
+        props.updateConfig(
+            (config) =>
+                (config.historyMessageCount = val || 1),
+        );
     }
 
     return (
         <>
+            {contextHolder}
             <ListItem title={Locale.Settings.Model}>
                 <Select
                     style={{minWidth: "250px"}}
-                    defaultValue={props.modelConfig.model}
-                    options={config.allModels().map((v, i) => (
-                        {label: v.name, value: v.name}
+                    defaultValue={config.defaultModel?.alias}
+                    options={config.supportedModels.map((v, i) => (
+                        {label: v.alias, value: v.name}
                     ))}
                     onChange={(value) => {
                         props.updateConfig(
@@ -284,18 +271,30 @@ export function ModelConfigList(props: {
                     />
                 </Col>
             </ListItem>
-            <ConversationMemoryConfigList
-                modelConfig={props.modelConfig}
-                updateConfig={props.updateConfig}
-            />
             <ListItem
-                title={Locale.Settings.ApplyModel.Title}
-                subTitle={Locale.Settings.ApplyModel.SubTitle}
+                title={Locale.Settings.HistoryWindowCount.Title}
+                subTitle={Locale.Settings.HistoryWindowCount.SubTitle}
+                isSubList={false}
             >
-                <Button
-                    key={"applyModel"}
-                    onClick={applyModel}
-                >应用模型</Button>
+                <Col style={{marginLeft: "48px"}} span={10}>
+                    <Slider
+                        min={0}
+                        max={10}
+                        onChange={onHistoryMessageCountChange}
+                        value={historyMessageCount}
+                        step={1}
+                    />
+                </Col>
+                <Col span={4}>
+                    <InputNumber
+                        min={0}
+                        max={10} // lets limit it to 0-1
+                        step={1}
+                        style={{margin: '0 4px'}}
+                        value={historyMessageCount}
+                        onChange={onHistoryMessageCountChange}
+                    />
+                </Col>
             </ListItem>
         </>
     );

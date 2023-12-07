@@ -21,3 +21,10 @@ export interface TablePagination {
     defaultPageSize: number;
     total?: number;
 }
+
+export interface ProListDataItem {
+    name: string;
+    desc: string | JSX.Element | null;
+    actions: string | JSX.Element | null;
+}
+

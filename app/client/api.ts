@@ -1,8 +1,6 @@
-import {getClientConfig} from "../config/client";
 import {ACCESS_CODE_PREFIX} from "../constant";
 import {ChatMessage, ModelType, useAccessStore} from "../store";
-import {ChatGPTApi} from "./platforms/openai";
-import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
+import {ContextDoc} from "@/app/trypes/chat";
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
@@ -42,6 +40,7 @@ export interface LLMUsage {
 export interface LLMModel {
     name: string;
     available: boolean;
+    alias: string;
 }
 
 export interface LangchainBackendBaseLLMConfig {
@@ -63,21 +62,6 @@ export interface ConversationMemoryType {
     available: boolean;
 }
 
-export interface BaseSetupModelConfig {
-
-}
-
-export interface LangchainSetupModelConfig extends BaseSetupModelConfig {
-    llm_type: string;
-    llm_model_config: LangchainBackendBaseLLMConfig;
-    memory_type: MemoryTypeName;
-    memory_additional_args: Map<string, string>;
-    prompt_serialized_type: string;
-    prompt_path: string;
-    is_chinese_text: boolean;
-    have_context: boolean;
-}
-
 
 type RetrieverType = "local_vector_stores" | "web_search" | "fixed"
 
@@ -92,34 +76,6 @@ export interface LangchainRelevantDocsSearchOptions {
     use_reorder_assist: boolean;
 }
 
-export interface RelevantDocMetadata {
-    title: string;
-    url: string;
-    source: string;
-}
-
-export interface ContextDoc {
-    metadata: RelevantDocMetadata;
-    page_content: string;
-}
-
-export interface RelevantDocsResponse {
-    docs: ContextDoc[];
-    query: string;
-}
-
-
-export abstract class LLMApi {
-    abstract searchRelevantDocs(options: LangchainRelevantDocsSearchOptions): Promise<RelevantDocsResponse>;
-
-    abstract chat(options: ChatOptions): Promise<void>;
-
-    abstract usage(): Promise<LLMUsage>;
-
-    abstract models(): Promise<LLMModel[]>;
-
-    abstract startupModel(options: BaseSetupModelConfig): Promise<void>
-}
 
 type ProviderName = "openai" | "azure" | "claude" | "palm";
 
@@ -141,66 +97,6 @@ interface ChatProvider {
     chat: () => void;
     usage: () => void;
 }
-
-export class ClientApi {
-    public llm: LangchainBackendApi;
-
-    constructor() {
-        // this.llm = new ChatGPTApi();
-        this.llm = new LangchainBackendApi();
-        console.log("[ClientApi]", this.llm)
-    }
-
-    config() {
-    }
-
-    prompts() {
-    }
-
-    masks() {
-    }
-
-    async share(messages: ChatMessage[], avatarUrl: string | null = null) {
-        const msgs = messages
-            .map((m) => ({
-                from: m.role === "user" ? "human" : "gpt",
-                value: m.content,
-            }))
-            .concat([
-                {
-                    from: "human",
-                    value:
-                        "Share from [ChatGPT Next Web]: https://github.com/Yidadaa/ChatGPT-Next-Web",
-                },
-            ]);
-        // 敬告二开开发者们，为了开源大模型的发展，请不要修改上述消息，此消息用于后续数据清洗使用
-        // Please do not modify this message
-
-        console.log("[Share]", messages, msgs);
-        const clientConfig = getClientConfig();
-        const proxyUrl = "/sharegpt";
-        const rawUrl = "https://sharegpt.com/api/conversations";
-        const shareUrl = clientConfig?.isApp ? rawUrl : proxyUrl;
-        const res = await fetch(shareUrl, {
-            body: JSON.stringify({
-                avatarUrl,
-                items: msgs,
-            }),
-            headers: {
-                "Content-Type": "application/json",
-            },
-            method: "POST",
-        });
-
-        const resJson = await res.json();
-        console.log("[Share]", resJson);
-        if (resJson.id) {
-            return `https://shareg.pt/${resJson.id}`;
-        }
-    }
-}
-
-export const api = new ClientApi();
 
 export function getHeaders() {
     const accessStore = useAccessStore.getState();

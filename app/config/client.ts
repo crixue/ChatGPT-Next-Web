@@ -4,11 +4,13 @@ export function getClientConfig() {
   if (typeof document !== "undefined") {
     // client side
     const meta = queryMeta("config");
+    // console.log("[Client Config] meta: ", JSON.parse(meta));
     return JSON.parse(meta) as BuildConfig;
   }
 
   if (typeof process !== "undefined") {
     // server side
+    // console.log("[server side] process: ", getBuildConfig());
     return getBuildConfig();
   }
 }
@@ -19,9 +21,9 @@ function queryMeta(key: string, defaultValue?: string): string {
     const meta = document.head.querySelector(
       `meta[name='${key}']`,
     ) as HTMLMetaElement;
-    ret = meta?.content ?? "";
+    ret = meta?.content ?? "{}";
   } else {
-    ret = defaultValue ?? "";
+    ret = defaultValue ?? "{}";
   }
 
   return ret;
