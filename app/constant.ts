@@ -2,6 +2,8 @@ import {getClientConfig} from "@/app/config/client";
 import {ConversationMemoryType, LLMModel, MemoryTypeName} from "@/app/client/api";
 import {nanoid} from "nanoid";
 import {ChatMessage} from "@/app/store";
+import {extraPromptPlaceHolders} from "@/app/utils/common-util";
+import Locales from "./locales";
 
 export const OWNER = "Yidadaa";
 export const REPO = "ChatGPT-Next-Web";
@@ -21,7 +23,8 @@ export enum Path {
     NewChat = "/new-chat",
     Masks = "/masks",
     Auth = "/auth",
-    MakeLocalVSStore = "/make-local-vs-store"
+    MakeLocalVSStore = "/make-local-vs-store",
+    ManageLocalVectorStore = "/manage-local-vector-store",
 }
 
 export enum SlotID {
@@ -154,27 +157,48 @@ export const DEFAULT_CONFIG = {
             id: nanoid(),
             date: Date.now(),
             role: "system",
-            content: "你是一个AI对话助手。请用中文回答用户的问题，你的回答基于给定的上下文信息，如果你不知道答案，请不要编造答案。"
+            content: "You are a helpful AI assistant. Your answer can be based on the given source.",
         },
         {
             id: nanoid(),
             date: Date.now(),
             role: "user",
-            content: "以下是对话历史：{context}\\n 用户问题是: {query}\\n",
+            content: "The following is the source: {context}. \n The user input is: {query}.",
         }
     ] as any as ChatMessage[],
 };
+
+export function transformToPromptTemplate(systemInput: string, userInput: string) {
+    return {
+        system: {
+            _type: "prompt",
+            input_variables: [],
+            template: systemInput,
+        },
+        user: {
+            _type: "prompt",
+            input_variables: extraPromptPlaceHolders(userInput),
+            // input_variables: [],
+            template: userInput,
+        },
+    }
+}
+
+export const DEFAULT_PROMPT_TEMPLATE = transformToPromptTemplate(
+    DEFAULT_CONFIG.chatMessages.filter((v) => v.role == "system")[0].content,
+    DEFAULT_CONFIG.chatMessages.filter((v) => v.role == "user")[0].content)
+
+export type PromptTemplate = typeof DEFAULT_PROMPT_TEMPLATE;
 
 export const DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS = {
     retriever_type:"web_search",
     local_vs_folder_name:"web_search",
     use_multi_query_assist:false,
-    // retriever_type: "local_vector_stores",
-    // local_vs_folder_name: "guest007/test_txt_file0",
     search_type: "similarity",
     search_top_k: 4,
+    web_search_results_count: 8,
     use_embedding_filter_assist: false,
-    use_reorder_assist: false,
+    use_reorder_assist: true,
 }
 
 export type ChatConfig = typeof DEFAULT_CONFIG;
@@ -189,7 +213,6 @@ export type ChatConfigStore = ChatConfig & {
     reset: () => void;
     update: (updater: (config: ChatConfig) => void) => void;
     allModels: () => Promise<LLMModel[]>;
-    allConversationMemoryTypes: () => ConversationMemoryType[];
 };
 
 export type ModelConfig = ChatConfig["modelConfig"];

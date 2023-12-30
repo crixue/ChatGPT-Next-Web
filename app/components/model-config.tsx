@@ -5,105 +5,7 @@ import {ListItem, } from "./ui-lib";
 import {Button, Col, Descriptions, InputNumber, notification, Row, Select, Slider} from "antd";
 import React from "react";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
-import {DEFAULT_CONFIG, ModelConfig} from "@/app/constant";
-
-// export function ConversationMemoryConfigList(props: {
-//     modelConfig: ModelConfig;
-//     updateConfig: (updater: (config: ModelConfig) => void) => void;
-// }) {
-//     const config = useAppConfig();
-//
-//     const [conversationMemoryType, setConversationMemoryType] = React.useState<string>(
-//         config.allConversationMemoryTypes()[0].name
-//     );
-//     const onConversationMemoryTypeChange = (val: string | null) => {
-//         const allMemoryTypes = config.allConversationMemoryTypes();
-//         let currentMemoryType = allMemoryTypes.find(item => item.name === val);
-//         currentMemoryType = currentMemoryType || DEFAULT_CONFIG.modelConfig.memoryType;
-//         // console.log(currentMemoryType)
-//         setConversationMemoryType(currentMemoryType.name);
-//         props.updateConfig(
-//             (config) =>
-//                 config.memoryType = {
-//                     name: currentMemoryType?.name || "ConversationBufferWindowMemory" as MemoryTypeName,
-//                     available: currentMemoryType?.available || true,
-//                 }
-//         );
-//     }
-//
-//     const [historyMessageCount, setHistoryMessageCount] = React.useState(props.modelConfig.historyMessageCount);
-//     const onHistoryMessageCountChange = (val: number | null) => {
-//         setHistoryMessageCount(val || 1);
-//         props.updateConfig(
-//             (config) =>
-//                 (config.historyMessageCount = val || 1),
-//         );
-//     }
-//     return (
-//         <>
-//             <ListItem
-//                 title={Locale.Settings.ConversationMemoryType.Title}
-//                 subTitle={Locale.Settings.ConversationMemoryType.SubTitle}
-//             >
-//                 <Select
-//                     defaultValue={conversationMemoryType}
-//                     options={config.allConversationMemoryTypes().map((v, i) => {
-//                         const item = {label: v.label, value: v.name};
-//                         // console.log(item);
-//                         return item;
-//                     })}
-//                     onChange={onConversationMemoryTypeChange}
-//                 />
-//             </ListItem>
-//             {conversationMemoryType === 'ConversationBufferWindowMemory' && (
-//                 <ListItem
-//                     title={Locale.Settings.HistoryWindowCount.Title}
-//                     subTitle={Locale.Settings.HistoryWindowCount.SubTitle}
-//                     isSubList={true}
-//                 >
-//                     <Col style={{marginLeft: "48px"}} span={10}>
-//                         <Slider
-//                             min={0}
-//                             max={20}
-//                             onChange={onHistoryMessageCountChange}
-//                             value={historyMessageCount}
-//                             step={1}
-//                         />
-//                     </Col>
-//                     <Col span={4}>
-//                         <InputNumber
-//                             min={0}
-//                             max={20} // lets limit it to 0-1
-//                             step={1}
-//                             style={{margin: '0 4px'}}
-//                             value={historyMessageCount}
-//                             onChange={onHistoryMessageCountChange}
-//                         />
-//                     </Col>
-//                 </ListItem>
-//             )}
-//             {conversationMemoryType === 'ConversationSummaryBufferMemory' && (
-//                 <ListItem
-//                     title={Locale.Settings.CompressThreshold.Title}
-//                     subTitle={Locale.Settings.CompressThreshold.SubTitle}
-//                 >
-//                     <InputNumber
-//                         defaultValue={props.modelConfig.compressMessageLengthThreshold}
-//                         min={500}
-//                         max={4000}
-//                         controls
-//                         onChange={(value) =>
-//                             props.updateConfig(
-//                                 (config) =>
-//                                     (config.compressMessageLengthThreshold = value || 2000),
-//                             )
-//                         }
-//                     />
-//                 </ListItem>
-//             )}
-//         </>
-//     );
-// }
+import {ModelConfig} from "@/app/constant";
 
 
 export function ModelConfigList(props: {
@@ -153,10 +55,10 @@ export function ModelConfigList(props: {
 
     const [historyMessageCount, setHistoryMessageCount] = React.useState(props.modelConfig.historyMessageCount);
     const onHistoryMessageCountChange = (val: number | null) => {
-        setHistoryMessageCount(val || 1);
+        setHistoryMessageCount(val || 0);
         props.updateConfig(
             (config) =>
-                (config.historyMessageCount = val || 1),
+                (config.historyMessageCount = val || 0),
         );
     }
 
@@ -184,15 +86,15 @@ export function ModelConfigList(props: {
                 title={Locale.Settings.Temperature.Title}
                 subTitle={Locale.Settings.Temperature.SubTitle}
             >
-                <Col style={{marginLeft: "120px"}} span={10}>
-                    <Slider
-                        min={0}
-                        max={1}
-                        onChange={onTemperatureChange}
-                        value={temperature}
-                        step={0.1}
-                    />
-                </Col>
+                {/*<Col style={{marginLeft: "120px"}} span={10}>*/}
+                {/*    <Slider*/}
+                {/*        min={0}*/}
+                {/*        max={1}*/}
+                {/*        onChange={onTemperatureChange}*/}
+                {/*        value={temperature}*/}
+                {/*        step={0.1}*/}
+                {/*    />*/}
+                {/*</Col>*/}
                 <Col span={4}>
                     <InputNumber
                         min={0}
@@ -208,15 +110,15 @@ export function ModelConfigList(props: {
                 title={Locale.Settings.TopP.Title}
                 subTitle={Locale.Settings.TopP.SubTitle}
             >
-                <Col style={{marginLeft: "48px"}} span={10}>
-                    <Slider
-                        min={0}
-                        max={1}
-                        onChange={onTopPChange}
-                        value={topP}
-                        step={0.1}
-                    />
-                </Col>
+                {/*<Col style={{marginLeft: "48px"}} span={10}>*/}
+                {/*    <Slider*/}
+                {/*        min={0}*/}
+                {/*        max={1}*/}
+                {/*        onChange={onTopPChange}*/}
+                {/*        value={topP}*/}
+                {/*        step={0.1}*/}
+                {/*    />*/}
+                {/*</Col>*/}
                 <Col span={4}>
                     <InputNumber
                         min={0}
@@ -251,15 +153,15 @@ export function ModelConfigList(props: {
                 title={Locale.Settings.FrequencyPenalty.Title}
                 subTitle={Locale.Settings.FrequencyPenalty.SubTitle}
             >
-                <Col style={{marginLeft: "48px"}} span={10}>
-                    <Slider
-                        min={0.5}
-                        max={2}
-                        onChange={onFrequencyPenaltyChange}
-                        value={frequencyPenalty}
-                        step={0.1}
-                    />
-                </Col>
+                {/*<Col style={{marginLeft: "48px"}} span={10}>*/}
+                {/*    <Slider*/}
+                {/*        min={0.5}*/}
+                {/*        max={2}*/}
+                {/*        onChange={onFrequencyPenaltyChange}*/}
+                {/*        value={frequencyPenalty}*/}
+                {/*        step={0.1}*/}
+                {/*    />*/}
+                {/*</Col>*/}
                 <Col span={4}>
                     <InputNumber
                         min={0.5}
@@ -276,15 +178,15 @@ export function ModelConfigList(props: {
                 subTitle={Locale.Settings.HistoryWindowCount.SubTitle}
                 isSubList={false}
             >
-                <Col style={{marginLeft: "48px"}} span={10}>
-                    <Slider
-                        min={0}
-                        max={10}
-                        onChange={onHistoryMessageCountChange}
-                        value={historyMessageCount}
-                        step={1}
-                    />
-                </Col>
+                {/*<Col style={{marginLeft: "48px"}} span={10}>*/}
+                {/*    <Slider*/}
+                {/*        min={0}*/}
+                {/*        max={10}*/}
+                {/*        onChange={onHistoryMessageCountChange}*/}
+                {/*        value={historyMessageCount}*/}
+                {/*        step={1}*/}
+                {/*    />*/}
+                {/*</Col>*/}
                 <Col span={4}>
                     <InputNumber
                         min={0}

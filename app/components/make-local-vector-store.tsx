@@ -27,13 +27,15 @@ const userService = new UserApi();
 const uploadService = new UploadApi();
 const makeLocalVSService = new MakeLocalVectorStoreApi();
 
-const useInitUserFolders = () => {
+
+export const useInitUserFolders = (reload: Boolean | undefined) => {
     useEffect(() => {
         (async () => {
             await useUserFolderStore.getState().initUserLocalVSFolders();
         })();
-    },[]);
+    },[reload]);
 }
+
 
 /**
  * 有以下步骤：
@@ -43,7 +45,7 @@ const useInitUserFolders = () => {
  * @constructor
  */
 export const MakeLocalVectorStorePage = () => {
-    useInitUserFolders();
+    useInitUserFolders(true);
 
     const [current, setCurrent] = useState(0);
     const [nextBtnDisabled, setNextBtnDisabled] = useState(false);
@@ -90,22 +92,22 @@ export const MakeLocalVectorStorePage = () => {
 
     const steps = [
         {
-            title: '第一步',
-            description: '选择一个知识库',
+            title: Locale.MakeLocalVSStore.Steps.FirstStep.Title,
+            description: Locale.MakeLocalVSStore.Steps.FirstStep.Descriptions,
             content: <UserFolderSelection
                 uploadFolderId={currentSelectedFolderId ?? ""}/>,
         },
         {
-            title: '第二步',
-            description: '上传文件',
+            title: Locale.MakeLocalVSStore.Steps.SecondStep.Title,
+            description: Locale.MakeLocalVSStore.Steps.SecondStep.Descriptions,
             // content: <MakeLocalVectorTaskRecordsView
             //     uploadFolderId={currentSelectedFolderId ?? ""}/>,
             content: <UploadPage
                 uploadFolderId={currentSelectedFolderId ?? ""}/>,
         },
         {
-            title: '第三步',
-            description: '开始制作，查看结果',
+            title: Locale.MakeLocalVSStore.Steps.ThirdStep.Title,
+            description: Locale.MakeLocalVSStore.Steps.ThirdStep.Descriptions,
             content: <MakeLocalVectorTaskRecordsView
                 uploadFolderId={currentSelectedFolderId ?? ""}/>,
         },
@@ -165,7 +167,7 @@ export const MakeLocalVectorStorePage = () => {
         }).catch((error) => {
             console.log(error);
             notify['error']({
-                message: `操作失败，请稍后重试`,
+                message: Locale.Common.OperateFailed,
             });
         }).finally(() => {
             globalSettingStore.switchShowGlobalLoading();
@@ -219,7 +221,7 @@ export const MakeLocalVectorStorePage = () => {
                             disabled={nextBtnDisabled}
                             type="primary"
                             onClick={() => next()}>
-                            下一步
+                            {Locale.MakeLocalVSStore.Steps.NextStep}
                         </Button>
                     )}
                     {current === 1 && (
@@ -227,7 +229,7 @@ export const MakeLocalVectorStorePage = () => {
                                 disabled={nextBtnDisabled}
                                 onClick={start2Make}
                                 type="primary">
-                                下一步
+                                {Locale.MakeLocalVSStore.Steps.NextStep}
                             </Button>
                     )}
                     {current === steps.length - 1 && (
@@ -235,23 +237,24 @@ export const MakeLocalVectorStorePage = () => {
                             <Button
                                 type="primary"
                                 onClick={() => {
+                                    reset();
                                     navigate(-1);}
                                 }
                             >
-                                完成
+                                {Locale.Common.Complete}
                             </Button>
                             <Button
                                 style={{ margin: '0 8px' }}
                                 onClick={() => {
                                     reset();
                                 }}>
-                                继续制作
+                                {Locale.MakeLocalVSStore.Steps.ContinueToMake}
                             </Button>
                         </>
                     )}
                     {current > 0 && current <= 1 && (
                         <Button style={{ margin: '0 8px' }} onClick={() => prev()}>
-                            上一步
+                            {Locale.MakeLocalVSStore.Steps.PreviousStep}
                         </Button>
                     )}
                 </div>
@@ -260,19 +263,20 @@ export const MakeLocalVectorStorePage = () => {
     )
 }
 
+
 const UserFolderSelection = (props: {
     uploadFolderId?: string;
 }) => {
     const userFolderStore = useUserFolderStore();
     const userFolders = userFolderStore.userFolders;
-    const selectedFolder = userFolderStore.currentSelectedFolder;
+    const currentSelectedFolder = userFolderStore.currentSelectedFolder;
     const setSelectedFolder = userFolderStore.setCurrentSelectedFolder;
 
     const [form] = Form.useForm();
     const [notify, contextHolder] = notification.useNotification();
 
     const createNewOption = {
-        label: '新建文件夹',
+        label: Locale.MakeLocalVSStore.CreateNewLocalVS,
         value: '-1',
     };
     const allOptions = [
@@ -282,10 +286,6 @@ const UserFolderSelection = (props: {
             value: userFolder.id,
         }))
     ];
-    const [defaultValue, setDefaultValue] = useState<string>(props.uploadFolderId === '' ?
-        createNewOption.value :
-        allOptions.filter((item) => item.value === props.uploadFolderId)[0].value
-    );
 
     const handleChange = (selectedId: string) => {
         if (selectedId === '-1') {
@@ -317,82 +317,84 @@ const UserFolderSelection = (props: {
             ]
         }
 
-        userService.createFolder(userFolderCreateRequest)
-            .then((respItem) => {
-                userFolderStore.setUserFolders([respItem, ...userFolders]);
-                // setDefaultOption(respItem.folderName);
-                form.resetFields();
-                notify['success']({
-                    message: `文件夹 ${respItem.folderName} 创建成功`,
-                });
-            })
-            .catch((error) => {
-                console.log(error);
-                const errInfo = JSON.parse(error.message);
-                if (errInfo.code === 62001) {
-                    notify['error']({
-                        message: '文件名已存在',
-                    });
-                    return;
-                }
-                notify['error']({
-                    message: `操作失败，请稍后重试`,
-                });
+        try {
+            const respItem = await userService.createFolder(userFolderCreateRequest);
+            userFolderStore.setUserFolders([respItem, ...userFolders]);
+            form.resetFields();
+            userFolderStore.setCurrentSelectedFolder(respItem);
+            notify['success']({
+                message: `文件夹 ${respItem.folderName} 创建成功`,
             });
+        } catch (e: any) {
+            console.log(e);
+            const errInfo = JSON.parse(e.message);
+            if (errInfo.code === 62001) {
+                notify['error']({
+                    message: '文件名已存在',
+                });
+                return;
+            }
+            setSelectedFolder(null);
+            notify['error']({
+                message: Locale.Common.OperateFailed,
+            });
+        }
     }
 
     return (
         <div>
             {contextHolder}
-            <Select
-                placeholder={"请选择文件夹"}
-                defaultActiveFirstOption={true}
-                defaultValue={defaultValue}
-                onChange={handleChange}
-                style={{ width: 200 }}
-                options={allOptions}
-            >
-            </Select>
-            {selectedFolder !== null && (
+            {currentSelectedFolder !== null && (
                 <div>
-                    <div>文件夹名称：{selectedFolder.folderName}</div>
-                    <div>文件夹描述：{selectedFolder.folderDesc}</div>
+                    <Button type={"link"} onClick={() => setSelectedFolder(null)}>{Locale.MakeLocalVSStore.ReSelectLocalVS}</Button>
+                    <div>{Locale.MakeLocalVSStore.LocalVSName}：{currentSelectedFolder.folderName}</div>
+                    <div>{Locale.MakeLocalVSStore.LocalVSDesc}：{currentSelectedFolder.folderDesc}</div>
                 </div>
             )}
-            {selectedFolder === null && (
-                <Form
-                    form={form}
-                    onFinish={handleSubmit}
+            {currentSelectedFolder === null && (
+                <>
+                    <Select
+                        placeholder={Locale.MakeLocalVSStore.PleaseChoiceLocalVS}
+                        defaultActiveFirstOption={true}
+                        defaultValue={createNewOption.value}
+                        onChange={handleChange}
+                        style={{ width: 200 }}
+                        options={allOptions}
+                    />
+                    <Form
+                        form={form}
+                        onFinish={handleSubmit}
                     >
-                    <Form.Item
-                        label="新建文件夹"
-                        name="folderName"
-                        rules={[
-                            {
-                                required: true,
-                                message: '请输入文件夹名称' },
-                            {
-                                pattern: /^[a-zA-Z0-9_]+([a-zA-Z0-9_ ]*[a-zA-Z0-9_]+)*$/,
-                                message: '请输入空格、字母、数字或下划线组成的字符串',
-                            },
+                        <Form.Item
+                            label={Locale.MakeLocalVSStore.CreateNewLocalVS}
+                            name="folderName"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: '请输入文件夹名称' },
+                                {
+                                    pattern: /^[a-zA-Z0-9_]+([a-zA-Z0-9_ ]*[a-zA-Z0-9_]+)*$/,
+                                    message: '请输入空格、字母、数字或下划线组成的字符串',
+                                },
                             ]}
-                    >
-                        <Input id={"folderName"} allowClear placeholder={"请输入文件夹名称"}/>
-                    </Form.Item>
-                    <Form.Item
-                        label="文件夹描述"
-                        name="folderDesc"
-                    >
-                        <TextArea id={"folderDesc"} allowClear placeholder={"请输入文件夹描述"}/>
-                    </Form.Item>
-                    <Form.Item
-                        wrapperCol={{ offset: 8, span: 16 }}
-                    >
-                        <Button type="primary" htmlType="submit">
-                            确认创建
-                        </Button>
-                    </Form.Item>
-                </Form>
+                        >
+                            <Input id={"folderName"} allowClear placeholder={"请输入文件夹名称"}/>
+                        </Form.Item>
+                        <Form.Item
+                            label={Locale.MakeLocalVSStore.LocalVSDesc}
+                            name="folderDesc"
+                        >
+                            <TextArea id={"folderDesc"} allowClear placeholder={"请输入文件夹描述"}/>
+                        </Form.Item>
+                        <Form.Item
+                            wrapperCol={{ offset: 8, span: 16 }}
+                        >
+                            <Button type="primary" htmlType="submit">
+                                {Locale.MakeLocalVSStore.ConfirmToCreate}
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                </>
             )}
         </div>
     )
@@ -431,12 +433,12 @@ export const MakeLocalVectorTaskRecordsView = (props: {
         const handleDelete = (record: MakeLocalVectorstoreTaskRecords) => {
             makeLocalVSService.deleteIndexInLocalVS(record.id).then((resp) => {
                 notify['success']({
-                    message: `删除成功`,
+                    message: Locale.Common.OperateSuccess,
                 });
             }).catch((error) => {
                 console.log(error);
                 notify['error']({
-                    message: `操作失败，请稍后重试`,
+                    message: Locale.Common.OperateFailed,
                 });
             }).finally(() => {
                 setReload(!reload);
@@ -445,8 +447,8 @@ export const MakeLocalVectorTaskRecordsView = (props: {
 
         return (
             <div>
-                <Popconfirm title="确认删除？" okText={"确认"} cancelText={"取消"} onConfirm={() => handleDelete(record)}>
-                    <a>删除</a>
+                <Popconfirm title={Locale.Common.Confirm} okText={Locale.Common.Confirm} cancelText={Locale.Common.Cancel} onConfirm={() => handleDelete(record)}>
+                    <a>{Locale.Common.Delete}</a>
                 </Popconfirm>
             </div>
         );
@@ -454,7 +456,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
 
     const columns: ColumnsType<MakeLocalVectorstoreTaskRecords> = [
         {
-            title: '创建时间',
+            title: Locale.MakeLocalVSStore.TaskRecordsColumn.createdAt,
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text, record) => {
@@ -462,13 +464,13 @@ export const MakeLocalVectorTaskRecordsView = (props: {
             }
         },
         {
-            title: '任务ID',
+            title: Locale.MakeLocalVSStore.TaskRecordsColumn.id,
             dataIndex: 'id',
             key: 'id',
             ellipsis: true,
         },
         {
-            title: '任务状态',
+            title: Locale.MakeLocalVSStore.TaskRecordsColumn.status,
             dataIndex: 'status',
             key: 'status',
             render: (text, record) => {
@@ -477,7 +479,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                         return (
                             <span>
                                 <Tag icon={<SyncOutlined spin />} color="processing">
-                                    处理中
+                                    {Locale.Common.InProgress}
                                 </Tag>
                             </span>
                         )
@@ -485,7 +487,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                         return (
                             <span>
                                 <Tag icon={<CheckCircleOutlined />} color="success">
-                                    成功
+                                    {Locale.Common.Success}
                                 </Tag>
                             </span>
                         );
@@ -494,7 +496,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                     return (
                         <span>
                             <Tag icon={<CloseCircleOutlined />} color="error">
-                                失败
+                                {Locale.Common.Failed}
                             </Tag>
                         </span>
                     );
@@ -503,7 +505,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
             }
         },
         {
-            title: '制作类型',
+            title: Locale.MakeLocalVSStore.TaskRecordsColumn.makeType,
             dataIndex: 'makeType',
             key: 'makeType',
             render: (text, record) => {
@@ -517,7 +519,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
             }
         },
         {
-            title: '文件名称',
+            title: Locale.MakeLocalVSStore.TaskRecordsColumn.fileName,
             dataIndex: 'oriFilePath',
             key: 'fileName',
             width: 200,
@@ -529,7 +531,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
             }
         },
         {
-            title: '操作',
+            title: Locale.MakeLocalVSStore.TaskRecordsColumn.action,
             dataIndex: 'action',
             key: 'action',
             render: (_, record) => {
@@ -540,11 +542,6 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                 )
             }
         },
-        // {
-        //     title: '保存地址',
-        //     dataIndex: 'oriFilePath',
-        //     key: 'oriFilePath'
-        // },
         // {
         //     title: '错误信息',
         //     dataIndex: 'errInfo',
@@ -569,7 +566,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                         setReload(!reload);
                     }}
                 >
-                    刷新
+                    {Locale.Common.Refresh}
                 </Button>
             </div>
             <Table

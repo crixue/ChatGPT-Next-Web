@@ -1,15 +1,49 @@
-import {useAccessStore, useChatStore} from "@/app/store";
-import {ChatOptions, getBackendApiHeaders, LangchainRelevantDocsSearchOptions} from "@/app/client/api";
-import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, REQUEST_TIMEOUT_MS} from "@/app/constant";
+import {ChatMessage, ChatSession, Mask, useAccessStore, useChatStore} from "@/app/store";
+import {ChatOptions, getBackendApiHeaders, LangchainRelevantDocsSearchOptions, RequestMessage} from "@/app/client/api";
+import {
+    DEFAULT_CONFIG,
+    DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+    PromptTemplate,
+    REQUEST_TIMEOUT_MS,
+    transformToPromptTemplate
+} from "@/app/constant";
 import {prettyObject} from "@/app/utils/format";
 import Locale from "@/app/locales";
 import {StartupMaskRequestVO} from "@/app/trypes/model-vo";
 import {handleServerResponse} from "@/app/common-api";
-import {ChatCompletionRequestVO, ContextDoc} from "@/app/trypes/chat";
+import {ChatCompletionRequestVO, ContextDoc, RelevantDocsResponseVO} from "@/app/trypes/chat";
 import {
     EventStreamContentType,
     fetchEventSource,
 } from "@fortaine/fetch-event-source";
+
+/**
+ * 过滤历史消息，只保留用户和assistant的消息,
+ * 并且保证user和assistant的消息是成对出现的，同时assistant的消息不能是错误消息
+ * @param historyMessages
+ * @param historyMsgCount
+ */
+export function filterHistoryMessages(historyMessages: ChatMessage[], historyMsgCount: number) {
+    const filteredHistoryMessages = historyMessages.slice(-historyMsgCount * 2);
+    const results: RequestMessage[] = [];
+    for (let i = 0; i < filteredHistoryMessages.length; i++) {
+        const var0 = filteredHistoryMessages[i];
+        if(var0.role !== "user"){
+            continue;
+        }
+        if (i+1 < filteredHistoryMessages.length) {
+            const var1 = filteredHistoryMessages[++i];
+            if(var1.role === "user" || (var1.role === "assistant" && var1.isError)){
+                console.log("var1 is not assistant message")
+                continue;
+            }
+
+            results.push(var0);
+            results.push(var1);
+        }
+    }
+    return results;
+}
 
 export class ChatApi {
     path(path: string): string {
@@ -23,22 +57,48 @@ export class ChatApi {
     }
 
     async chat(options: ChatOptions) {
-        const currentSession = useChatStore.getState().currentSession();
-        const mask = currentSession.mask;
+        const currentSession: ChatSession = useChatStore.getState().currentSession();
+        const mask: Mask = currentSession.mask;
         const maskModelConfig = mask.modelConfig;
-        const messages = options.messages.map((v) => ({
-            role: v.role,
-            content: v.content,
-        }));
+        const historyMsgCount = maskModelConfig.historyMessageCount ?? 0;
+        const fewShotContext = mask.fewShotContext;
+        const messages = options.messages;
+        const haveContext = mask?.haveContext ?? false;
+        const contextDocs = options.contextDocs ?? [];
+        let promptTemplate: string | undefined;
+
+        let historyMessages: RequestMessage[] = [];
+        const systemMessage = messages.at(0) ?? {
+            role: "system",
+            content: DEFAULT_CONFIG.chatMessages[0].content
+        } as RequestMessage;
+        historyMessages.push(systemMessage);  // 添加系统消息
+        for (const [key, value] of Object.entries(fewShotContext)) {
+            historyMessages.push(value[0]);
+            historyMessages.push(value[1]);
+        }
+        const userLastQuery = messages.at(-1)?.content ?? "";
+        if(historyMsgCount > 0){
+            messages.pop()  // 移除由用户发送的最后一条消息
+            const filteredHistoryMessages = filterHistoryMessages(messages, historyMsgCount);
+            historyMessages = historyMessages.concat(filteredHistoryMessages);
+        }
+
+        if (haveContext) {
+            const context = (mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+            // console.log("context:"+JSON.stringify(context))
+            promptTemplate = context.filter(msg => msg.role === "user")[0].content;
+        }
 
         const requestPayload = {
-            // TODO history_messages
-            query: messages.at(-1)?.content ?? "",
-            context_docs: options.contextDocs ?? [],
+            history_messages: historyMessages,
+            query: userLastQuery,
+            context_docs: contextDocs,
+            prompt_template_str: promptTemplate ?? DEFAULT_CONFIG.chatMessages[1].content,
             startup_mask_request: {
                 is_chinese_text: mask?.isChineseText ?? true,
                 prompt_id: mask?.promptId ?? "",
-                have_context: mask?.haveContext ?? false,
+                have_context: haveContext,
                 prompt_serialized_type: "chat_prompt",
                 llm_type: maskModelConfig.model,
                 model_config: {
@@ -51,7 +111,7 @@ export class ChatApi {
             } as StartupMaskRequestVO
         } as ChatCompletionRequestVO;
 
-        console.log("[Request] langchain backend payload: ", requestPayload);
+        // console.log("[Request] langchain backend payload: ", requestPayload);
 
         const shouldStream = !!options.config.stream;
         const controller = new AbortController();
@@ -125,7 +185,8 @@ export class ChatApi {
 
                             responseText = responseTexts.join("\n\n");
 
-                            return finish();
+                            throw new Error("Request failed, Please contact admin to check the backend service.");
+                            // return finish();
                         }
                     },
                     onmessage(msg) {
@@ -201,6 +262,6 @@ export class ChatApi {
             throw new Error(await res.text());
         }
 
-        return handleServerResponse<ContextDoc[]>(await res.json());
+        return handleServerResponse<RelevantDocsResponseVO>(await res.json());
     }
 }

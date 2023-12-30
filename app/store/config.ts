@@ -1,13 +1,12 @@
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
-import {ConversationMemoryType, LLMModel, MemoryTypeName} from "../client/api";
+import {LLMModel, } from "../client/api";
 import {
     ChatConfigStore,
     DEFAULT_CONFIG,
     DEFAULT_MODELS,
     StoreKey
 } from "../constant";
-import Locale, { AllLangs, ALL_LANG_OPTIONS, Lang } from "../locales";
 import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
@@ -82,19 +81,6 @@ export const useAppConfig = create<ChatConfigStore>()(
                 return models;
             },
 
-            allConversationMemoryTypes() {
-                const memoryTypes = get().memoryTypes;
-                const allMemoryTypes = Object.values(Locale.Settings.ConversationMemoryType.MemoryTypes);
-                memoryTypes.forEach((m) => {
-                    allMemoryTypes.map((t) => {
-                        if (t.name === m.name) {
-                            m.label = t.label;
-                        }
-                    });
-                    return m;
-                });
-                return memoryTypes;
-            }
         }),
         {
             name: StoreKey.Config,

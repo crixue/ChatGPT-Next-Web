@@ -37,17 +37,11 @@ import {Updater} from "../typing";
 import {ModelConfigList} from "./model-config";
 import {FileName, ModelConfig, Path} from "../constant";
 import {BUILTIN_MASK_STORE} from "../masks";
-import {
-    OnDragEndResponder,
-} from "@hello-pangea/dnd";
-import {Button, Input, Modal, notification, Radio, Select, Switch, Tag} from "antd";
+import {Button, Card, Col, Input, InputNumber, Modal, notification, Radio, Select, Slider, Switch, Tag} from "antd";
 import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import {
-    MaskItemResponseVO,
-} from "@/app/trypes/mask-vo";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
-import {useGlobalSettingStore} from "@/app/store/global-setting";
+import {nanoid} from "nanoid";
 
 // drag and drop helper function
 function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
@@ -57,12 +51,8 @@ function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
     return result;
 }
 
-export function MaskAvatar(props: { mask: Mask }) {
-    return props.mask.avatar !== DEFAULT_MASK_AVATAR ? (
-        <Avatar avatar={props.mask.avatar}/>
-    ) : (
-        <Avatar avatar={DEFAULT_MASK_AVATAR}/>
-    );
+export function MaskAvatar(props: { mask: Mask, isTyping?: boolean }) {
+    return <Avatar isModel={true} avatar={DEFAULT_MASK_AVATAR} spin={props.isTyping}/>
 }
 
 export function MaskConfig(props: {
@@ -76,6 +66,16 @@ export function MaskConfig(props: {
     const [showPicker, setShowPicker] = useState(false);
     const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
     const [contextSourcesOptions, setContextSourcesOptions] = useState('web_search');
+    const [searchContextNums, setSearchContextNums] = useState(props.mask.relevantSearchOptions.search_top_k);
+    const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
+
+    const onSearchContextNumsChange = (val: number | null) => {
+        setSearchContextNums(val || 4);
+        props.updateMask(
+            (mask) =>
+                (mask.relevantSearchOptions.search_top_k = val || 5),
+        );
+    }
 
     const userFolderStore = useUserFolderStore();
     const navigate = useNavigate();
@@ -113,12 +113,27 @@ export function MaskConfig(props: {
     // console.log("Current mask:" + JSON.stringify(props.mask));
     return (
         <>
+            <Modal title={Locale.Settings.MakingLocalVS.Title}
+                   open={isOpenMakingLocalVSModal}
+                   onOk={() => navigate(Path.MakeLocalVSStore)}
+                   okText={Locale.Settings.MakingLocalVS.ButtonContent}
+                   onCancel={() => setIsOpenMakingLocalVSModal(false)}
+                   cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
+            >
+                <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
+            </Modal>
             <ContextPrompts
                 context={props.mask.context}
                 updateContext={(updater) => {
                     const context = props.mask.context.slice();
                     updater(context);
                     props.updateMask((mask) => (mask.context = context));
+                }}
+                fewShotMessages={props.mask.fewShotContext}
+                updateFewShotMessages={(updater) => {
+                    const newFewShotMessages = {...props.mask.fewShotContext};
+                    updater(newFewShotMessages);
+                    props.updateMask((mask) => (mask.fewShotContext = newFewShotMessages));
                 }}
             />
 
@@ -171,6 +186,20 @@ export function MaskConfig(props: {
                 {
                     props.mask.haveContext ? (
                         <>
+                            {/*<ListItem*/}
+                            {/*    title={Locale.Mask.Config.HaveContext.UseMultiQueryAssist.Title}*/}
+                            {/*    subTitle={Locale.Mask.Config.HaveContext.UseMultiQueryAssist.SubTitle}*/}
+                            {/*>*/}
+                            {/*    <Switch*/}
+                            {/*        checkedChildren={<CheckOutlined/>}*/}
+                            {/*        unCheckedChildren={<CloseOutlined/>}*/}
+                            {/*        defaultChecked={props.mask.relevantSearchOptions.use_multi_query_assist ?? false}*/}
+                            {/*        onChange={(checked) => {*/}
+                            {/*            props.updateMask((mask) => {*/}
+                            {/*                mask.haveContext = checked;*/}
+                            {/*            });*/}
+                            {/*        }}/>*/}
+                            {/*</ListItem>*/}
                             <ListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
                                 <Select
                                     defaultValue={props.mask.relevantSearchOptions.retriever_type ?? "web_search"}
@@ -192,10 +221,10 @@ export function MaskConfig(props: {
                                             const userFolders = userFolderStore.userFolders;
                                             if (userFolders.length === 0) {
                                                 props.updateMask((mask) => {  //先设置默认值，后续再修改
-                                                    mask.relevantSearchOptions.retriever_type = value;
+                                                    mask.relevantSearchOptions.retriever_type = "web_search";
                                                     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
                                                 });
-                                                //TODO 跳出弹窗要求用户创建本地知识库
+                                                setIsOpenMakingLocalVSModal(true);
                                                 return;
                                             }
                                             props.updateMask((mask) => {
@@ -208,6 +237,30 @@ export function MaskConfig(props: {
                                     style={{width: 130}}
                                 />
                             </ListItem>
+                            <ListItem
+                                title={Locale.Mask.Config.HaveContext.SearchedContextNums.Title}
+                                subTitle={Locale.Mask.Config.HaveContext.SearchedContextNums.SubTitle}
+                            >
+                                {/*<Col style={{marginLeft: "48px"}} span={10}>*/}
+                                {/*    <Slider*/}
+                                {/*        min={1}*/}
+                                {/*        max={10}*/}
+                                {/*        step={1}*/}
+                                {/*        onChange={onSearchContextNumsChange}*/}
+                                {/*        value={searchContextNums}*/}
+                                {/*    />*/}
+                                {/*</Col>*/}
+                                <Col span={4}>
+                                    <InputNumber
+                                        min={1}
+                                        max={10}
+                                        step={1}
+                                        style={{margin: '0 4px'}}
+                                        value={searchContextNums}
+                                        onChange={onSearchContextNumsChange}
+                                    />
+                                </Col>
+                            </ListItem>
                             {
                                 props.mask.relevantSearchOptions.retriever_type === "local_vector_stores"
                                     ||  props.mask.relevantSearchOptions.retriever_type === "fixed"? (
@@ -217,12 +270,21 @@ export function MaskConfig(props: {
                                                 <ListItem
                                                     title={Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.Title}
                                                     subTitle={
-                                                        <Button
-                                                            onClick={() => navigate(Path.MakeLocalVSStore)}
-                                                            type="link"
-                                                        >
-                                                            {Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.SubTitle}
-                                                        </Button>
+                                                        <>
+                                                            <Button
+                                                                onClick={() => navigate(Path.MakeLocalVSStore)}
+                                                                type="link"
+                                                            >
+                                                                {Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.SubTitle}
+                                                            </Button>
+                                                            <Button
+                                                                onClick={() => navigate(Path.ManageLocalVectorStore)}
+                                                                type="link"
+                                                            >
+                                                                {Locale.Mask.Config.HaveContext.ManageLocalVSFolder.SubTitle}
+                                                            </Button>
+                                                        </>
+
                                                     }
                                                 >
                                                     <Select
@@ -244,7 +306,13 @@ export function MaskConfig(props: {
 
                                                     </Select>
                                                 </ListItem>
-                                            ) : null  //TODO 跳出弹窗要求用户创建本地知识库
+                                            ) : (() => {
+                                                props.updateMask((mask) => {  //先设置默认值，后续再修改
+                                                    mask.relevantSearchOptions.retriever_type = "web_search";
+                                                    mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                                                });
+                                                setIsOpenMakingLocalVSModal(true);
+                                            })
                                         }
                                     </>
                                 ) : null
@@ -385,8 +453,30 @@ function ContextPromptItem(props: {
 export function ContextPrompts(props: {
     context: ChatMessage[];
     updateContext: (updater: (context: ChatMessage[]) => void) => void;
+    fewShotMessages: Record<string /*id*/, [ChatMessage /*user*/, ChatMessage /*assistant*/]>;
+    updateFewShotMessages: (updater: (fewShotMessages: Record<string /*id*/, [ChatMessage, ChatMessage]>) => void) => void;
 }) {
-    const context = props.context;
+    const context = (props.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+    const shownFewShotMessages = props.fewShotMessages;
+
+    const addFewShotMsgs = (coupleMsg: [ChatMessage, ChatMessage]) => {
+        const randId = nanoid();
+        props.updateFewShotMessages((fewShotMessages) => {
+            fewShotMessages[randId] = coupleMsg;
+        });
+    }
+
+    const removeFewShotMsgs = (id: string) => {
+        props.updateFewShotMessages((fewShotMessages) => {
+            delete fewShotMessages[id];
+        });
+    }
+
+    const updateFewShotMsgs = (id: string, coupleMsg: [ChatMessage, ChatMessage]) => {
+        props.updateFewShotMessages((fewShotMessages) => {
+            fewShotMessages[id] = coupleMsg;
+        });
+    }
 
     const addContextPrompt = (prompt: ChatMessage, i: number) => {
         props.updateContext((context) => context.splice(i, 0, prompt));
@@ -413,7 +503,66 @@ export function ContextPrompts(props: {
                         />
                     </div>
                 ))}
-
+                {
+                    shownFewShotMessages && Object.keys(shownFewShotMessages).length > 0 ? (
+                        Object.entries(shownFewShotMessages).map(([id, value], i) => (
+                            <div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
+                                <Card size={"small"} title={"引导案例"} extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
+                                    <div className={chatStyle["context-prompt-row"]}>
+                                        <div>
+                                            <Tag bordered={false} color={Locale.Mask.PromptItem.User.color}>
+                                                {Locale.Mask.PromptItem.User.name}
+                                            </Tag>
+                                        </div>
+                                        <TextArea
+                                            value={value[0].content ?? ""}
+                                            minLength={1}
+                                            autoSize={true}
+                                            allowClear={true}
+                                            onChange={(e) => {
+                                                const lastUserMsg: ChatMessage = value[0];
+                                                const content = e.target.value as any;
+                                                updateFewShotMsgs(id, [{...lastUserMsg, content}, value[1]])
+                                            }}
+                                        />
+                                    </div>
+                                    <div className={chatStyle["context-prompt-row"]}>
+                                        <div>
+                                            <Tag bordered={false} color={Locale.Mask.PromptItem.Assistant.color}>
+                                                {Locale.Mask.PromptItem.Assistant.name}
+                                            </Tag>
+                                        </div>
+                                        <TextArea
+                                            value={value[1].content ?? ""}
+                                            minLength={1}
+                                            autoSize={true}
+                                            allowClear={true}
+                                            onChange={(e) => {
+                                                const lastAssistantMsg: ChatMessage = value[1];
+                                                const content = e.target.value as any;
+                                                updateFewShotMsgs(id, [value[0], {...lastAssistantMsg, content}])
+                                            }}
+                                        />
+                                    </div>
+                                </Card>
+                            </div>
+                        ))
+                    ) : null
+                }
+                <div>
+                    <Button onClick={() => {
+                        const count = shownFewShotMessages ? Object.keys(shownFewShotMessages).length : 0;
+                        addFewShotMsgs([createMessage({
+                            role: "user",
+                            content: "例子" + (count + 1),
+                            date: new Date().toISOString()
+                        }), createMessage({
+                            role: "assistant",
+                            content: "回答" + (count + 1),
+                            date: new Date().toISOString()
+                        })])}
+                    }>新增引导案例</Button>
+                </div>
                 {props.context.length === 0 && (
                     <div className={chatStyle["context-prompt-row"]}>
                         <IconButton
@@ -439,19 +588,7 @@ export function ContextPrompts(props: {
     );
 }
 
-export function useInitMasks() {
-    useEffect(() => {
-        (async () => {
-            await useMaskStore.getState().initMasks();
-        })();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-    return true;
-}
-
 export function MaskPage() {
-    useInitMasks();
-
     const navigate = useNavigate();
 
     const maskStore = useMaskStore();
@@ -508,27 +645,6 @@ export function MaskPage() {
         });
     }
 
-    const saveMask = (mask: Mask) => {
-        const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(mask);
-        maskApi.createMask(maskCreationRequestVO)
-            .then((res: MaskItemResponseVO) => {
-                const updatedMask = res.mask;
-                maskStore.update(mask.id, (mask) => {
-                    mask = {...mask, ...updatedMask};
-                });
-                closeMaskModal();
-                notify['success']({
-                    message: '保存成功',
-                });
-            })
-            .catch((err: Error) => {
-                console.log(err);
-                notify['error']({
-                    message: '保存失败',
-                });
-            });
-    }
-
     const updateMask = (mask?: Mask) => {
         if (!mask) {
             return;
@@ -554,9 +670,9 @@ export function MaskPage() {
 
     const handleOnApplyMask = async (mask: Mask) => {
         // create or update mask setting
+        updateMask(mask);
         navigate(Path.Chat);
         chatStore.newSession(mask);
-
     }
 
     const downloadAll = () => {
@@ -665,7 +781,7 @@ export function MaskPage() {
                                 }).catch((err: Error) => {
                                     console.log(err);
                                     notify['error']({
-                                        message: '创建失败，请稍后重试',
+                                        message: Locale.Common.OperateFailed,
                                     });
                                 });
                             }}
@@ -683,11 +799,11 @@ export function MaskPage() {
                                     </div>
                                     <div className={styles["mask-title"]}>
                                         <div className={styles["mask-name"]}>{m.name}</div>
-                                        <div className={styles["mask-info"] + " one-line"}>
-                                            {`${Locale.Mask.Item.Info(m.context.length)} / ${
-                                                ALL_LANG_OPTIONS[m.lang]
-                                            } / ${m.modelConfig.model}`}
-                                        </div>
+                                        {/*<div className={styles["mask-info"] + " one-line"}>*/}
+                                        {/*    {`${Locale.Mask.Item.Info(m.context ? m.context.length: 0)} / ${*/}
+                                        {/*        ALL_LANG_OPTIONS[m.lang]*/}
+                                        {/*    } / ${m.modelConfig.model}`}*/}
+                                        {/*</div>*/}
                                     </div>
                                 </div>
                                 <div className={styles["mask-actions"]}>
@@ -742,31 +858,31 @@ export function MaskPage() {
                             onClick={() => {
                                 updateMask(editingMask)
                             }}
-                        >保存面具</Button>,
+                        >{Locale.Mask.Config.SaveAs}</Button>,
                         <Button
                             icon={<DownloadIcon/>}
                             key="applyMask"
                             onClick={() => {
                                 handleOnApplyMask(editingMask)
                             }}
-                        >应用面具</Button>,
+                        >{Locale.Mask.Config.ApplyMask}</Button>,
                         <Button
                             icon={<DeleteIcon/>}
                             key="deleteMask"
                             onClick={() => {
                                 deleteMask(editingMask?.id)
                             }}
-                        >删除面具</Button>,
-                        <Button
-                            icon={<DownloadIcon/>}
-                            key="export"
-                            onClick={() =>
-                                downloadAs(
-                                    JSON.stringify(editingMask),
-                                    `${editingMask.name}.json`,
-                                )
-                            }
-                        >{Locale.Mask.EditModal.Download}</Button>,
+                        >{Locale.Mask.Config.DeleteMask}</Button>,
+                        // <Button
+                        //     icon={<DownloadIcon/>}
+                        //     key="export"
+                        //     onClick={() =>
+                        //         downloadAs(
+                        //             JSON.stringify(editingMask),
+                        //             `${editingMask.name}.json`,
+                        //         )
+                        //     }
+                        // >{Locale.Mask.EditModal.Download}</Button>,
                         <Button
                             key="copy"
                             icon={<CopyIcon/>}

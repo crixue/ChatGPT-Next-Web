@@ -23,11 +23,11 @@ export interface LLMConfig {
 }
 
 export interface ChatOptions {
-    messages: RequestMessage[];
+    messages: ChatMessage[];
     config: LLMConfig;
     contextDocs?: ContextDoc[];
     onUpdate?: (message: string, chunk: string) => void;
-    onFinish: (message: string) => void;
+    onFinish: (message: string, ) => void;
     onError?: (err: Error) => void;
     onController?: (controller: AbortController) => void;
 }
@@ -71,9 +71,15 @@ export interface LangchainRelevantDocsSearchOptions {
     local_vs_folder_name: string;
     search_type: "similarity" | "mmr";
     search_top_k: number;
+    web_search_results_count?: number;
     use_multi_query_assist: boolean;
     use_embedding_filter_assist: boolean;
     use_reorder_assist: boolean;
+    cn_chunk_size?: number;
+    cn_chunk_overlap?: number;
+    en_chunk_size?: number;
+    en_chunk_overlap?: number;
+    history_messages?: RequestMessage[];
 }
 
 
@@ -146,7 +152,7 @@ export function getBackendApiHeaders() {
     // }
 
     //TODO mock a user id
-    headers["GATEWAY-REQUEST-USER-ID"] = "7BreKaxY";
+    headers["GATEWAY-REQUEST-USER-ID"] = "jOMBSR9l";
 
     return headers;
 }

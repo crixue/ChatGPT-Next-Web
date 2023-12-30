@@ -20,13 +20,16 @@ import {ChatControllerPool} from "../client/controller";
 import {prettyObject} from "../utils/format";
 import {estimateTokenLength} from "../utils/token";
 import {nanoid} from "nanoid";
-import {ChatApi} from "@/app/client/chat-api";
+import {ChatApi, filterHistoryMessages} from "@/app/client/chat-api";
+import {ContextDoc} from "@/app/trypes/chat";
 
 export type ChatMessage = RequestMessage & {
     date: string;
     streaming?: boolean;
     isError?: boolean;
     id: string;
+    contextDocs?: ContextDoc[];
+    searchKeywords?: string;
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -48,7 +51,6 @@ export interface ChatStat {
 export interface ChatSession {
     id: string;
     topic: string;
-
     memoryPrompt: string;
     messages: ChatMessage[];
     stat: ChatStat;
@@ -199,16 +201,24 @@ export const useChatStore = create<ChatStore>()(
                     const config = useAppConfig.getState();
                     const globalModelConfig = config.modelConfig;
 
+                    let historyMessages = mask.context;
+                    if (historyMessages.length > 0) {  // Only keep System message as history messages!
+                        historyMessages = [historyMessages[0]];
+                        // console.log("historyMessages:"+JSON.stringify(historyMessages))
+                    }
+
                     session.mask = {
                         ...mask,
                         modelConfig: {
                             ...globalModelConfig,
                             ...mask.modelConfig,
                         },
+                        // context: historyMessages,
                     };
                     session.topic = mask.name;
                 }
 
+                console.log("newSession:"+JSON.stringify(session))
                 set((state) => ({
                     currentSessionIndex: 0,
                     sessions: [session].concat(state.sessions),
@@ -284,8 +294,8 @@ export const useChatStore = create<ChatStore>()(
                     session.messages = session.messages.concat();
                     session.lastUpdate = Date.now();
                 });
-                get().updateStat(message);
-                get().summarizeSession();
+                // get().updateStat(message);
+                // get().summarizeSession();
             },
 
             async onUserInput(content) {
@@ -294,6 +304,9 @@ export const useChatStore = create<ChatStore>()(
                 const currentMask = session.mask;
                 const modelConfig = currentMask.modelConfig;
                 const relevantSearchOptions = currentMask.relevantSearchOptions;
+                const haveContext = currentMask.haveContext;
+                let contextDocs:ContextDoc[] = [];
+                let searchKeywords:string = content;
 
                 const userContent = fillTemplateWith(content, modelConfig);
                 // console.log("[User Input] after template: ", userContent);
@@ -326,6 +339,23 @@ export const useChatStore = create<ChatStore>()(
                     ]);
                 });
 
+                if(haveContext) {
+                    try {
+                        const historyMsgCount = modelConfig.historyMessageCount ?? 0;
+                        const filteredRecentMessages = filterHistoryMessages(recentMessages, historyMsgCount);
+                        const resp = await chatApi.searchRelevantDocs({
+                            query: sendMessages.at(-1)?.content ?? "",
+                            history_messages: filteredRecentMessages,
+                            ...relevantSearchOptions,
+                        } as LangchainRelevantDocsSearchOptions);
+                        contextDocs = resp?.relevantDocs ?? [];
+                        searchKeywords = resp?.searchKeywords ?? content;
+                    } catch (e) {
+                        console.error("[Chat] searchRelevantDocs failed: ", e);
+                    }
+
+                }
+
                 let chatRequest = {
                     messages: sendMessages,
                     config: {...modelConfig, stream: true},
@@ -333,6 +363,10 @@ export const useChatStore = create<ChatStore>()(
                         botMessage.streaming = true;
                         if (message) {
                             botMessage.content = message;
+                        }
+                        if(haveContext) {
+                            botMessage.contextDocs = contextDocs;
+                            botMessage.searchKeywords = searchKeywords;
                         }
                         get().updateCurrentSession((session) => {
                             session.messages = session.messages.concat();
@@ -377,19 +411,11 @@ export const useChatStore = create<ChatStore>()(
                     },
                 } as ChatOptions;
 
-                if (currentMask.haveContext) {
-                    chatApi.searchRelevantDocs({
-                        query: sendMessages.at(-1)?.content ?? "",
-                        ...relevantSearchOptions,
-                    } as LangchainRelevantDocsSearchOptions)
-                    .then((contextDocs) => {
-                        chatRequest = { ...chatRequest, contextDocs: contextDocs } as ChatOptions;
-                        chatApi.chat(chatRequest);
-                    })
-                } else {
-                    // make request
-                    chatApi.chat(chatRequest);
+                if (haveContext) {
+                    chatRequest = { ...chatRequest, contextDocs: contextDocs } as ChatOptions;
                 }
+                // make request
+                chatApi.chat(chatRequest);
             },
 
             getMemoryPrompt() {
@@ -412,8 +438,9 @@ export const useChatStore = create<ChatStore>()(
                 const messages = session.messages.slice();
                 const totalMessageCount = session.messages.length;
 
-                // in-context prompts
-                const contextPrompts = session.mask.context.slice();
+                // in-context prompts: only need system message
+                // const contextPrompts = session.mask.context.slice();
+                const contextPrompts = [session.mask.context[0]];
 
                 // system prompts, to get close to OpenAI Web ChatGPT
                 // const shouldInjectSystemPrompts = modelConfig.enableInjectSystemPrompts;
@@ -477,10 +504,18 @@ export const useChatStore = create<ChatStore>()(
                     reversedRecentMessages.push(msg);
                 }
 
+                // console.log("contextPrompts:"+JSON.stringify(contextPrompts))
+                // console.log("reversedRecentMessages:"+JSON.stringify(reversedRecentMessages))
                 // concat all messages
+                // const recentMessages = [
+                //     // ...systemPrompts,
+                //     ...longTermMemoryPrompts,
+                //     ...contextPrompts,
+                //     ...reversedRecentMessages.reverse(),
+                // ];
+
                 const recentMessages = [
                     // ...systemPrompts,
-                    ...longTermMemoryPrompts,
                     ...contextPrompts,
                     ...reversedRecentMessages.reverse(),
                 ];

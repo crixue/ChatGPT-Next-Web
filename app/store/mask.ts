@@ -3,10 +3,11 @@ import {getLang, Lang} from "../locales";
 import {DEFAULT_TOPIC, ChatMessage} from "./chat";
 
 import {
-    DEFAULT_CONFIG,
+    DEFAULT_CONFIG, DEFAULT_PROMPT_TEMPLATE,
     DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
-    ModelConfig,
-    SearchContextSourceConfig,StoreKey} from "../constant";
+    ModelConfig, PromptTemplate,
+    SearchContextSourceConfig, StoreKey
+} from "../constant";
 import {nanoid} from "nanoid";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {persist} from "zustand/middleware";
@@ -25,6 +26,7 @@ export type Mask = {
     relevantSearchOptionsJsonStr?: string;
     promptId?: string,
     context: ChatMessage[];
+    fewShotContext: Record<string, [ChatMessage, ChatMessage]>;
     syncGlobalConfig?: boolean;
     modelConfig: ModelConfig;
     modelConfigJsonStr?: string;
@@ -58,6 +60,7 @@ export const createEmptyMask = () =>
         relevantSearchOptions: DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
         promptId: "",
         context: DEFAULT_CONFIG.chatMessages,
+        fewShotContext: {},
         syncGlobalConfig: true, // use global config as default
         modelConfig: {...DEFAULT_CONFIG.modelConfig},
         lang: getLang(),
@@ -66,69 +69,63 @@ export const createEmptyMask = () =>
     } as Mask);
 
 
-export const useMaskStore = create<MaskStore>()(
-    persist(
-        (set, get) => ({
-            // ...DEFAULT_MASK_STATE,
-            masks: {} as Record<string, Mask>,
-            async initMasks() {
-                const masks =  {} as Record<string, Mask>;
-                const allMasks = await maskApi.getAllMasks();
-                allMasks.forEach((m) => {
-                    const modelConfigJsonStr = m.modelConfigJsonStr;
-                    if(modelConfigJsonStr) {
-                        m.modelConfig = JSON.parse(modelConfigJsonStr);
-                    } else {
-                        m.modelConfig = DEFAULT_CONFIG["modelConfig"];
-                    }
+export const useMaskStore = create<MaskStore>()((set, get) => ({
+        // ...DEFAULT_MASK_STATE,
+        masks: {} as Record<string, Mask>,
+        async initMasks() {
+            const masks =  {} as Record<string, Mask>;
+            const allMasks = await maskApi.getAllMasks();
+            allMasks.forEach((m) => {
+                const modelConfigJsonStr = m.modelConfigJsonStr;
+                if(modelConfigJsonStr) {
+                    m.modelConfig = JSON.parse(modelConfigJsonStr);
+                } else {
+                    m.modelConfig = DEFAULT_CONFIG["modelConfig"];
+                }
 
-                    if (m.relevantSearchOptionsJsonStr) {
-                        m.relevantSearchOptions = JSON.parse(m.relevantSearchOptionsJsonStr,);
-                    } else {
-                        m.relevantSearchOptions = DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
-                    }
-                    masks[m.id] = m;
-                });
-                set(() => ({masks}));
-            },
-            async create(mask) {
-                const masks = get().masks;
-                const newMask = {...createEmptyMask(), ...mask};
-                const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
-                const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
-                const createdMask = resp.mask;
-                masks[createdMask.id] = createdMask;
-                set(() => ({masks}));
+                if (m.relevantSearchOptionsJsonStr) {
+                    m.relevantSearchOptions = JSON.parse(m.relevantSearchOptionsJsonStr,);
+                } else {
+                    m.relevantSearchOptions = DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
+                }
+                masks[m.id] = m;
+            });
+            set(() => ({masks}));
+        },
+        async create(mask) {
+            const masks = get().masks;
+            const newMask = {...createEmptyMask(), ...mask};
+            const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
+            const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
+            const createdMask = resp.mask;
+            masks[createdMask.id] = createdMask;
+            set(() => ({masks}));
 
-                return masks[createdMask.id];
-            },
-            update(id, updater: (mask: Mask) => void) {
-                const masks = get().masks;
-                const mask = masks[id];
-                if (!mask) return;
-                const updateMask = {...mask};
-                updater(updateMask);
-                masks[id] = updateMask;
-                set(() => ({masks}));
-            },
-            delete(id) {
-                const masks = get().masks;
-                delete masks[id];
-                set(() => ({masks}));
-            },
+            return masks[createdMask.id];
+        },
+        update(id, updater: (mask: Mask) => void) {
+            const masks = get().masks;
+            const mask = masks[id];
+            if (!mask) return;
+            const updateMask = {...mask};
+            updater(updateMask);
+            masks[id] = updateMask;
+            set(() => ({masks}));
+        },
+        delete(id) {
+            const masks = get().masks;
+            delete masks[id];
+            set(() => ({masks}));
+        },
 
-            get(id) {
-                return get().masks[id ?? 1145141919810];
-            },
-            getAll() {
-                return Object.values(get().masks).sort((a, b) => a.updateAt - b.updateAt);
-            },
-            search(text) {
-                return Object.values(get().masks);
-            },
-        }),
-        {
-            name: StoreKey.Mask,
-        }
-    ),
+        get(id) {
+            return get().masks[id ?? 1145141919810];
+        },
+        getAll() {
+            return Object.values(get().masks).sort((a, b) => a.updateAt - b.updateAt);
+        },
+        search(text) {
+            return Object.values(get().masks);
+        },
+    })
 );

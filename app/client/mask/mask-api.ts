@@ -1,5 +1,6 @@
 import {useAccessStore, useAppConfig} from "@/app/store";
 import {
+    FewShotMessageVO,
     MaskCreationRequestVO,
     MaskItemResponseVO,
     PromptInfoDict,
@@ -10,13 +11,18 @@ import {getBackendApiHeaders, MemoryTypeName} from "@/app/client/api";
 import {handleServerResponse, ServerResponse} from "@/app/common-api";
 import {Mask} from "@/app/store/mask";
 import {DEFAULT_CONFIG} from "@/app/constant";
+import {init} from "es-module-lexer";
 
 export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     if(!mask.context || mask.context.length == 0){
         mask.context = DEFAULT_CONFIG.chatMessages;
     }
+    if(!mask.fewShotContext || Object.keys(mask.fewShotContext).length == 0){
+        mask.fewShotContext = {};
+    }
+
     const chatMsgs = mask.context;
-    const promptInfoDict = {"user": {}, "system": {}} as PromptInfoDict;
+    const promptInfoDict = {user: {}, system: {}, few_shot_examples: []} as PromptInfoDict;
     for(const item of chatMsgs){
         if (item.role == "user") {
             promptInfoDict["user"] = {
@@ -29,11 +35,22 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
         }
     }
 
+    const var0: FewShotMessageVO[] = []
+    Object.entries(mask.fewShotContext).forEach(([key, value]) => {
+        var0.push({
+            id: key,
+            chatMessages: value,
+        })
+    });
+    promptInfoDict["few_shot_examples"] = var0;
+
+    console.log("promptInfoDict:" + JSON.stringify(promptInfoDict));
+
     const serializePromptRequestVO = {
         title: mask.name + "-prompt",
-        prompt_folder_name: "chat_prompt",  //TODO prompt_folder_name暂时写死
+        prompt_folder_name: "chat_prompt",  //prompt_folder_name暂时写死
         serialize_info: {
-            prompt_type: "chat_prompt",  //TODO prompt_folder_name暂时写死
+            prompt_type: "chat_prompt",  // prompt_folder_name暂时写死
             have_context: mask.haveContext,
             prompt_info_dict: promptInfoDict,
         } as SerializeInfo,
@@ -53,7 +70,7 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
         serializePromptRequest: serializePromptRequestVO,
         requiredPermIds: [632, 633]  //TODO 暂时写死
     } as MaskCreationRequestVO;
-    console.log(JSON.stringify(maskCreationRequestVO));
+    // console.log(JSON.stringify(maskCreationRequestVO));
     return maskCreationRequestVO;
 }
 

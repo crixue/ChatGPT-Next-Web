@@ -2,6 +2,7 @@ import {useAccessStore} from "@/app/store";
 import {handleServerResponse} from "@/app/common-api";
 import {getBackendApiHeaders} from "@/app/client/api";
 import {UserFolderCreateReqVO, UserFolderVO} from "@/app/trypes/user-folder.vo";
+import qs from "qs";
 
 
 export class UserApi {
@@ -35,6 +36,22 @@ export class UserApi {
             throw new Error(await res.text());
         }
         return handleServerResponse<UserFolderVO>(await res.json());
+    }
+
+    async deleteUserFolder(data: {userFolderId: string}) {
+        const res = await fetch(this.path(
+                `/api/user-folder/delete-user-folder?${qs.stringify(data)}`),
+            {
+                method: "DELETE",
+                headers: {
+                    ...getBackendApiHeaders()
+                }
+            });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<void>(await res.json());
     }
 
 }

@@ -125,7 +125,6 @@ export const useUpdateStore = create<UpdateStore>()(
     }),
     {
       name: StoreKey.Update,
-      version: 1,
     },
   ),
 );

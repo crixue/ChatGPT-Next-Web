@@ -1,11 +1,28 @@
 import {getClientConfig} from "../config/client";
-import {ConversationMemoryType, MemoryTypeName} from "@/app/client/api";
 import {SubmitKey} from "@/app/constant";
 
 const isApp = !!getClientConfig()?.isApp;
 
 const cn = {
     WIP: "该功能仍在开发中……",
+    DefaultChatMessages: {
+        systemContent: "你是一个AI对话助手。请用中文回答用户的问题，你的回答可以基于给定的上下文信息，如果你不知道答案，请不要编造答案。",
+        userContent: "以下是上下文：{context}\\n 用户问题是: {query}\\n",
+    },
+    Common: {
+        Confirm: "确认",
+        Cancel: "取消",
+        ConfirmDelete: "确认删除？",
+        Delete: "删除",
+        OperateSuccess: "操作成功",
+        InProgress: "处理中",
+        Success: "成功",
+        Failed: "失败",
+        Refresh: "刷新",
+        OperateFailed: "操作失败，请稍后重试",
+        Complete: "完成",
+        Action: "操作",
+    },
     Error: {
         Unauthorized: isApp
             ? "检测到无效 API Key，请前往[设置](/#/settings)页检查 API Key 是否配置正确。"
@@ -76,9 +93,13 @@ const cn = {
         Send: "发送",
         Config: {
             Reset: "清除记忆",
-            SaveAs: "应用面具",
         },
         IsContext: "预设提示词",
+        SourceText: "来源: ",
+        SourceDetail: "搜索来源",
+        SourceFromLocalVS: "本地文件",
+        SourceFromWebSearch: "网络搜索",
+        SearchKeywords: "搜索关键词: ",
     },
     Export: {
         Title: "分享聊天记录",
@@ -207,26 +228,6 @@ const cn = {
                 Title: "编辑提示词",
             },
         },
-        ConversationMemoryType: {
-            Title: "对话历史缓存类型",
-            SubTitle: "对话历史按照什么类型作为上下文给模型处理",
-            MemoryTypes: [{
-                name: "ConversationBufferWindowMemory",
-                label: "最近n条对话历史缓存",
-                available: true
-            },
-                {
-                    name: "ConversationSummaryBufferMemory",
-                    label: "压缩对话历史缓存",
-                    available: true
-                },
-                {
-                    name: "ConversationBufferMemory",
-                    label: "无限制历史缓存（慎用）",
-                    available: true
-                }
-            ] as ConversationMemoryType[]
-        },
         HistoryWindowCount: {
             Title: "附带历史消息数",
             SubTitle: "每次请求携带的历史消息数",
@@ -293,6 +294,8 @@ const cn = {
             Title: "构建本地知识库",
             SubTitle: "使用本地文件构建属于您的知识库",
             ButtonContent: "立即构建",
+            GoToMakeLocalVS: "您还没有本地知识库，是否前去构建？",
+            CancelButtonContent: "取消",
         }
     },
     Store: {
@@ -378,13 +381,27 @@ const cn = {
                 ChooseLocalVSFolder: {
                     Title: "选择本地知识库",
                     SubTitle: "构建您的本地知识库"
-                }
+                },
+                ManageLocalVSFolder: {
+                    SubTitle: "管理您已有的本地知识库",
+                },
+                SearchedContextNums: {
+                    Title: "上下文的数量",
+                    SubTitle: "上下文的数量越多为模型提供的信息越多，但是响应的时间越长"
+                },
+                UseMultiQueryAssist: {
+                    Title: "使用多关键词搜索",
+                    SubTitle: "使用多个关键词搜索，提高搜索的准确性"
+                },
             },
             Share: {
                 Title: "分享此面具",
                 SubTitle: "生成此面具的直达链接",
                 Action: "复制链接",
             },
+            SaveAs: "保存面具",
+            ApplyMask: "应用面具",
+            DeleteMask: "删除面具",
         },
         PromptItem: {
             System: {
@@ -394,6 +411,10 @@ const cn = {
             User: {
                 name: "用户角色",
                 color: "cyan",
+            },
+            Assistant: {
+                name: "助手角色",
+                color: "blue",
             },
             Delete: "删除",
         },
@@ -427,8 +448,52 @@ const cn = {
         Time: "时间",
     },
     MakeLocalVSStore: {
-        Title: "本地知识库",
+        Title: "构建本地知识库",
         SubTitle: "上传本地文件，构建属于你的独家知识库",
+        CreateNewLocalVS: "新建知识库",
+        ReSelectLocalVS: "重新选择知识库",
+        LocalVSName: "知识库名称",
+        LocalVSDesc: "知识库描述",
+        PleaseChoiceLocalVS: "请选择本地知识库",
+        ConfirmToCreate: "确认创建",
+        Steps: {
+            FirstStep: {
+                Title: "第一步",
+                Descriptions: "选择一个知识库"
+            },
+            SecondStep: {
+                Title: "第二步",
+                Descriptions: "上传文件用于构建知识库"
+            },
+            ThirdStep: {
+                Title: "第三步",
+                Descriptions: "开始构建，查看结果"
+            },
+            PreviousStep: "上一步",
+            NextStep: "下一步",
+            ContinueToMake: "继续制作",
+        },
+        TaskRecordsColumn: {
+            createdAt: "创建时间",
+            id: "任务id",
+            status: "任务状态",
+            makeType: "制作类型",
+            fileName: "文件名称",
+            action: "操作"
+        },
+        ListMakeLocalVSFolders: {
+            Title: "本地知识库列表",
+            Column: {
+                folderName: "知识库名称",
+                folderDesc: "知识库描述",
+                updateAt: "更新时间",
+            }
+        }
+    },
+    ManageLocalVectorStore: {
+        Title: "管理本地知识库",
+        SubTitle: "管理本地知识库，查看知识库的详细信息",
+        ButtonContent: "立即查看"
     }
 };
 

@@ -8,6 +8,7 @@ export interface UserFolderVO {
     folderName: string;
     folderType: string;
     folderDesc?: string;
+    updateAt?: number;
 }
 
 

@@ -43,7 +43,7 @@ import {
     useAccessStore,
     useAppConfig,
     DEFAULT_TOPIC,
-    ModelType,
+    ModelType, Mask, useMaskStore,
 } from "../store";
 
 import {
@@ -63,7 +63,6 @@ import {IconButton} from "./button";
 import styles from "./chat.module.scss";
 
 import {
-    List,
     ListItem,
     Modal,
     Selector,
@@ -86,22 +85,28 @@ import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
 import {ExportMessageModal} from "./exporter";
 import {getClientConfig} from "../config/client";
+import {Button, Drawer, List, notification} from "antd";
+import {ContextDoc, RelevantDocMetadata} from "@/app/trypes/chat";
+import {Record} from "immutable";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
 });
 
 export function SessionConfigModel(props: { onClose: () => void }) {
+    const maskStore = useMaskStore();
     const chatStore = useChatStore();
     const session = chatStore.currentSession();
     const navigate = useNavigate();
+    const [notify, contextHolder] = notification.useNotification();
 
     const handleOnApplyMask = () => {
-        navigate(Path.Masks);
+        props.onClose();
     }
 
     return (
         <div className="modal-mask">
+            {contextHolder}
             <Modal
                 title={Locale.Context.Edit}
                 onClose={() => props.onClose()}
@@ -120,10 +125,10 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                         }}
                     />,
                     <IconButton
-                        key="copy"
+                        key="applyMask"
                         icon={<CopyIcon/>}
                         bordered
-                        text={Locale.Chat.Config.SaveAs}
+                        text={Locale.Mask.Config.ApplyMask}
                         onClick={handleOnApplyMask}
                         // onClick={() => {
                         //     navigate(Path.Masks);
@@ -536,6 +541,8 @@ export function EditMessageModal(props: { onClose: () => void }) {
     const chatStore = useChatStore();
     const session = chatStore.currentSession();
     const [messages, setMessages] = useState(session.messages.slice());
+    const context = session.mask.context;
+    const [fewShotMessages, setFewShotMessages] = useState(session.mask.fewShotContext);
 
     return (
         <div className="modal-mask">
@@ -558,7 +565,9 @@ export function EditMessageModal(props: { onClose: () => void }) {
                         key="ok"
                         onClick={() => {
                             chatStore.updateCurrentSession(
-                                (session) => (session.messages = messages),
+                                (session) => {
+                                    session.messages = messages;
+                                },
                             );
                             props.onClose();
                         }}
@@ -587,6 +596,12 @@ export function EditMessageModal(props: { onClose: () => void }) {
                         const newMessages = messages.slice();
                         updater(newMessages);
                         setMessages(newMessages);
+                    }}
+                    fewShotMessages={fewShotMessages}
+                    updateFewShotMessages={(updater) => {
+                        const newFewShotMessages = {...fewShotMessages};
+                        updater(newFewShotMessages);
+                        setFewShotMessages(newFewShotMessages);
                     }}
                 />
             </Modal>
@@ -855,7 +870,9 @@ function _Chat() {
     };
 
     const context: RenderMessage[] = useMemo(() => {
-        return session.mask.hideContext ? [] : session.mask.context.slice();
+        const showContexts = session.mask.context.slice(0,1);  // only show the system message context
+        // console.log("showContexts", showContexts);
+        return session.mask.hideContext ? [] : showContexts;
     }, [session.mask.context, session.mask.hideContext]);
     const accessStore = useAccessStore();
 
@@ -877,13 +894,13 @@ function _Chat() {
             .concat(
                 isLoading
                     ? [
-                        {
-                            ...createMessage({
-                                role: "assistant",
-                                content: "……",
-                            }),
-                            preview: true,
-                        },
+                        // {
+                        //     ...createMessage({
+                        //         role: "assistant",
+                        //         content: "……",
+                        //     }),
+                        //     preview: false,
+                        // },
                     ]
                     : [],
             )
@@ -895,7 +912,7 @@ function _Chat() {
                                 role: "user",
                                 content: userInput,
                             }),
-                            preview: true,
+                            preview: false,
                         },
                     ]
                     : [],
@@ -1028,6 +1045,13 @@ function _Chat() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const [openSourceDrawer, setOpenSourceDrawer] = useState(false);
+    const [showedDataList, setShowedDataList] = useState([] as any[]);
+    const onSourceDrawerClose = () => {
+        setOpenSourceDrawer(false);
+    };
+
+
     return (
         <div className={styles.chat} key={session.id}>
             <div className="window-header" data-tauri-drag-region>
@@ -1047,7 +1071,7 @@ function _Chat() {
                 <div className={`window-header-title ${styles["chat-body-title"]}`}>
                     <div
                         className={`window-header-main-title ${styles["chat-body-main-title"]}`}
-                        onClickCapture={() => setIsEditingMessage(true)}
+                        // onClickCapture={() => setIsEditingMessage(true)}
                     >
                         {!session.topic ? DEFAULT_TOPIC : session.topic}
                     </div>
@@ -1056,15 +1080,15 @@ function _Chat() {
                     </div>
                 </div>
                 <div className="window-actions">
-                    {!isMobileScreen && (
-                        <div className="window-action-button">
-                            <IconButton
-                                icon={<RenameIcon/>}
-                                bordered
-                                onClick={() => setIsEditingMessage(true)}
-                            />
-                        </div>
-                    )}
+                    {/*{!isMobileScreen && (*/}
+                    {/*    <div className="window-action-button">*/}
+                    {/*        <IconButton*/}
+                    {/*            icon={<RenameIcon/>}*/}
+                    {/*            bordered*/}
+                    {/*            onClick={() => setIsEditingMessage(true)}*/}
+                    {/*        />*/}
+                    {/*    </div>*/}
+                    {/*)}*/}
                     <div className="window-action-button">
                         <IconButton
                             icon={<ExportIcon/>}
@@ -1109,6 +1133,7 @@ function _Chat() {
             >
                 {messages.map((message, i) => {
                     const isUser = message.role === "user";
+                    const isAssistant = message.role === "assistant";
                     const isContext = i < context.length;
                     const showActions =
                         i > 0 &&
@@ -1117,6 +1142,39 @@ function _Chat() {
                     const showTyping = message.preview || message.streaming;
 
                     const shouldShowClearContextDivider = i === clearContextIndex - 1;
+
+                    const handleOnCheckSource = (currentMessage: ChatMessage) => {
+                        const messageContextDocs: ContextDoc[] = currentMessage.contextDocs ?? [];
+                        let showedSourcesSet = new Set<string>();
+                        const showedDataList = [];
+                        for (const item of messageContextDocs) {
+                            const metadata = item.metadata;
+                            if(!metadata || !metadata.source_type) continue;
+
+                            const showedData = {} as any;
+                            const sourceType = metadata.source_type;
+                            if (sourceType === ("upload_files" || "plain_text" || "speech_recognize_transcript") && metadata.source) {
+                                // 从完整的路径中截取文件名
+                                const fileName = metadata.source.split("/").pop();
+                                if(showedSourcesSet.has(fileName ?? "")) continue;
+                                if (fileName) showedSourcesSet.add(fileName ?? "");
+                                showedData['title'] = (<p><span style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromLocalVS}</p>);
+                                showedData['description'] = (<span className={styles["source-description"]}>fileName</span>);
+                            } else if (sourceType === "web_search" && metadata.url) {
+                                if (showedSourcesSet.has(metadata.url ?? "")) continue;
+                                if (metadata.url) showedSourcesSet.add(metadata.url ?? "");
+                                showedData['title'] = (<p><span style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromWebSearch}</p>);;
+                                showedData['description'] = (<Button className={styles["source-description"]}
+                                                                     type={"link"}
+                                                                     onClick={() => {
+                                                                window.open(metadata.url, "_blank");
+                                                            }}>{metadata.url}</Button>);
+                            }
+                            showedDataList.push(showedData);
+                        }
+                        setShowedDataList(showedDataList);
+                        setOpenSourceDrawer(true);
+                    }
 
                     return (
                         <Fragment key={message.id}>
@@ -1151,7 +1209,7 @@ function _Chat() {
                                             {isUser ? (
                                                 <Avatar avatar={config.avatar}/>
                                             ) : (
-                                                <MaskAvatar mask={session.mask}/>
+                                                <MaskAvatar mask={session.mask} isTyping={showTyping}/>
                                             )}
                                         </div>
 
@@ -1194,6 +1252,14 @@ function _Chat() {
                                             </div>
                                         )}
                                     </div>
+                                    <div>
+                                        {isAssistant && !isContext && !message.isError && message.searchKeywords && (
+                                            <div className={styles["chat-message-search-keywords-container"]}>
+                                                {Locale.Chat.SearchKeywords}
+                                                <span className={styles["chat-message-search-keywords"]}>{message.searchKeywords}</span>
+                                            </div>
+                                        )}
+                                    </div>
                                     {showTyping && (
                                         <div className={styles["chat-message-status"]}>
                                             {Locale.Chat.Typing}
@@ -1217,7 +1283,12 @@ function _Chat() {
                                             defaultShow={i >= messages.length - 6}
                                         />
                                     </div>
-
+                                    {isAssistant && !isContext &&
+                                        <a className={styles["chat-message-action-sources"]}
+                                           onClick={() => handleOnCheckSource(messages[i])}>
+                                            {Locale.Chat.SourceDetail}
+                                        </a>
+                                    }
                                     <div className={styles["chat-message-action-date"]}>
                                         {isContext
                                             ? Locale.Chat.IsContext
@@ -1225,6 +1296,26 @@ function _Chat() {
                                     </div>
                                 </div>
                             </div>
+                            <Drawer
+                                placement={"bottom"}
+                                closable={false}
+                                onClose={onSourceDrawerClose}
+                                open={openSourceDrawer}
+                                key={"chat-source-detail-drawer"}
+                            >
+                                <List
+                                    itemLayout={"horizontal"}
+                                    dataSource={showedDataList}
+                                    renderItem={(item, index) => (
+                                        <List.Item>
+                                            <List.Item.Meta
+                                                title={item.title}
+                                                description={item.description}
+                                            />
+                                        </List.Item>
+                                    )}
+                                />
+                            </Drawer>
                             {shouldShowClearContextDivider && <ClearContextDivider/>}
                         </Fragment>
                     );

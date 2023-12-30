@@ -35,7 +35,6 @@ import Locale, {
     getLang,
 } from "../locales";
 import {copyToClipboard} from "../utils";
-import Link from "next/link";
 import {Path, RELEASE_URL, SubmitKey, Theme, UPDATE_URL} from "../constant";
 import {Prompt, SearchService, usePromptStore} from "../store/prompt";
 import {ErrorBoundary} from "./error";
@@ -368,7 +367,7 @@ export function Settings() {
     const showUsage = accessStore.isAuthorized();
     useEffect(() => {
         // checks per minutes
-        checkUpdate();
+        // checkUpdate();
         // showUsage && checkUsage();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -434,31 +433,6 @@ export function Settings() {
                                 <Avatar avatar={config.avatar}/>
                             </div>
                         </Popover>
-                    </ListItem>
-
-                    <ListItem
-                        title={Locale.Settings.Update.Version(currentVersion ?? "unknown")}
-                        subTitle={
-                            checkingUpdate
-                                ? Locale.Settings.Update.IsChecking
-                                : hasNewVersion
-                                    ? Locale.Settings.Update.FoundUpdate(remoteId ?? "ERROR")
-                                    : Locale.Settings.Update.IsLatest
-                        }
-                    >
-                        {checkingUpdate ? (
-                            <LoadingIcon/>
-                        ) : hasNewVersion ? (
-                            <Link href={updateUrl} target="_blank" className="link">
-                                {Locale.Settings.Update.GoToUpdate}
-                            </Link>
-                        ) : (
-                            <IconButton
-                                icon={<ResetIcon></ResetIcon>}
-                                text={Locale.Settings.Update.CheckUpdate}
-                                onClick={() => checkUpdate(true)}
-                            />
-                        )}
                     </ListItem>
 
                     <ListItem title={Locale.Settings.SendKey}>
@@ -612,6 +586,19 @@ export function Settings() {
                             }}
                         >
                             {Locale.Settings.MakingLocalVS.ButtonContent}
+                        </Button>
+                    </ListItem>
+                    <ListItem
+                        title={Locale.ManageLocalVectorStore.Title}
+                        subTitle={Locale.ManageLocalVectorStore.SubTitle}
+                    >
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                navigate(Path.ManageLocalVectorStore);
+                            }}
+                        >
+                            {Locale.ManageLocalVectorStore.ButtonContent}
                         </Button>
                     </ListItem>
                 </List>

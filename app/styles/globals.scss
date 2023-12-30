@@ -352,6 +352,20 @@ pre {
   border-radius: 11px;
 }
 
+.spin-avatar {
+    animation: spin 6s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .one-line {
   white-space: nowrap;
   overflow: hidden;

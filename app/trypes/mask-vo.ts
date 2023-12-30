@@ -1,10 +1,17 @@
 import {Mask} from "@/app/store/mask";
 import {Prompt} from "@/app/store/prompt";
+import {ChatMessage} from "@/app/store";
 
+
+export interface FewShotMessageVO {
+    id: string;
+    chatMessages: ChatMessage[];
+}
 
 export interface PromptInfoDict {
     user?: PromptInfoDict;
     system?: PromptInfoDict;
+    few_shot_examples?: FewShotMessageVO[];
     template?: string;
     prefix?: string;
     example_prompt_template?: string;

@@ -61,6 +61,11 @@ const MakeLocalVectorStorePage = dynamic(async () => (await import("./make-local
     loading: () => <Loading noLogo/>,
 });
 
+const ManageLocalVectorStorePage = dynamic(async () => (await import("./manage-local-vector-store")).ManageLocalVectorStorePage, {
+    loading: () => <Loading noLogo/>,
+});
+
+
 export function useSwitchTheme() {
     const config = useAppConfig();
 
@@ -163,6 +168,7 @@ function Screen() {
                             <Route path={Path.Chat} element={<Chat/>}/>
                             <Route path={Path.Settings} element={<Settings/>}/>
                             <Route path={Path.MakeLocalVSStore} element={<MakeLocalVectorStorePage/>}/>
+                            <Route path={Path.ManageLocalVectorStore} element={<ManageLocalVectorStorePage/>}/>
                         </Routes>
                     </div>
                 </>
@@ -181,7 +187,18 @@ export function useLoadData() {
 }
 
 
+export function useInitMasks() {
+    useEffect(() => {
+        (async () => {
+            await useMaskStore.getState().initMasks();
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return true;
+}
+
 export function Home() {
+    useInitMasks();
     useSwitchTheme();
     useLoadData();
     useHtmlLang();
