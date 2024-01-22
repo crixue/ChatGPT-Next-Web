@@ -1,5 +1,5 @@
 import {useAccessStore} from "@/app/store";
-import {MakeFolderLocalVSTaskRecordsVO, MakeLocalVSRequestVO} from "@/app/trypes/make-localvs-vo";
+import {MakeFolderLocalVSTaskRecordsVO, MakeLocalVSRequestVO} from "@/app/types/make-localvs-vo";
 import qs from "qs";
 import {getBackendApiHeaders} from "@/app/client/api";
 import {handleServerResponse} from "@/app/common-api";

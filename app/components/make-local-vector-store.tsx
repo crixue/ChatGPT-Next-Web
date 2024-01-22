@@ -2,7 +2,7 @@ import {Button, Form, Input, notification, Popconfirm, Select, Steps, Table, Tag
 import React, {useEffect, useMemo, useState} from "react";
 import {UserApi} from "@/app/client/user";
 import {useMaskStore, useUserFolderStore} from "@/app/store";
-import {UserFolderCreateReqVO, UserFolderVO} from "@/app/trypes/user-folder.vo";
+import {UserFolderCreateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
 import TextArea from "antd/es/input/TextArea";
 import Locale from "@/app/locales";
 import {IconButton} from "@/app/components/button";
@@ -10,16 +10,16 @@ import CloseIcon from "@/app/icons/close.svg";
 import {Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
 import styles from "./make-local-vector-store.module.scss";
-import {List} from "@/app/components/ui-lib";
+import {CustomList} from "@/app/components/ui-lib";
 import {UploadPage} from "@/app/components/upload";
 import {useUploadFileStore} from "@/app/store/upload-file";
 import {UploadApi} from "@/app/client/upload";
 import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
-import {MakeLocalVectorstoreTaskRecords, MakeLocalVSRequestVO} from "@/app/trypes/make-localvs-vo";
+import {MakeLocalVectorstoreTaskRecords, MakeLocalVSRequestVO} from "@/app/types/make-localvs-vo";
 import {ColumnsType} from "antd/es/table";
 import dayjs from "dayjs";
 import {useMakeLocalVSStore} from "@/app/store/make-localvs";
-import {TablePagination} from "@/app/trypes/common-type";
+import {TablePagination} from "@/app/types/common-type";
 import {CheckCircleOutlined, CloseCircleOutlined, SyncOutlined} from "@ant-design/icons";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 
@@ -210,11 +210,11 @@ export const MakeLocalVectorStorePage = () => {
                     onChange={onChange}
                     items={steps}
                 />
-                <List>
+                <CustomList>
                     <div className={styles['local-vs-item']}>
                         {steps[current].content}
                     </div>
-                </List>
+                </CustomList>
                 <div className={styles["step-btns"]}>
                     {current === 0 && (
                         <Button

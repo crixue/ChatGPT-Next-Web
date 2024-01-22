@@ -11,7 +11,7 @@ import {
     LLMUsage
 } from "../api";
 import Locale from "../../locales";
-import {StartupMaskRequestVO, StartUpModelRequestVO, SupportedModelVO} from "@/app/trypes/model-vo";
+import {StartupMaskRequestVO, StartUpModelRequestVO, SupportedModelVO} from "@/app/types/model-vo";
 import {handleServerResponse} from "../../common-api";
 import {getClientConfig} from "@/app/config/client";
 

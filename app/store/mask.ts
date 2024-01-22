@@ -10,8 +10,7 @@ import {
 } from "../constant";
 import {nanoid} from "nanoid";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
-import {persist} from "zustand/middleware";
-import {MaskItemResponseVO} from "@/app/trypes/mask-vo";
+import {MaskItemResponseVO} from "@/app/types/mask-vo";
 
 export type Mask = {
     id: string;
@@ -47,6 +46,8 @@ type MaskStore = MaskState & {
     search: (text: string) => Mask[];
     get: (id?: string) => Mask | null;
     getAll: () => Mask[];
+    ifShowUserPromptError: boolean;
+    setShowUserPromptError: (show: boolean) => void;
 };
 
 export const DEFAULT_MASK_AVATAR = "gpt-bot";
@@ -127,5 +128,9 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
         search(text) {
             return Object.values(get().masks);
         },
+        ifShowUserPromptError: false,
+        setShowUserPromptError(show: boolean) {
+            set(() => ({ifShowUserPromptError: show}));
+        }
     })
 );

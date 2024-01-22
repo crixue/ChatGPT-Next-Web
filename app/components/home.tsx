@@ -65,6 +65,11 @@ const ManageLocalVectorStorePage = dynamic(async () => (await import("./manage-l
     loading: () => <Loading noLogo/>,
 });
 
+const PluginsPage = dynamic(async () => (await import("./plugins")).PluginsPage, {
+    loading: () => <Loading noLogo/>,
+});
+
+
 
 export function useSwitchTheme() {
     const config = useAppConfig();
@@ -169,6 +174,7 @@ function Screen() {
                             <Route path={Path.Settings} element={<Settings/>}/>
                             <Route path={Path.MakeLocalVSStore} element={<MakeLocalVectorStorePage/>}/>
                             <Route path={Path.ManageLocalVectorStore} element={<ManageLocalVectorStorePage/>}/>
+                            <Route path={Path.Plugins} element={<PluginsPage/>}/>
                         </Routes>
                     </div>
                 </>

@@ -63,7 +63,7 @@ import {IconButton} from "./button";
 import styles from "./chat.module.scss";
 
 import {
-    ListItem,
+    CustomListItem,
     Modal,
     Selector,
     showConfirm,
@@ -86,8 +86,8 @@ import {prettyObject} from "../utils/format";
 import {ExportMessageModal} from "./exporter";
 import {getClientConfig} from "../config/client";
 import {Button, Drawer, List, notification} from "antd";
-import {ContextDoc, RelevantDocMetadata} from "@/app/trypes/chat";
-import {Record} from "immutable";
+import {ContextDoc, RelevantDocMetadata} from "@/app/types/chat";
+import {validateMask} from "@/app/utils/mask";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
@@ -101,6 +101,19 @@ export function SessionConfigModel(props: { onClose: () => void }) {
     const [notify, contextHolder] = notification.useNotification();
 
     const handleOnApplyMask = () => {
+        try {
+            validateMask(session.mask);
+        } catch (e: any) {
+            console.log("validate mask failed", e);
+            maskStore.setShowUserPromptError(true);
+            notify['error']({
+                message: e.message,
+                duration: 10,
+            });
+            return;
+        }
+        chatStore.updateCurrentSession((item) => (item.mask = session.mask));
+        console.log("[Mask] apply mask", JSON.stringify(session.mask));
         props.onClose();
     }
 
@@ -147,16 +160,6 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                         chatStore.updateCurrentSession((session) => (session.mask = mask));
                     }}
                     shouldSyncFromGlobal
-                    // extraListItems={
-                    //     session.mask.modelConfig.sendMemory ? (
-                    //         <ListItem
-                    //             title={`${Locale.Memory.Title} (${session.lastSummarizeIndex} of ${session.messages.length})`}
-                    //             subTitle={session.memoryPrompt || Locale.Memory.EmptyContent}
-                    //         ></ListItem>
-                    //     ) : (
-                    //         <></>
-                    //     )
-                    // }
                 ></MaskConfig>
             </Modal>
         </div>
@@ -575,7 +578,7 @@ export function EditMessageModal(props: { onClose: () => void }) {
                 ]}
             >
                 <List>
-                    <ListItem
+                    <CustomListItem
                         title={Locale.Chat.EditMessage.Topic.Title}
                         subTitle={Locale.Chat.EditMessage.Topic.SubTitle}
                     >
@@ -588,7 +591,7 @@ export function EditMessageModal(props: { onClose: () => void }) {
                                 )
                             }
                         ></input>
-                    </ListItem>
+                    </CustomListItem>
                 </List>
                 <ContextPrompts
                     context={messages}
@@ -1159,7 +1162,7 @@ function _Chat() {
                                 if(showedSourcesSet.has(fileName ?? "")) continue;
                                 if (fileName) showedSourcesSet.add(fileName ?? "");
                                 showedData['title'] = (<p><span style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromLocalVS}</p>);
-                                showedData['description'] = (<span className={styles["source-description"]}>fileName</span>);
+                                showedData['description'] = (<span className={styles["source-description"]}>{fileName}</span>);
                             } else if (sourceType === "web_search" && metadata.url) {
                                 if (showedSourcesSet.has(metadata.url ?? "")) continue;
                                 if (metadata.url) showedSourcesSet.add(metadata.url ?? "");
@@ -1253,6 +1256,14 @@ function _Chat() {
                                         )}
                                     </div>
                                     <div>
+                                        {isAssistant && message.usedPlugins && message.usedPlugins.length > 0 && (
+                                            <div className={styles["chat-message-search-keywords-container"]}>
+                                                {Locale.Chat.UsedPlugins}
+                                                <span className={styles["chat-message-search-keywords"]}>
+                                                    {message.usedPlugins.map(value => value.nameAlias).join(", ")}
+                                                </span>
+                                            </div>
+                                        )}
                                         {isAssistant && !isContext && !message.isError && message.searchKeywords && (
                                             <div className={styles["chat-message-search-keywords-container"]}>
                                                 {Locale.Chat.SearchKeywords}
@@ -1283,12 +1294,12 @@ function _Chat() {
                                             defaultShow={i >= messages.length - 6}
                                         />
                                     </div>
-                                    {isAssistant && !isContext &&
+                                    {isAssistant && !isContext && !message.isError && message.contextDocs && message.contextDocs.length > 0 && (
                                         <a className={styles["chat-message-action-sources"]}
                                            onClick={() => handleOnCheckSource(messages[i])}>
                                             {Locale.Chat.SourceDetail}
                                         </a>
-                                    }
+                                    )}
                                     <div className={styles["chat-message-action-date"]}>
                                         {isContext
                                             ? Locale.Chat.IsContext

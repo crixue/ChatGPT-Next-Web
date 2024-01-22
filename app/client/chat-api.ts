@@ -9,41 +9,21 @@ import {
 } from "@/app/constant";
 import {prettyObject} from "@/app/utils/format";
 import Locale from "@/app/locales";
-import {StartupMaskRequestVO} from "@/app/trypes/model-vo";
+import {StartupMaskRequestVO} from "@/app/types/model-vo";
 import {handleServerResponse} from "@/app/common-api";
-import {ChatCompletionRequestVO, ContextDoc, RelevantDocsResponseVO} from "@/app/trypes/chat";
+import {
+    ChatRequestVO,
+    RelevantDocsResponseVO,
+    ChatStreamResponseVO, ChatResponseVO
+} from "@/app/types/chat";
 import {
     EventStreamContentType,
     fetchEventSource,
 } from "@fortaine/fetch-event-source";
+import {filterHistoryMessages} from "@/app/utils/chat";
 
-/**
- * 过滤历史消息，只保留用户和assistant的消息,
- * 并且保证user和assistant的消息是成对出现的，同时assistant的消息不能是错误消息
- * @param historyMessages
- * @param historyMsgCount
- */
-export function filterHistoryMessages(historyMessages: ChatMessage[], historyMsgCount: number) {
-    const filteredHistoryMessages = historyMessages.slice(-historyMsgCount * 2);
-    const results: RequestMessage[] = [];
-    for (let i = 0; i < filteredHistoryMessages.length; i++) {
-        const var0 = filteredHistoryMessages[i];
-        if(var0.role !== "user"){
-            continue;
-        }
-        if (i+1 < filteredHistoryMessages.length) {
-            const var1 = filteredHistoryMessages[++i];
-            if(var1.role === "user" || (var1.role === "assistant" && var1.isError)){
-                console.log("var1 is not assistant message")
-                continue;
-            }
 
-            results.push(var0);
-            results.push(var1);
-        }
-    }
-    return results;
-}
+
 
 export class ChatApi {
     path(path: string): string {
@@ -52,11 +32,11 @@ export class ChatApi {
         return [openaiUrl, path].join("/");
     }
 
-    extractMessage(res: any) {
+    extractMessage(res: ChatResponseVO) {
         return res.choices?.at(0)?.message?.content ?? "";
     }
 
-    async chat(options: ChatOptions) {
+    async chat(options: ChatOptions, initRetrieverRequest: LangchainRelevantDocsSearchOptions) {
         const currentSession: ChatSession = useChatStore.getState().currentSession();
         const mask: Mask = currentSession.mask;
         const maskModelConfig = mask.modelConfig;
@@ -64,8 +44,8 @@ export class ChatApi {
         const fewShotContext = mask.fewShotContext;
         const messages = options.messages;
         const haveContext = mask?.haveContext ?? false;
-        const contextDocs = options.contextDocs ?? [];
         let promptTemplate: string | undefined;
+        const streamingMode = !!options.config.stream;
 
         let historyMessages: RequestMessage[] = [];
         const systemMessage = messages.at(0) ?? {
@@ -73,7 +53,7 @@ export class ChatApi {
             content: DEFAULT_CONFIG.chatMessages[0].content
         } as RequestMessage;
         historyMessages.push(systemMessage);  // 添加系统消息
-        for (const [key, value] of Object.entries(fewShotContext)) {
+        for (const [key, value] of Object.entries(fewShotContext)) {  // 添加 few shot examples 到 historyMessages中
             historyMessages.push(value[0]);
             historyMessages.push(value[1]);
         }
@@ -84,18 +64,17 @@ export class ChatApi {
             historyMessages = historyMessages.concat(filteredHistoryMessages);
         }
 
-        if (haveContext) {
+        // if (haveContext) {
             const context = (mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
-            // console.log("context:"+JSON.stringify(context))
+            console.log("context:"+JSON.stringify(context))
             promptTemplate = context.filter(msg => msg.role === "user")[0].content;
-        }
+        // }
 
         const requestPayload = {
-            history_messages: historyMessages,
             query: userLastQuery,
-            context_docs: contextDocs,
-            prompt_template_str: promptTemplate ?? DEFAULT_CONFIG.chatMessages[1].content,
-            startup_mask_request: {
+            is_chinese_text: mask?.isChineseText ?? true,
+            history_messages: historyMessages,
+            init_model_request: {
                 is_chinese_text: mask?.isChineseText ?? true,
                 prompt_id: mask?.promptId ?? "",
                 have_context: haveContext,
@@ -108,17 +87,17 @@ export class ChatApi {
                     max_tokens: maskModelConfig.maxTokens,
                     repetition_penalty: maskModelConfig.frequencyPenalty,
                 },
-            } as StartupMaskRequestVO
-        } as ChatCompletionRequestVO;
+            } as StartupMaskRequestVO,
+            init_retriever_request: initRetrieverRequest,
+            used_functions: maskModelConfig.checkedPluginIds,
+        } as ChatRequestVO;
 
-        // console.log("[Request] langchain backend payload: ", requestPayload);
+        console.log("[Request] langchain backend payload: ", requestPayload);
 
-        const shouldStream = !!options.config.stream;
         const controller = new AbortController();
         options.onController?.(controller);
 
         try {
-            const chatPath = this.path("llm-backend/v1/chat-stream/completions");
             const chatPayload = {
                 method: "POST",
                 body: JSON.stringify(requestPayload),
@@ -132,7 +111,9 @@ export class ChatApi {
                 REQUEST_TIMEOUT_MS,
             );
 
-            if (shouldStream) {
+            if (streamingMode) {  // Streaming mode!
+                const chatPath = this.path("llm-backend/v1/chat-stream/completions");
+
                 let responseText = "";
                 let finished = false;
 
@@ -160,13 +141,9 @@ export class ChatApi {
                             return finish();
                         }
 
-                        if (
-                            !res.ok ||
-                            !res.headers
-                                .get("content-type")
-                                ?.startsWith(EventStreamContentType) ||
-                            res.status !== 200
-                        ) {
+                        if (!res.ok ||
+                            !res.headers.get("content-type")
+                            ?.startsWith(EventStreamContentType) ||res.status !== 200) {
                             const responseTexts = [responseText];
                             let extraInfo = await res.clone().text();
                             try {
@@ -196,11 +173,17 @@ export class ChatApi {
                         const text = msg.data;
                         try {
                             const json = JSON.parse(text);
-                            const delta = json.content;
-                            if (delta) {
-                                responseText += delta;
-                                options.onUpdate?.(responseText, delta);
+                            let resp: ChatStreamResponseVO = Object.assign(new ChatStreamResponseVO(), json);
+                            if (resp.type === "content") {
+                                const delta = resp.content;
+                                if (delta) {
+                                    responseText += delta;
+                                    options.onUpdate?.(responseText, delta, resp);
+                                }
+                            } else if (resp.type === "addition_info") {
+                                options.onUpdate?.(responseText, undefined, resp);
                             }
+
                         } catch (e) {
                             console.error("[Request] parse error", text, msg);
                         }
@@ -214,13 +197,19 @@ export class ChatApi {
                     },
                     openWhenHidden: true,
                 });
-            } else {
+            } else {  // Not Streaming mode!
+                const chatPath = this.path("llm-backend/v1/chat/completions");
+
                 const res = await fetch(chatPath, chatPayload);
+                if (!res.ok) {
+                    throw new Error("Request failed, Please contact admin to check the backend service.");
+                }
                 clearTimeout(requestTimeoutId);
 
-                const resJson = await res.json();
-                const message = this.extractMessage(resJson);
-                options.onFinish(message);
+                const resp = handleServerResponse<ChatResponseVO>(await res.json());
+                const message = this.extractMessage(resp);
+                // const usedPlugins = extractUsedPlugins(resp);
+                options.onFinish(message, resp);
             }
         } catch (e) {
             console.log("[Request] failed to make a chat request", e);
@@ -228,40 +217,4 @@ export class ChatApi {
         }
     }
 
-    async searchRelevantDocs(options: LangchainRelevantDocsSearchOptions) {
-        const currentSession = useChatStore.getState().currentSession();
-        const mask = currentSession.mask;
-        const maskModelConfig = mask.modelConfig;
-
-        const payload = {
-            ...DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
-            ...options,
-            startupMaskRequest: {
-                prompt_serialized_type: "chat_prompt",
-                prompt_id: mask?.promptId ?? "",
-                is_chinese_text: mask?.isChineseText ?? true,
-                have_context: mask?.haveContext ?? false,
-                llm_type: maskModelConfig.model,
-                model_config: {
-                    temperature: maskModelConfig.temperature,
-                    top_p: maskModelConfig.topP,
-                    streaming: maskModelConfig.streaming,
-                    max_tokens: maskModelConfig.maxTokens,
-                    repetition_penalty: maskModelConfig.frequencyPenalty,
-                },
-            } as StartupMaskRequestVO
-        };
-
-        const res = await fetch(this.path("llm-backend/v1/search-relevant-documents"), {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: getBackendApiHeaders(),
-        });
-
-        if (!res.ok) {
-            throw new Error(await res.text());
-        }
-
-        return handleServerResponse<RelevantDocsResponseVO>(await res.json());
-    }
 }

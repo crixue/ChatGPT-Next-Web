@@ -4,6 +4,7 @@ import {nanoid} from "nanoid";
 import {ChatMessage} from "@/app/store";
 import {extraPromptPlaceHolders} from "@/app/utils/common-util";
 import Locales from "./locales";
+import {PluginsPage} from "@/app/components/plugins";
 
 export const OWNER = "Yidadaa";
 export const REPO = "ChatGPT-Next-Web";
@@ -23,8 +24,9 @@ export enum Path {
     NewChat = "/new-chat",
     Masks = "/masks",
     Auth = "/auth",
-    MakeLocalVSStore = "/make-local-vs-store",
+    MakeLocalVSStore = "/make-local-vector-store",
     ManageLocalVectorStore = "/manage-local-vector-store",
+    Plugins= "/plugins",
 }
 
 export enum SlotID {
@@ -55,7 +57,7 @@ export const ACCESS_CODE_PREFIX = "nk-";
 export const LAST_INPUT_KEY = "last-input";
 export const UNFINISHED_INPUT = (id: string) => "unfinished-input-" + id;
 
-export const REQUEST_TIMEOUT_MS = 60000;
+export const REQUEST_TIMEOUT_MS = 180000;
 
 export const EXPORT_MESSAGE_CLASS_NAME = "export-markdown";
 
@@ -65,7 +67,6 @@ export const LangchainBackendPath = {
 }
 
 export const OpenaiPath = {
-    ChatPath: "v1/chat/completions",
     UsagePath: "dashboard/billing/usage",
     SubsPath: "dashboard/billing/subscription",
     ListModelPath: "v1/models",
@@ -135,14 +136,15 @@ export const DEFAULT_CONFIG = {
 
     modelConfig: {
         model: "" ,
-        temperature: 0.8,
+        temperature: 0.5,
         topP: 0.9,
         maxTokens: 2000,
         // presence_penalty: 0,
         frequencyPenalty: 1.2,
         haveContext: true,
         streaming: true,
-        historyMessageCount: 3,
+        historyMessageCount: 0,
+        checkedPluginIds: [] as string[],
         // memoryType: {
         //     name: "ConversationBufferWindowMemory" as MemoryTypeName,
         //     available: true
@@ -157,7 +159,7 @@ export const DEFAULT_CONFIG = {
             id: nanoid(),
             date: Date.now(),
             role: "system",
-            content: "You are a helpful AI assistant. Your answer can be based on the given source.",
+            content: "你是一个乐于助人的AI帮手，请回答用户的问题，如果你不知道答案，请不要编造答案",
         },
         {
             id: nanoid(),
@@ -193,10 +195,10 @@ export type PromptTemplate = typeof DEFAULT_PROMPT_TEMPLATE;
 export const DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS = {
     retriever_type:"web_search",
     local_vs_folder_name:"web_search",
-    use_multi_query_assist:false,
     search_type: "similarity",
     search_top_k: 4,
-    web_search_results_count: 8,
+    web_search_results_count: 5,
+    use_multi_query_assist:false,
     use_embedding_filter_assist: false,
     use_reorder_assist: true,
 }
@@ -204,7 +206,7 @@ export const DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS = {
 export type ChatConfig = typeof DEFAULT_CONFIG;
 
 export type SearchContextSourceConfig = typeof DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS & {
-    userFolderId?: string;
+    user_folder_id?: string;
 };
 
 export type ChatConfigStore = ChatConfig & {

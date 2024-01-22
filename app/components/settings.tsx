@@ -12,8 +12,8 @@ import EditIcon from "../icons/edit.svg";
 import EyeIcon from "../icons/eye.svg";
 import {
     CustomTextAreaInput,
-    List,
-    ListItem,
+    CustomList,
+    CustomListItem,
     Modal,
     Popover,
     CustomSelect,
@@ -204,8 +204,8 @@ function DangerItems() {
     const appConfig = useAppConfig();
 
     return (
-        <List>
-            <ListItem
+        <CustomList>
+            <CustomListItem
                 title={Locale.Settings.Danger.Reset.Title}
                 subTitle={Locale.Settings.Danger.Reset.SubTitle}
             >
@@ -219,8 +219,8 @@ function DangerItems() {
                 >
                     {Locale.Settings.Danger.Reset.Action}
                 </Button>
-            </ListItem>
-            <ListItem
+            </CustomListItem>
+            <CustomListItem
                 title={Locale.Settings.Danger.Clear.Title}
                 subTitle={Locale.Settings.Danger.Clear.SubTitle}
             >
@@ -235,8 +235,8 @@ function DangerItems() {
                 >
                     {Locale.Settings.Danger.Clear.Action}
                 </Button>
-            </ListItem>
-        </List>
+            </CustomListItem>
+        </CustomList>
     );
 }
 
@@ -248,8 +248,8 @@ function SyncItems() {
     return null;
 
     return (
-        <List>
-            <ListItem
+        <CustomList>
+            <CustomListItem
                 title={"上次同步：" + new Date().toLocaleString()}
                 subTitle={"20 次对话，100 条消息，200 提示词，20 面具"}
             >
@@ -260,14 +260,14 @@ function SyncItems() {
                         syncStore.check().then(console.log);
                     }}
                 />
-            </ListItem>
+            </CustomListItem>
 
-            <ListItem
+            <CustomListItem
                 title={"本地备份"}
                 subTitle={"20 次对话，100 条消息，200 提示词，20 面具"}
-            ></ListItem>
+            ></CustomListItem>
 
-            <ListItem
+            <CustomListItem
                 title={"Web Dav Server"}
                 subTitle={Locale.Settings.AccessCode.SubTitle}
             >
@@ -281,9 +281,9 @@ function SyncItems() {
                         );
                     }}
                 />
-            </ListItem>
+            </CustomListItem>
 
-            <ListItem title="Web Dav User Name" subTitle="user name here">
+            <CustomListItem title="Web Dav User Name" subTitle="user name here">
                 <input
                     value={webdav.username}
                     type="text"
@@ -294,9 +294,9 @@ function SyncItems() {
                         );
                     }}
                 />
-            </ListItem>
+            </CustomListItem>
 
-            <ListItem title="Web Dav Password" subTitle="password here">
+            <CustomListItem title="Web Dav Password" subTitle="password here">
                 <input
                     value={webdav.password}
                     type="text"
@@ -307,8 +307,8 @@ function SyncItems() {
                         );
                     }}
                 />
-            </ListItem>
-        </List>
+            </CustomListItem>
+        </CustomList>
     );
 }
 
@@ -412,8 +412,8 @@ export function Settings() {
                 </div>
             </div>
             <div className={styles["settings"]}>
-                <List>
-                    <ListItem title={Locale.Settings.Avatar}>
+                <CustomList>
+                    <CustomListItem title={Locale.Settings.Avatar}>
                         <Popover
                             onClose={() => setShowEmojiPicker(false)}
                             content={
@@ -433,9 +433,9 @@ export function Settings() {
                                 <Avatar avatar={config.avatar}/>
                             </div>
                         </Popover>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem title={Locale.Settings.SendKey}>
+                    <CustomListItem title={Locale.Settings.SendKey}>
                         <CustomSelect
                             value={config.submitKey}
                             onChange={(e) => {
@@ -451,9 +451,9 @@ export function Settings() {
                                 </option>
                             ))}
                         </CustomSelect>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem title={Locale.Settings.Theme}>
+                    <CustomListItem title={Locale.Settings.Theme}>
                         <CustomSelect
                             value={config.theme}
                             onChange={(e) => {
@@ -468,9 +468,9 @@ export function Settings() {
                                 </option>
                             ))}
                         </CustomSelect>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem title={Locale.Settings.Lang.Name}>
+                    <CustomListItem title={Locale.Settings.Lang.Name}>
                         <CustomSelect
                             value={getLang()}
                             onChange={(e) => {
@@ -483,9 +483,9 @@ export function Settings() {
                                 </option>
                             ))}
                         </CustomSelect>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem
+                    <CustomListItem
                         title={Locale.Settings.FontSize.Title}
                         subTitle={Locale.Settings.FontSize.SubTitle}
                     >
@@ -502,9 +502,9 @@ export function Settings() {
                                 )
                             }
                         ></InputRange>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem
+                    <CustomListItem
                         title={Locale.Settings.AutoGenerateTitle.Title}
                         subTitle={Locale.Settings.AutoGenerateTitle.SubTitle}
                     >
@@ -518,9 +518,9 @@ export function Settings() {
                                 )
                             }
                         ></input>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem
+                    <CustomListItem
                         title={Locale.Settings.SendPreviewBubble.Title}
                         subTitle={Locale.Settings.SendPreviewBubble.SubTitle}
                     >
@@ -534,11 +534,11 @@ export function Settings() {
                                 )
                             }
                         ></input>
-                    </ListItem>
-                </List>
+                    </CustomListItem>
+                </CustomList>
 
-                <List>
-                    <ListItem
+                <CustomList>
+                    <CustomListItem
                         title={Locale.Settings.Mask.Splash.Title}
                         subTitle={Locale.Settings.Mask.Splash.SubTitle}
                     >
@@ -553,9 +553,9 @@ export function Settings() {
                                 )
                             }
                         ></input>
-                    </ListItem>
+                    </CustomListItem>
 
-                    <ListItem
+                    <CustomListItem
                         title={Locale.Settings.Mask.Builtin.Title}
                         subTitle={Locale.Settings.Mask.Builtin.SubTitle}
                     >
@@ -569,13 +569,13 @@ export function Settings() {
                                 )
                             }
                         ></input>
-                    </ListItem>
-                </List>
+                    </CustomListItem>
+                </CustomList>
 
                 <SyncItems/>
 
-                <List>
-                    <ListItem
+                <CustomList>
+                    <CustomListItem
                         title={Locale.Settings.MakingLocalVS.Title}
                         subTitle={Locale.Settings.MakingLocalVS.SubTitle}
                     >
@@ -587,8 +587,8 @@ export function Settings() {
                         >
                             {Locale.Settings.MakingLocalVS.ButtonContent}
                         </Button>
-                    </ListItem>
-                    <ListItem
+                    </CustomListItem>
+                    <CustomListItem
                         title={Locale.ManageLocalVectorStore.Title}
                         subTitle={Locale.ManageLocalVectorStore.SubTitle}
                     >
@@ -600,8 +600,8 @@ export function Settings() {
                         >
                             {Locale.ManageLocalVectorStore.ButtonContent}
                         </Button>
-                    </ListItem>
-                </List>
+                    </CustomListItem>
+                </CustomList>
 
                 {/*<List>*/}
                 {/*    <ModelConfigList*/}

@@ -6,7 +6,7 @@ import {
     PromptInfoDict,
     SerializeInfo,
     SerializePromptRequestVO
-} from "@/app/trypes/mask-vo";
+} from "@/app/types/mask-vo";
 import {getBackendApiHeaders, MemoryTypeName} from "@/app/client/api";
 import {handleServerResponse, ServerResponse} from "@/app/common-api";
 import {Mask} from "@/app/store/mask";

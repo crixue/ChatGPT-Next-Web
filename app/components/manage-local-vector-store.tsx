@@ -1,11 +1,11 @@
 import {notification, Popconfirm, Table} from "antd";
 import {useUserFolderStore} from "@/app/store";
 import {ColumnsType} from "antd/es/table";
-import {UserFolderVO} from "@/app/trypes/user-folder.vo";
+import {UserFolderVO} from "@/app/types/user-folder.vo";
 import Locales from "@/app/locales";
 import dayjs from "dayjs";
 import React, {useEffect, useState} from "react";
-import {TablePagination} from "@/app/trypes/common-type";
+import {TablePagination} from "@/app/types/common-type";
 import Locale from "@/app/locales";
 import {IconButton} from "@/app/components/button";
 import CloseIcon from "@/app/icons/close.svg";

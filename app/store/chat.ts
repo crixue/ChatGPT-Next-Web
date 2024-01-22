@@ -1,8 +1,6 @@
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
 
-import {trimTopic} from "../utils";
-
 import Locale, {getLang} from "../locales";
 import {showToast} from "../components/ui-lib";
 import {useAppConfig} from "./config";
@@ -20,8 +18,10 @@ import {ChatControllerPool} from "../client/controller";
 import {prettyObject} from "../utils/format";
 import {estimateTokenLength} from "../utils/token";
 import {nanoid} from "nanoid";
-import {ChatApi, filterHistoryMessages} from "@/app/client/chat-api";
-import {ContextDoc} from "@/app/trypes/chat";
+import {ChatApi} from "@/app/client/chat-api";
+import {ChatResponseVO, ChatStreamResponseVO, ContextDoc} from "@/app/types/chat";
+import {FunctionPlugin} from "@/app/types/plugins";
+import {usePluginsStore} from "@/app/store/plugins";
 
 export type ChatMessage = RequestMessage & {
     date: string;
@@ -30,6 +30,7 @@ export type ChatMessage = RequestMessage & {
     id: string;
     contextDocs?: ContextDoc[];
     searchKeywords?: string;
+    usedPlugins?: FunctionPlugin[];
 };
 
 export function createMessage(override: Partial<ChatMessage>): ChatMessage {
@@ -104,7 +105,7 @@ interface ChatStore {
     nextSession: (delta: number) => void;
     onNewMessage: (message: ChatMessage) => void;
     onUserInput: (content: string) => Promise<void>;
-    summarizeSession: () => void;
+    // summarizeSession: () => void;
     updateStat: (message: ChatMessage) => void;
     updateCurrentSession: (updater: (session: ChatSession) => void) => void;
     updateMessage: (
@@ -146,9 +147,11 @@ function fillTemplateWith(input: string, modelConfig: ModelConfig) {
     return input;
 }
 
+export function extractUsedPlugins(res: ChatStreamResponseVO | ChatResponseVO) {
+    return usePluginsStore.getState().findPluginByIdList(res.used_function_ids ?? []);
+}
 
 const chatApi = new ChatApi();
-
 
 export const useChatStore = create<ChatStore>()(
     persist(
@@ -305,8 +308,6 @@ export const useChatStore = create<ChatStore>()(
                 const modelConfig = currentMask.modelConfig;
                 const relevantSearchOptions = currentMask.relevantSearchOptions;
                 const haveContext = currentMask.haveContext;
-                let contextDocs:ContextDoc[] = [];
-                let searchKeywords:string = content;
 
                 const userContent = fillTemplateWith(content, modelConfig);
                 // console.log("[User Input] after template: ", userContent);
@@ -339,45 +340,48 @@ export const useChatStore = create<ChatStore>()(
                     ]);
                 });
 
-                if(haveContext) {
-                    try {
-                        const historyMsgCount = modelConfig.historyMessageCount ?? 0;
-                        const filteredRecentMessages = filterHistoryMessages(recentMessages, historyMsgCount);
-                        const resp = await chatApi.searchRelevantDocs({
-                            query: sendMessages.at(-1)?.content ?? "",
-                            history_messages: filteredRecentMessages,
-                            ...relevantSearchOptions,
-                        } as LangchainRelevantDocsSearchOptions);
-                        contextDocs = resp?.relevantDocs ?? [];
-                        searchKeywords = resp?.searchKeywords ?? content;
-                    } catch (e) {
-                        console.error("[Chat] searchRelevantDocs failed: ", e);
-                    }
-
-                }
-
+                const streamingMode = modelConfig.streaming;
                 let chatRequest = {
                     messages: sendMessages,
-                    config: {...modelConfig, stream: true},
-                    onUpdate(message) {
+                    config: {...modelConfig, stream: streamingMode},
+                    onUpdate(message, chunk, resp) {
                         botMessage.streaming = true;
                         if (message) {
                             botMessage.content = message;
                         }
-                        if(haveContext) {
-                            botMessage.contextDocs = contextDocs;
-                            botMessage.searchKeywords = searchKeywords;
+                        if(resp?.type && resp?.type == "addition_info") {   // for stream response
+                            if(resp.retriever_docs && resp.retriever_docs.length > 0) {
+                                botMessage.contextDocs = resp.retriever_docs;
+                            }
+                            if(resp.search_keywords) {
+                                botMessage.searchKeywords = resp.search_keywords;
+                            }
+                            if(resp.used_function_ids) {
+                                botMessage.usedPlugins = extractUsedPlugins(resp);
+                            }
                         }
                         get().updateCurrentSession((session) => {
                             session.messages = session.messages.concat();
                         });
                     },
-                    onFinish(message) {
+                    onFinish(message, resp?: ChatStreamResponseVO | ChatResponseVO) {
                         botMessage.streaming = false;
                         if (message) {
                             botMessage.content = message;
                             get().onNewMessage(botMessage);
                         }
+                        if(resp) {  // for non-stream response
+                            if(resp.retriever_docs && resp.retriever_docs.length > 0) {
+                                botMessage.contextDocs = resp.retriever_docs;
+                            }
+                            if(resp.search_keywords) {
+                                botMessage.searchKeywords = resp.search_keywords;
+                            }
+                            if(resp.used_function_ids) {
+                                botMessage.usedPlugins = extractUsedPlugins(resp);
+                            }
+                        }
+
                         ChatControllerPool.remove(session.id, botMessage.id);
                     },
                     onError(error) {
@@ -411,11 +415,11 @@ export const useChatStore = create<ChatStore>()(
                     },
                 } as ChatOptions;
 
-                if (haveContext) {
-                    chatRequest = { ...chatRequest, contextDocs: contextDocs } as ChatOptions;
-                }
                 // make request
-                chatApi.chat(chatRequest);
+                const initRetrieverRequest = {
+                    ...relevantSearchOptions,
+                } as LangchainRelevantDocsSearchOptions;
+                chatApi.chat(chatRequest, initRetrieverRequest);
             },
 
             getMemoryPrompt() {
@@ -542,98 +546,98 @@ export const useChatStore = create<ChatStore>()(
                 });
             },
 
-            summarizeSession() {
-                const config = useAppConfig.getState();
-                const session = get().currentSession();
-
-                // remove error messages if any
-                const messages = session.messages;
-
-                // should summarize topic after chating more than 50 words
-                const SUMMARIZE_MIN_LEN = 50;
-                if (
-                    config.enableAutoGenerateTitle &&
-                    session.topic === DEFAULT_TOPIC &&
-                    countMessages(messages) >= SUMMARIZE_MIN_LEN
-                ) {
-                    const topicMessages = messages.concat(
-                        createMessage({
-                            role: "user",
-                            content: Locale.Store.Prompt.Topic,
-                        }),
-                    );
-                    chatApi.chat({
-                        messages: topicMessages,
-                        config: {
-                            model: getSummarizeModel(session.mask.modelConfig.model),
-                        },
-                        onFinish(message) {
-                            get().updateCurrentSession(
-                                (session) =>
-                                    (session.topic =
-                                        message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
-                            );
-                        },
-                    });
-                }
-
-                const modelConfig = session.mask.modelConfig;
-                const summarizeIndex = Math.max(
-                    session.lastSummarizeIndex,
-                    session.clearContextIndex ?? 0,
-                );
-                let toBeSummarizedMsgs = messages
-                    .filter((msg) => !msg.isError)
-                    .slice(summarizeIndex);
-
-                const historyMsgLength = countMessages(toBeSummarizedMsgs);
-
-                if (historyMsgLength > modelConfig?.maxTokens ?? 4000) {
-                    const n = toBeSummarizedMsgs.length;
-                    toBeSummarizedMsgs = toBeSummarizedMsgs.slice(
-                        Math.max(0, n - modelConfig.historyMessageCount),
-                    );
-                }
-
-                // add memory prompt
-                toBeSummarizedMsgs.unshift(get().getMemoryPrompt());
-
-                const lastSummarizeIndex = session.messages.length;
-
-                // console.log(
-                //     "[Chat History] ",
-                //     toBeSummarizedMsgs,
-                //     historyMsgLength,
-                // );
-
-                // if (historyMsgLength > modelConfig.compressMessageLengthThreshold &&
-                //     modelConfig.sendMemory) {
-                //     chatApi.chat({
-                //         messages: toBeSummarizedMsgs.concat(
-                //             createMessage({
-                //                 role: "system",
-                //                 content: Locale.Store.Prompt.Summarize,
-                //                 date: "",
-                //             }),
-                //         ),
-                //         config: {
-                //             ...modelConfig,
-                //             stream: true,
-                //             model: getSummarizeModel(session.mask.modelConfig.model),
-                //         },
-                //         onUpdate(message) {
-                //             session.memoryPrompt = message;
-                //         },
-                //         onFinish(message) {
-                //             console.log("[Memory] ", message);
-                //             session.lastSummarizeIndex = lastSummarizeIndex;
-                //         },
-                //         onError(err) {
-                //             console.error("[Summarize] ", err);
-                //         },
-                //     });
-                // }
-            },
+            // summarizeSession() {
+            //     const config = useAppConfig.getState();
+            //     const session = get().currentSession();
+            //
+            //     // remove error messages if any
+            //     const messages = session.messages;
+            //
+            //     // should summarize topic after chating more than 50 words
+            //     const SUMMARIZE_MIN_LEN = 50;
+            //     if (
+            //         config.enableAutoGenerateTitle &&
+            //         session.topic === DEFAULT_TOPIC &&
+            //         countMessages(messages) >= SUMMARIZE_MIN_LEN
+            //     ) {
+            //         const topicMessages = messages.concat(
+            //             createMessage({
+            //                 role: "user",
+            //                 content: Locale.Store.Prompt.Topic,
+            //             }),
+            //         );
+            //         chatApi.chat({
+            //             messages: topicMessages,
+            //             config: {
+            //                 model: getSummarizeModel(session.mask.modelConfig.model),
+            //             },
+            //             onFinish(message) {
+            //                 get().updateCurrentSession(
+            //                     (session) =>
+            //                         (session.topic =
+            //                             message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
+            //                 );
+            //             },
+            //         });
+            //     }
+            //
+            //     const modelConfig = session.mask.modelConfig;
+            //     const summarizeIndex = Math.max(
+            //         session.lastSummarizeIndex,
+            //         session.clearContextIndex ?? 0,
+            //     );
+            //     let toBeSummarizedMsgs = messages
+            //         .filter((msg) => !msg.isError)
+            //         .slice(summarizeIndex);
+            //
+            //     const historyMsgLength = countMessages(toBeSummarizedMsgs);
+            //
+            //     if (historyMsgLength > modelConfig?.maxTokens ?? 4000) {
+            //         const n = toBeSummarizedMsgs.length;
+            //         toBeSummarizedMsgs = toBeSummarizedMsgs.slice(
+            //             Math.max(0, n - modelConfig.historyMessageCount),
+            //         );
+            //     }
+            //
+            //     // add memory prompt
+            //     toBeSummarizedMsgs.unshift(get().getMemoryPrompt());
+            //
+            //     const lastSummarizeIndex = session.messages.length;
+            //
+            //     // console.log(
+            //     //     "[Chat History] ",
+            //     //     toBeSummarizedMsgs,
+            //     //     historyMsgLength,
+            //     // );
+            //
+            //     // if (historyMsgLength > modelConfig.compressMessageLengthThreshold &&
+            //     //     modelConfig.sendMemory) {
+            //     //     chatApi.chat({
+            //     //         messages: toBeSummarizedMsgs.concat(
+            //     //             createMessage({
+            //     //                 role: "system",
+            //     //                 content: Locale.Store.Prompt.Summarize,
+            //     //                 date: "",
+            //     //             }),
+            //     //         ),
+            //     //         config: {
+            //     //             ...modelConfig,
+            //     //             stream: true,
+            //     //             model: getSummarizeModel(session.mask.modelConfig.model),
+            //     //         },
+            //     //         onUpdate(message) {
+            //     //             session.memoryPrompt = message;
+            //     //         },
+            //     //         onFinish(message) {
+            //     //             console.log("[Memory] ", message);
+            //     //             session.lastSummarizeIndex = lastSummarizeIndex;
+            //     //         },
+            //     //         onError(err) {
+            //     //             console.error("[Summarize] ", err);
+            //     //         },
+            //     //     });
+            //     // }
+            // },
 
             updateStat(message) {
                 get().updateCurrentSession((session) => {

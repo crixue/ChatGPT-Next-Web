@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { showToast } from "./components/ui-lib";
 import Locale from "./locales";
 import {Mask} from "@/app/store/mask";
-import {PromptInfoDict, SerializeInfo, SerializePromptRequestVO} from "@/app/trypes/mask-vo";
+import {PromptInfoDict, SerializeInfo, SerializePromptRequestVO} from "@/app/types/mask-vo";
 
 export function trimTopic(topic: string) {
   return topic.replace(/[，。！？”“"、,.!?]*$/, "");

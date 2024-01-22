@@ -1,4 +1,4 @@
-import {MakeFolderLocalVSTaskRecordsVO} from "@/app/trypes/make-localvs-vo";
+import {MakeFolderLocalVSTaskRecordsVO} from "@/app/types/make-localvs-vo";
 import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
 import {create} from "zustand";
 

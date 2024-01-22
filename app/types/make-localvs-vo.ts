@@ -1,4 +1,4 @@
-import {PageInfo} from "@/app/trypes/common-type";
+import {PageInfo} from "@/app/types/common-type";
 
 
 export interface MakeLocalVSRequestVO {

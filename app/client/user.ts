@@ -1,7 +1,7 @@
 import {useAccessStore} from "@/app/store";
 import {handleServerResponse} from "@/app/common-api";
 import {getBackendApiHeaders} from "@/app/client/api";
-import {UserFolderCreateReqVO, UserFolderVO} from "@/app/trypes/user-folder.vo";
+import {UserFolderCreateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
 import qs from "qs";
 
 

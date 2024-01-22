@@ -22,6 +22,7 @@ const cn = {
         OperateFailed: "操作失败，请稍后重试",
         Complete: "完成",
         Action: "操作",
+        Or: "或",
     },
     Error: {
         Unauthorized: isApp
@@ -100,6 +101,7 @@ const cn = {
         SourceFromLocalVS: "本地文件",
         SourceFromWebSearch: "网络搜索",
         SearchKeywords: "搜索关键词: ",
+        UsedPlugins: "使用插件: ",
     },
     Export: {
         Title: "分享聊天记录",
@@ -265,6 +267,38 @@ const cn = {
             SubTitle: "增加自定义模型可选项，使用英文逗号隔开",
         },
         Model: "模型 (model)",
+        ChatMode: {
+            Title: "聊天模式",
+            SubTitle: "创意模式会给出具有原创性的、富有想象力的回答",
+            SubTitle1: "精确性模式会更注重准确性和相关性，更真实、更简洁",
+            SubTitle2: "平衡性模式介于创造性模式和精确性模式两者之间，更加平衡",
+            MoreCreative: "更有创意",
+            MoreBalanced: "更具平衡",
+            MorePrecise: "更加精确",
+        },
+        ContainHistory: {
+            Title: "传递历史消息",
+            SubTitle: "开启后将每次请求向模型发送历史聊天消息",
+            Switch: {
+                Checked: "开启",
+                Unchecked: "关闭",
+            }
+        },
+        StreamingMode: {
+            Title: "流式模式",
+            SubTitleStreamingMode: "流式模式下，模型会实时返回生成的结果，直到所有内容都全部返回",
+            SubTitleNotStreamingMode: "非流式模式下，会等到所有结果生成完毕后，才会一次性返回所有的结果，这种方式结果可能会返回比较慢",
+            Switch: {
+                Checked: "流式",
+                Unchecked: "非流式",
+            }
+        },
+        Plugins: {
+            Title: "插件",
+            SubTitle: "在当前面具中使用插件，从而增强模型能力。 ",
+            KnowMore: "点击了解更多",
+            ChoosePlugin: "选择插件",
+        },
         Temperature: {
             Title: "随机性 (temperature)",
             SubTitle: "值越大，回复越随机",
@@ -377,6 +411,11 @@ const cn = {
                 SubTitle: "使用本地知识库或网络搜索的文本内容能更准确为模型提供信息",
                 ContextSources: {
                     Title: "上下文来源",
+                    RetrieverType: {
+                        WebSearch: "网络搜索",
+                        LocalVectorStores: "本地知识库",
+                        Fixed: "混合模式",
+                    }
                 },
                 ChooseLocalVSFolder: {
                     Title: "选择本地知识库",
@@ -385,9 +424,13 @@ const cn = {
                 ManageLocalVSFolder: {
                     SubTitle: "管理您已有的本地知识库",
                 },
+                WebSearchNums: {
+                    Title: "网络搜索的数量",
+                    SubTitle: "网络搜索的相关数据，供下一步检索提供外部数据源。搜索的数量越多，响应的时间越长"
+                },
                 SearchedContextNums: {
-                    Title: "上下文的数量",
-                    SubTitle: "上下文的数量越多为模型提供的信息越多，但是响应的时间越长"
+                    Title: "检索文档的数量",
+                    SubTitle: "通过对外部数据源相关性等的筛选，为模型提供更有效信息（RAG）。检索文档的数量越多，响应的时间越长"
                 },
                 UseMultiQueryAssist: {
                     Title: "使用多关键词搜索",
@@ -402,22 +445,37 @@ const cn = {
             SaveAs: "保存面具",
             ApplyMask: "应用面具",
             DeleteMask: "删除面具",
+            SwitchSingleConfig: "切换 精简设置",
+            SwitchAdvancedConfig: "切换 高级设置",
+            Validator: {
+                Prompt: {
+                    QueryPlaceHolderInvalid: "用户角色设置中 {query} 占位符必须存在",
+                    ContextPlaceHolderInvalid: "用户角色设置中 {context} 占位符必须存在",
+                    NotExistsContextPlaceHolderInvalid: "用户角色设置中 {context} 占位符必须不存在",
+                }
+            }
         },
         PromptItem: {
             System: {
                 name: "系统角色",
-                color: "purple",
+                color: "red",
             },
             User: {
                 name: "用户角色",
-                color: "cyan",
+                color: "green",
             },
             Assistant: {
                 name: "助手角色",
                 color: "blue",
             },
+            Tool: {
+                name: "工具角色",
+                color: "magenta",
+            },
             Delete: "删除",
+            DefaultAddedContextStr: "来源:{context}。 "
         },
+
     },
     NewChat: {
         Return: "返回",
@@ -494,6 +552,14 @@ const cn = {
         Title: "管理本地知识库",
         SubTitle: "管理本地知识库，查看知识库的详细信息",
         ButtonContent: "立即查看"
+    },
+    Plugins: {
+        Title: "插件",
+        SubTitle: "插件能将模型连接到第三方应用程序。这些插件使模型能够与开发人员定义的 API 进行交互，从而增强模型的功能",
+        Switch: {
+            Checked: "开启",
+            Unchecked: "关闭",
+        }
     }
 };
 

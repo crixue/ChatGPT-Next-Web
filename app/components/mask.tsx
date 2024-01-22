@@ -20,8 +20,8 @@ import {
     useChatStore, useUserFolderStore,
 } from "../store";
 import {
-    List,
-    ListItem,
+    CustomList,
+    CustomListItem,
     Popover,
     CustomSelect,
     showConfirm,
@@ -35,13 +35,14 @@ import React, {useEffect, useState} from "react";
 import {copyToClipboard, downloadAs, readFromFile} from "../utils";
 import {Updater} from "../typing";
 import {ModelConfigList} from "./model-config";
-import {FileName, ModelConfig, Path} from "../constant";
+import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, FileName, ModelConfig, Path} from "../constant";
 import {BUILTIN_MASK_STORE} from "../masks";
 import {Button, Card, Col, Input, InputNumber, Modal, notification, Radio, Select, Slider, Switch, Tag} from "antd";
 import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {nanoid} from "nanoid";
+import {validateMask} from "@/app/utils/mask";
 
 // drag and drop helper function
 function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
@@ -67,13 +68,24 @@ export function MaskConfig(props: {
     const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
     const [contextSourcesOptions, setContextSourcesOptions] = useState('web_search');
     const [searchContextNums, setSearchContextNums] = useState(props.mask.relevantSearchOptions.search_top_k);
+    const [webSearchResultsCount, setWebSearchResultsCount] = useState(props.mask.relevantSearchOptions.web_search_results_count);
     const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
+    const [isAdvancedConfig, setIsAdvancedConfig] = useState(false);
+
+
+    const onWebSearchResultsCountChange = (val: number | null) => {
+        setWebSearchResultsCount(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
+        props.updateMask(
+            (mask) =>
+                (mask.relevantSearchOptions.web_search_results_count = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count),
+        );
+    }
 
     const onSearchContextNumsChange = (val: number | null) => {
         setSearchContextNums(val || 4);
         props.updateMask(
             (mask) =>
-                (mask.relevantSearchOptions.search_top_k = val || 5),
+                (mask.relevantSearchOptions.search_top_k = val || 4),
         );
     }
 
@@ -111,6 +123,41 @@ export function MaskConfig(props: {
 
     const globalConfig = useAppConfig();
     // console.log("Current mask:" + JSON.stringify(props.mask));
+
+    const handleOnAddContext = (checked: boolean) => {
+        let context = (props.mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+        const defaultAddedContextStr = Locale.Mask.PromptItem.DefaultAddedContextStr;
+        const userRolePrompt = context.find((c) => c.role === "user");
+
+        if(checked) {
+            // check if user role's prompt exists `{context}` in the context, if not exists, add `The source:{context}.` at the beginning of the context
+            if (userRolePrompt) {
+                const userRolePromptContent = userRolePrompt.content;
+                if (!userRolePromptContent.includes("{context}")) {
+                    userRolePrompt.content = defaultAddedContextStr + userRolePromptContent;
+                }
+            }
+        } else {
+            // remove the `{context}` in the context
+            if (userRolePrompt) {
+                const userRolePromptContent = userRolePrompt.content;
+                console.log("userRolePromptContent:" + userRolePromptContent);
+                if (userRolePromptContent.includes(defaultAddedContextStr)) {
+                    const replacedContext = userRolePromptContent.replace(defaultAddedContextStr, "");
+                    userRolePrompt.content = replacedContext;
+                } else if (userRolePromptContent.includes("{context}")) {
+                    userRolePrompt.content = userRolePromptContent.replace("{context}", " ");
+                }  //TODO 应用面具的时候需要验证！
+            }
+        }
+
+        // console.log("context:" + JSON.stringify(context));
+        props.updateMask((mask) => {
+            mask.haveContext = checked;
+            mask.context = context;
+        });
+    }
+
     return (
         <>
             <Modal title={Locale.Settings.MakingLocalVS.Title}
@@ -137,8 +184,11 @@ export function MaskConfig(props: {
                 }}
             />
 
-            <List>
-                <ListItem title={Locale.Mask.Config.Avatar}>
+            <Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>
+                {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}
+            </Button>
+            <CustomList>
+                <CustomListItem title={Locale.Mask.Config.Avatar}>
                     <Popover
                         content={
                             <AvatarPicker
@@ -158,8 +208,8 @@ export function MaskConfig(props: {
                             <MaskAvatar mask={props.mask}/>
                         </div>
                     </Popover>
-                </ListItem>
-                <ListItem title={Locale.Mask.Config.Name}>
+                </CustomListItem>
+                <CustomListItem title={Locale.Mask.Config.Name}>
                     <Input
                         type={"text"}
                         defaultValue={props.mask.name}
@@ -168,8 +218,8 @@ export function MaskConfig(props: {
                                 mask.name = e.currentTarget.value
                             });
                         }}/>
-                </ListItem>
-                <ListItem
+                </CustomListItem>
+                <CustomListItem
                     title={Locale.Mask.Config.HaveContext.Title}
                     subTitle={Locale.Mask.Config.HaveContext.SubTitle}
                 >
@@ -177,37 +227,19 @@ export function MaskConfig(props: {
                         checkedChildren={<CheckOutlined/>}
                         unCheckedChildren={<CloseOutlined/>}
                         defaultChecked={props.mask.haveContext}
-                        onChange={(checked) => {
-                            props.updateMask((mask) => {
-                                mask.haveContext = checked;
-                            });
-                        }}/>
-                </ListItem>
+                        onChange={handleOnAddContext}/>
+                </CustomListItem>
                 {
                     props.mask.haveContext ? (
                         <>
-                            {/*<ListItem*/}
-                            {/*    title={Locale.Mask.Config.HaveContext.UseMultiQueryAssist.Title}*/}
-                            {/*    subTitle={Locale.Mask.Config.HaveContext.UseMultiQueryAssist.SubTitle}*/}
-                            {/*>*/}
-                            {/*    <Switch*/}
-                            {/*        checkedChildren={<CheckOutlined/>}*/}
-                            {/*        unCheckedChildren={<CloseOutlined/>}*/}
-                            {/*        defaultChecked={props.mask.relevantSearchOptions.use_multi_query_assist ?? false}*/}
-                            {/*        onChange={(checked) => {*/}
-                            {/*            props.updateMask((mask) => {*/}
-                            {/*                mask.haveContext = checked;*/}
-                            {/*            });*/}
-                            {/*        }}/>*/}
-                            {/*</ListItem>*/}
-                            <ListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
+                            <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
                                 <Select
                                     defaultValue={props.mask.relevantSearchOptions.retriever_type ?? "web_search"}
                                     value={props.mask.relevantSearchOptions.retriever_type}
                                     options={[
-                                        {label: "网络搜索", value: "web_search"},
-                                        {label: "本地知识库", value: "local_vector_stores"},
-                                        {label: "混合模式", value: "fixed"},
+                                        {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch, value: "web_search"},
+                                        {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores, value: "local_vector_stores"},
+                                        {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed, value: "fixed"},
                                     ]}
                                     onChange={(value) => {
                                         props.updateMask((mask) => {
@@ -229,55 +261,72 @@ export function MaskConfig(props: {
                                             }
                                             props.updateMask((mask) => {
                                                 mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "";
-                                                mask.relevantSearchOptions.userFolderId = userFolders[0].id;
+                                                mask.relevantSearchOptions.user_folder_id = userFolders[0].id;
                                             });
                                         }
                                         setContextSourcesOptions(value);
                                     }}
                                     style={{width: 130}}
                                 />
-                            </ListItem>
-                            <ListItem
-                                title={Locale.Mask.Config.HaveContext.SearchedContextNums.Title}
-                                subTitle={Locale.Mask.Config.HaveContext.SearchedContextNums.SubTitle}
-                            >
-                                {/*<Col style={{marginLeft: "48px"}} span={10}>*/}
-                                {/*    <Slider*/}
-                                {/*        min={1}*/}
-                                {/*        max={10}*/}
-                                {/*        step={1}*/}
-                                {/*        onChange={onSearchContextNumsChange}*/}
-                                {/*        value={searchContextNums}*/}
-                                {/*    />*/}
-                                {/*</Col>*/}
-                                <Col span={4}>
-                                    <InputNumber
-                                        min={1}
-                                        max={10}
-                                        step={1}
-                                        style={{margin: '0 4px'}}
-                                        value={searchContextNums}
-                                        onChange={onSearchContextNumsChange}
-                                    />
-                                </Col>
-                            </ListItem>
+                            </CustomListItem>
+                            {
+                                props.mask.relevantSearchOptions.retriever_type === "web_search" && isAdvancedConfig && (
+                                    <CustomListItem
+                                        title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
+                                        subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
+                                    >
+                                        <Col span={4}>
+                                            <InputNumber
+                                                min={1}
+                                                max={9}
+                                                step={1}
+                                                style={{margin: '0 4px'}}
+                                                value={webSearchResultsCount}
+                                                onChange={onWebSearchResultsCountChange}
+                                            />
+                                        </Col>
+                                    </CustomListItem>
+                                )
+                            }
+                            {
+                                isAdvancedConfig && (
+                                    <CustomListItem
+                                        title={Locale.Mask.Config.HaveContext.SearchedContextNums.Title}
+                                        subTitle={Locale.Mask.Config.HaveContext.SearchedContextNums.SubTitle}
+                                    >
+                                        <Col span={4}>
+                                            <InputNumber
+                                                min={1}
+                                                max={10}
+                                                step={1}
+                                                style={{margin: '0 4px'}}
+                                                value={searchContextNums}
+                                                onChange={onSearchContextNumsChange}
+                                            />
+                                        </Col>
+                                    </CustomListItem>
+                                )
+                            }
                             {
                                 props.mask.relevantSearchOptions.retriever_type === "local_vector_stores"
                                     ||  props.mask.relevantSearchOptions.retriever_type === "fixed"? (
                                     <>
                                         {
                                             localVSFoldersOptions.length > 0 ? (
-                                                <ListItem
+                                                <CustomListItem
                                                     title={Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.Title}
                                                     subTitle={
                                                         <>
                                                             <Button
+                                                                style={{padding: "0px 4px", fontSize: "12px"}}
                                                                 onClick={() => navigate(Path.MakeLocalVSStore)}
                                                                 type="link"
                                                             >
                                                                 {Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.SubTitle}
                                                             </Button>
+                                                            <span>{Locale.Common.Or}</span>
                                                             <Button
+                                                                style={{padding: "0px 4px", fontSize: "12px"}}
                                                                 onClick={() => navigate(Path.ManageLocalVectorStore)}
                                                                 type="link"
                                                             >
@@ -295,7 +344,7 @@ export function MaskConfig(props: {
                                                                 if (userFolder.id === selectedId) {
                                                                     props.updateMask((mask) => {
                                                                         mask.relevantSearchOptions.local_vs_folder_name = userFolder.folderName ?? "";
-                                                                        mask.relevantSearchOptions.userFolderId = userFolder.id;
+                                                                        mask.relevantSearchOptions.user_folder_id = userFolder.id;
                                                                     });
                                                                     userFolderStore.setCurrentSelectedFolder(userFolder);
                                                                     break;
@@ -305,7 +354,7 @@ export function MaskConfig(props: {
                                                     >
 
                                                     </Select>
-                                                </ListItem>
+                                                </CustomListItem>
                                             ) : (() => {
                                                 props.updateMask((mask) => {  //先设置默认值，后续再修改
                                                     mask.relevantSearchOptions.retriever_type = "web_search";
@@ -320,22 +369,27 @@ export function MaskConfig(props: {
                         </>
                     ) : null
                 }
-                <ListItem
-                    title={Locale.Mask.Config.HideContext.Title}
-                    subTitle={Locale.Mask.Config.HideContext.SubTitle}
-                >
-                    <Switch
-                        checkedChildren={<CheckOutlined/>}
-                        unCheckedChildren={<CloseOutlined/>}
-                        defaultChecked={props.mask.hideContext}
-                        onChange={(checked) => {
-                            props.updateMask((mask) => {
-                                mask.hideContext = checked;
-                            });
-                        }}/>
-                </ListItem>
-
-                <ListItem
+                {
+                    isAdvancedConfig ? (
+                        <>
+                            <CustomListItem
+                                title={Locale.Mask.Config.HideContext.Title}
+                                subTitle={Locale.Mask.Config.HideContext.SubTitle}
+                            >
+                                <Switch
+                                    checkedChildren={<CheckOutlined/>}
+                                    unCheckedChildren={<CloseOutlined/>}
+                                    defaultChecked={props.mask.hideContext}
+                                    onChange={(checked) => {
+                                        props.updateMask((mask) => {
+                                            mask.hideContext = checked;
+                                        });
+                                    }}/>
+                            </CustomListItem>
+                        </>
+                    ) : null
+                }
+                <CustomListItem
                     title={Locale.Mask.Config.IsChineseText.Title}
                     subTitle={Locale.Mask.Config.IsChineseText.SubTitle}
                 >
@@ -348,7 +402,7 @@ export function MaskConfig(props: {
                                 mask.isChineseText = checked;
                             });
                         }}/>
-                </ListItem>
+                </CustomListItem>
                 {/*{!props.shouldSyncFromGlobal ? (*/}
                 {/*    <ListItem*/}
                 {/*        title={Locale.Mask.Config.Share.Title}*/}
@@ -362,34 +416,34 @@ export function MaskConfig(props: {
                 {/*    </ListItem>*/}
                 {/*) : null}*/}
 
-                {props.shouldSyncFromGlobal ? (
-                    <ListItem
-                        title={Locale.Mask.Config.Sync.Title}
-                        subTitle={Locale.Mask.Config.Sync.SubTitle}
-                    >
-                        <Switch
-                            checkedChildren={<CheckOutlined/>}
-                            unCheckedChildren={<CloseOutlined/>}
-                            defaultChecked={props.mask.syncGlobalConfig}
-                            onChange={async (checked) => {
-                                if (
-                                    checked &&
-                                    (await showConfirm(Locale.Mask.Config.Sync.Confirm))
-                                ) {
-                                    props.updateMask((mask) => {
-                                        mask.syncGlobalConfig = checked;
-                                        mask.modelConfig = {...globalConfig.modelConfig};
-                                    });
-                                } else if (!checked) {
-                                    props.updateMask((mask) => {
-                                        mask.syncGlobalConfig = checked;
-                                    });
-                                }
-                            }}/>
-                    </ListItem>
-                ) : null}
-            </List>
-            <List>
+                {/*{props.shouldSyncFromGlobal ? (*/}
+                {/*    <CustomListItem*/}
+                {/*        title={Locale.Mask.Config.Sync.Title}*/}
+                {/*        subTitle={Locale.Mask.Config.Sync.SubTitle}*/}
+                {/*    >*/}
+                {/*        <Switch*/}
+                {/*            checkedChildren={<CheckOutlined/>}*/}
+                {/*            unCheckedChildren={<CloseOutlined/>}*/}
+                {/*            defaultChecked={props.mask.syncGlobalConfig}*/}
+                {/*            onChange={async (checked) => {*/}
+                {/*                if (*/}
+                {/*                    checked &&*/}
+                {/*                    (await showConfirm(Locale.Mask.Config.Sync.Confirm))*/}
+                {/*                ) {*/}
+                {/*                    props.updateMask((mask) => {*/}
+                {/*                        mask.syncGlobalConfig = checked;*/}
+                {/*                        mask.modelConfig = {...globalConfig.modelConfig};*/}
+                {/*                    });*/}
+                {/*                } else if (!checked) {*/}
+                {/*                    props.updateMask((mask) => {*/}
+                {/*                        mask.syncGlobalConfig = checked;*/}
+                {/*                    });*/}
+                {/*                }*/}
+                {/*            }}/>*/}
+                {/*    </CustomListItem>*/}
+                {/*) : null}*/}
+            </CustomList>
+            <CustomList>
                 <ModelConfigList
                     modelConfig={props.mask.modelConfig}
                     updateConfig={(updater) => {
@@ -400,8 +454,9 @@ export function MaskConfig(props: {
                             mask.syncGlobalConfig = false;
                         });
                     }}
+                    isAdvancedConfig={isAdvancedConfig}
                 />
-            </List>
+            </CustomList>
         </>
     );
 }
@@ -412,7 +467,6 @@ function ContextPromptItem(props: {
     update: (prompt: ChatMessage) => void;
     remove: () => void;
 }) {
-    const [promptContent, setPromptContent] = useState(props.prompt.content);
     const roleName = props.prompt.role === "system" ? Locale.Mask.PromptItem.System.name : Locale.Mask.PromptItem.User.name;
     const roleColor = props.prompt.role === "system" ? Locale.Mask.PromptItem.System.color : Locale.Mask.PromptItem.User.color;
 
@@ -424,13 +478,12 @@ function ContextPromptItem(props: {
                 </Tag>
             </div>
             <TextArea
-                value={promptContent}
+                value={props.prompt.content ?? ""}
                 minLength={2}
                 autoSize={true}
                 allowClear={true}
                 onChange={(e) => {
                     const content = e.target.value as any;
-                    setPromptContent(content);
                     props.update({
                         ...props.prompt,
                         content: content,
@@ -456,8 +509,9 @@ export function ContextPrompts(props: {
     fewShotMessages: Record<string /*id*/, [ChatMessage /*user*/, ChatMessage /*assistant*/]>;
     updateFewShotMessages: (updater: (fewShotMessages: Record<string /*id*/, [ChatMessage, ChatMessage]>) => void) => void;
 }) {
-    const context = (props.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+    const context = (props.context ?? []).slice(0, 1);  //目前只支持system 的 prompt
     const shownFewShotMessages = props.fewShotMessages;
+    const maskStore = useMaskStore();
 
     const addFewShotMsgs = (coupleMsg: [ChatMessage, ChatMessage]) => {
         const randId = nanoid();
@@ -533,10 +587,17 @@ export function ContextPrompts(props: {
                                             </Tag>
                                         </div>
                                         <TextArea
+                                            status={"error"}  //TODO 有问题
+                                            // status={maskStore.ifShowUserPromptError ? "error" : undefined}
                                             value={value[1].content ?? ""}
                                             minLength={1}
                                             autoSize={true}
                                             allowClear={true}
+                                            onFocus={() => {
+                                                if (maskStore.ifShowUserPromptError) {
+                                                    maskStore.setShowUserPromptError(false);
+                                                }
+                                            }}
                                             onChange={(e) => {
                                                 const lastAssistantMsg: ChatMessage = value[1];
                                                 const content = e.target.value as any;
@@ -649,6 +710,18 @@ export function MaskPage() {
         if (!mask) {
             return;
         }
+        try {
+            validateMask(session.mask);
+        } catch (e: any) {
+            console.log("validate mask failed", e);
+            maskStore.setShowUserPromptError(true);
+            notify['error']({
+                message: e.message,
+                duration: 10,
+            });
+            return;
+        }
+
         const maskUpdateRequestVO = assembleSaveOrUpdateMaskRequest(mask);
         maskApi.updateMask(maskUpdateRequestVO)
             .then((res: void) => {
@@ -722,13 +795,6 @@ export function MaskPage() {
                                 onClick={downloadAll}
                             />
                         </div>
-                        {/*<div className="window-action-button">*/}
-                        {/*    <IconButton*/}
-                        {/*        icon={<UploadIcon/>}*/}
-                        {/*        bordered*/}
-                        {/*        onClick={() => importFromFile()}*/}
-                        {/*    />*/}
-                        {/*</div>*/}
                         <div className="window-action-button">
                             <IconButton
                                 icon={<CloseIcon/>}
@@ -873,16 +939,6 @@ export function MaskPage() {
                                 deleteMask(editingMask?.id)
                             }}
                         >{Locale.Mask.Config.DeleteMask}</Button>,
-                        // <Button
-                        //     icon={<DownloadIcon/>}
-                        //     key="export"
-                        //     onClick={() =>
-                        //         downloadAs(
-                        //             JSON.stringify(editingMask),
-                        //             `${editingMask.name}.json`,
-                        //         )
-                        //     }
-                        // >{Locale.Mask.EditModal.Download}</Button>,
                         <Button
                             key="copy"
                             icon={<CopyIcon/>}

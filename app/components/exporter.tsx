@@ -3,8 +3,8 @@ import { ChatMessage, useAppConfig, useChatStore } from "../store";
 import Locale from "../locales";
 import styles from "./exporter.module.scss";
 import {
-  List,
-  ListItem,
+  CustomList,
+  CustomListItem,
   Modal,
   CustomSelect,
   showImageModal,
@@ -183,8 +183,8 @@ export function MessageExporter() {
         className={styles["message-exporter-body"]}
         style={currentStep.value !== "select" ? { display: "none" } : {}}
       >
-        <List>
-          <ListItem
+        <CustomList>
+          <CustomListItem
             title={Locale.Export.Format.Title}
             subTitle={Locale.Export.Format.SubTitle}
           >
@@ -203,8 +203,8 @@ export function MessageExporter() {
                 </option>
               ))}
             </CustomSelect>
-          </ListItem>
-          <ListItem
+          </CustomListItem>
+          <CustomListItem
             title={Locale.Export.IncludeContext.Title}
             subTitle={Locale.Export.IncludeContext.SubTitle}
           >
@@ -217,8 +217,8 @@ export function MessageExporter() {
                 );
               }}
             ></input>
-          </ListItem>
-        </List>
+          </CustomListItem>
+        </CustomList>
         <MessageSelector
           selection={selection}
           updateSelection={updateSelection}

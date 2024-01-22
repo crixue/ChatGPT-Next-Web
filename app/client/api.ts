@@ -1,6 +1,7 @@
 import {ACCESS_CODE_PREFIX} from "../constant";
 import {ChatMessage, ModelType, useAccessStore} from "../store";
-import {ContextDoc} from "@/app/trypes/chat";
+import {ChatResponseVO, ChatStreamResponseVO, ContextDoc} from "@/app/types/chat";
+import {FunctionPlugin} from "@/app/types/plugins";
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
@@ -25,9 +26,8 @@ export interface LLMConfig {
 export interface ChatOptions {
     messages: ChatMessage[];
     config: LLMConfig;
-    contextDocs?: ContextDoc[];
-    onUpdate?: (message: string, chunk: string) => void;
-    onFinish: (message: string, ) => void;
+    onUpdate?: (message: string, chunk?: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
+    onFinish: (message: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
     onError?: (err: Error) => void;
     onController?: (controller: AbortController) => void;
 }
@@ -66,8 +66,9 @@ export interface ConversationMemoryType {
 type RetrieverType = "local_vector_stores" | "web_search" | "fixed"
 
 export interface LangchainRelevantDocsSearchOptions {
-    query: string;
+    query?: string;
     retriever_type: RetrieverType;
+    user_folder_id: string,
     local_vs_folder_name: string;
     search_type: "similarity" | "mmr";
     search_top_k: number;
@@ -79,7 +80,6 @@ export interface LangchainRelevantDocsSearchOptions {
     cn_chunk_overlap?: number;
     en_chunk_size?: number;
     en_chunk_overlap?: number;
-    history_messages?: RequestMessage[];
 }
 
 
