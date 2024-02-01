@@ -576,19 +576,6 @@ export function Settings() {
 
                 <CustomList>
                     <CustomListItem
-                        title={Locale.Settings.MakingLocalVS.Title}
-                        subTitle={Locale.Settings.MakingLocalVS.SubTitle}
-                    >
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                navigate(Path.MakeLocalVSStore);
-                            }}
-                        >
-                            {Locale.Settings.MakingLocalVS.ButtonContent}
-                        </Button>
-                    </CustomListItem>
-                    <CustomListItem
                         title={Locale.ManageLocalVectorStore.Title}
                         subTitle={Locale.ManageLocalVectorStore.SubTitle}
                     >
@@ -617,6 +604,22 @@ export function Settings() {
                 {shouldShowPromptModal && (
                     <UserPromptModal onClose={() => setShowPromptModal(false)}/>
                 )}
+
+                <CustomList>
+                    <CustomListItem
+                        title={Locale.Plugins.Title}
+                        subTitle={Locale.Plugins.SubTitle}
+                    >
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                navigate(Path.Plugins);
+                            }}
+                        >
+                            {Locale.Plugins.GoToViewBtn}
+                        </Button>
+                    </CustomListItem>
+                </CustomList>
 
                 <DangerItems/>
             </div>

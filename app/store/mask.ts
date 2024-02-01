@@ -56,6 +56,7 @@ export const createEmptyMask = () =>
         id: nanoid(),
         avatar: DEFAULT_MASK_AVATAR,
         name: DEFAULT_TOPIC,
+        hideContext: false,
         isChineseText: true,
         haveContext: true,
         relevantSearchOptions: DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
@@ -95,10 +96,12 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
         },
         async create(mask) {
             const masks = get().masks;
-            const newMask = {...createEmptyMask(), ...mask};
+            const newMask = {...createEmptyMask()};
+            console.log("newMask:" + JSON.stringify(newMask));
             const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
             const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
-            const createdMask = resp.mask;
+            let createdMask = resp.mask;
+            createdMask = {...newMask, id: createdMask.id, promptId: createdMask.promptId};  // 因为返回的mask没有context和fewShotContext，手动添加
             masks[createdMask.id] = createdMask;
             set(() => ({masks}));
 

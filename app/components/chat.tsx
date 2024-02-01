@@ -88,6 +88,8 @@ import {getClientConfig} from "../config/client";
 import {Button, Drawer, List, notification} from "antd";
 import {ContextDoc, RelevantDocMetadata} from "@/app/types/chat";
 import {validateMask} from "@/app/utils/mask";
+import {SendOutlined} from "@ant-design/icons";
+import {useInitSupportedFunctions} from "@/app/components/plugins";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
@@ -467,27 +469,27 @@ export function ChatActions(props: {
                 />
             )}
 
-            <ChatAction
-                onClick={nextTheme}
-                text={Locale.Chat.InputActions.Theme[theme]}
-                icon={
-                    <>
-                        {theme === Theme.Auto ? (
-                            <AutoIcon/>
-                        ) : theme === Theme.Light ? (
-                            <LightIcon/>
-                        ) : theme === Theme.Dark ? (
-                            <DarkIcon/>
-                        ) : null}
-                    </>
-                }
-            />
+            {/*<ChatAction*/}
+            {/*    onClick={nextTheme}*/}
+            {/*    text={Locale.Chat.InputActions.Theme[theme]}*/}
+            {/*    icon={*/}
+            {/*        <>*/}
+            {/*            {theme === Theme.Auto ? (*/}
+            {/*                <AutoIcon/>*/}
+            {/*            ) : theme === Theme.Light ? (*/}
+            {/*                <LightIcon/>*/}
+            {/*            ) : theme === Theme.Dark ? (*/}
+            {/*                <DarkIcon/>*/}
+            {/*            ) : null}*/}
+            {/*        </>*/}
+            {/*    }*/}
+            {/*/>*/}
 
-            <ChatAction
-                onClick={props.showPromptHints}
-                text={Locale.Chat.InputActions.Prompt}
-                icon={<PromptIcon/>}
-            />
+            {/*<ChatAction*/}
+            {/*    onClick={props.showPromptHints}*/}
+            {/*    text={Locale.Chat.InputActions.Prompt}*/}
+            {/*    icon={<PromptIcon/>}*/}
+            {/*/>*/}
 
             <ChatAction
                 onClick={() => {
@@ -512,11 +514,11 @@ export function ChatActions(props: {
                 }}
             />
 
-            <ChatAction
-                onClick={() => setShowModelSelector(true)}
-                text={currentModel}
-                icon={<RobotIcon/>}
-            />
+            {/*<ChatAction*/}
+            {/*    onClick={() => setShowModelSelector(true)}*/}
+            {/*    text={currentModel}*/}
+            {/*    icon={<RobotIcon/>}*/}
+            {/*/>*/}
 
             {showModelSelector && (
                 <Selector
@@ -615,6 +617,8 @@ export function EditMessageModal(props: { onClose: () => void }) {
 function _Chat() {
     type RenderMessage = ChatMessage & { preview?: boolean };
 
+    const letterLimit = 2000
+
     const chatStore = useChatStore();
     const session = chatStore.currentSession();
     const config = useAppConfig();
@@ -624,6 +628,7 @@ function _Chat() {
 
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [userInput, setUserInput] = useState("");
+    const [formattedContent, setFormattedContent] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const {submitKey, shouldSubmit} = useSubmitHandler();
     const {scrollRef, setAutoScroll, scrollDomToBottom} = useScrollToBottom();
@@ -647,12 +652,18 @@ function _Chat() {
     const [inputRows, setInputRows] = useState(2);
     const measure = useDebouncedCallback(
         () => {
+
             const rows = inputRef.current ? autoGrowTextArea(inputRef.current) : 1;
             const inputRows = Math.min(
-                20,
+                10,
                 Math.max(2 + Number(!isMobileScreen), rows),
             );
             setInputRows(inputRows);
+            if (userInput.length > letterLimit) {
+                setFormattedContent(userInput.slice(0, letterLimit));
+                return
+            }
+            setFormattedContent(userInput);
         },
         100,
         {
@@ -663,6 +674,7 @@ function _Chat() {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(measure, [userInput]);
+    useInitSupportedFunctions(true);
 
     // chat commands shortcuts
     const chatCommands = useChatCommand({
@@ -873,7 +885,7 @@ function _Chat() {
     };
 
     const context: RenderMessage[] = useMemo(() => {
-        const showContexts = session.mask.context.slice(0,1);  // only show the system message context
+        const showContexts = session.mask.context.slice(0, 1);  // only show the system message context
         // console.log("showContexts", showContexts);
         return session.mask.hideContext ? [] : showContexts;
     }, [session.mask.context, session.mask.hideContext]);
@@ -1152,26 +1164,32 @@ function _Chat() {
                         const showedDataList = [];
                         for (const item of messageContextDocs) {
                             const metadata = item.metadata;
-                            if(!metadata || !metadata.source_type) continue;
+                            if (!metadata || !metadata.source_type) continue;
 
                             const showedData = {} as any;
                             const sourceType = metadata.source_type;
                             if (sourceType === ("upload_files" || "plain_text" || "speech_recognize_transcript") && metadata.source) {
                                 // 从完整的路径中截取文件名
                                 const fileName = metadata.source.split("/").pop();
-                                if(showedSourcesSet.has(fileName ?? "")) continue;
+                                if (showedSourcesSet.has(fileName ?? "")) continue;
                                 if (fileName) showedSourcesSet.add(fileName ?? "");
-                                showedData['title'] = (<p><span style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromLocalVS}</p>);
-                                showedData['description'] = (<span className={styles["source-description"]}>{fileName}</span>);
+                                showedData['title'] = (<p><span
+                                    style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromLocalVS}
+                                </p>);
+                                showedData['description'] = (
+                                    <span className={styles["source-description"]}>{fileName}</span>);
                             } else if (sourceType === "web_search" && metadata.url) {
                                 if (showedSourcesSet.has(metadata.url ?? "")) continue;
                                 if (metadata.url) showedSourcesSet.add(metadata.url ?? "");
-                                showedData['title'] = (<p><span style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromWebSearch}</p>);;
+                                showedData['title'] = (<p><span
+                                    style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromWebSearch}
+                                </p>);
+                                ;
                                 showedData['description'] = (<Button className={styles["source-description"]}
                                                                      type={"link"}
                                                                      onClick={() => {
-                                                                window.open(metadata.url, "_blank");
-                                                            }}>{metadata.url}</Button>);
+                                                                         window.open(metadata.url, "_blank");
+                                                                     }}>{metadata.url}</Button>);
                             }
                             showedDataList.push(showedData);
                         }
@@ -1267,7 +1285,8 @@ function _Chat() {
                                         {isAssistant && !isContext && !message.isError && message.searchKeywords && (
                                             <div className={styles["chat-message-search-keywords-container"]}>
                                                 {Locale.Chat.SearchKeywords}
-                                                <span className={styles["chat-message-search-keywords"]}>{message.searchKeywords}</span>
+                                                <span
+                                                    className={styles["chat-message-search-keywords"]}>{message.searchKeywords}</span>
                                             </div>
                                         )}
                                     </div>
@@ -1336,45 +1355,63 @@ function _Chat() {
             <div className={styles["chat-input-panel"]}>
                 <PromptHints prompts={promptHints} onPromptSelect={onPromptSelect}/>
 
-                <ChatActions
-                    showPromptModal={() => setShowPromptModal(true)}
-                    scrollToBottom={scrollToBottom}
-                    hitBottom={hitBottom}
-                    showPromptHints={() => {
-                        // Click again to close
-                        if (promptHints.length > 0) {
-                            setPromptHints([]);
-                            return;
-                        }
-
-                        inputRef.current?.focus();
-                        setUserInput("/");
-                        onSearch("");
-                    }}
-                />
                 <div className={styles["chat-input-panel-inner"]}>
-          <textarea
-              ref={inputRef}
-              className={styles["chat-input"]}
-              placeholder={Locale.Chat.Input(submitKey)}
-              onInput={(e) => onInput(e.currentTarget.value)}
-              value={userInput}
-              onKeyDown={onInputKeyDown}
-              onFocus={scrollToBottom}
-              onClick={scrollToBottom}
-              rows={inputRows}
-              autoFocus={autoFocus}
-              style={{
-                  fontSize: config.fontSize,
-              }}
-          />
-                    <IconButton
-                        icon={<SendWhiteIcon/>}
-                        text={Locale.Chat.Send}
-                        className={styles["chat-input-send"]}
-                        type="primary"
-                        onClick={() => doSubmit(userInput)}
+                    <textarea
+                      ref={inputRef}
+                      className={styles["chat-input"]}
+                      placeholder={Locale.Chat.Input(submitKey)}
+                      onInput={(e) => onInput(e.currentTarget.value)}
+                      value={userInput}
+                      onKeyDown={onInputKeyDown}
+                      onFocus={scrollToBottom}
+                      onClick={scrollToBottom}
+                      rows={inputRows}
+                      autoFocus={autoFocus}
+                      style={{
+                          fontSize: config.fontSize,
+                      }}
                     />
+                    <div className={styles["chat-bottom-container"]}>
+                        <div className={styles["chat-bottom-actions"]}>
+                            <ChatActions
+                                showPromptModal={() => setShowPromptModal(true)}
+                                scrollToBottom={scrollToBottom}
+                                hitBottom={hitBottom}
+                                showPromptHints={() => {
+                                    // Click again to close
+                                    if (promptHints.length > 0) {
+                                        setPromptHints([]);
+                                        return;
+                                    }
+
+                                    inputRef.current?.focus();
+                                    setUserInput("/");
+                                    onSearch("");
+                                }}
+                            />
+                        </div>
+                        <div className={styles["bottom-controls"]}>
+                            <Button
+                                className={styles["bottom-controls-btn"]}
+                                type="text"
+                                icon={<SendOutlined/>}
+                                onClick={() => doSubmit(userInput)}
+                            />
+                            <div
+                                className={styles["bottom-controls-letter-count"]}
+                            >
+                                <span>{formattedContent.length}</span>
+                                /2000
+                            </div>
+                            {/*<IconButton*/}
+                            {/*    icon={<SendWhiteIcon/>}*/}
+                            {/*    text={Locale.Chat.Send}*/}
+                            {/*    className={styles["chat-input-send"]}*/}
+                            {/*    type="primary"*/}
+                            {/*    onClick={() => doSubmit(userInput)}*/}
+                            {/*/>*/}
+                        </div>
+                    </div>
                 </div>
             </div>
 

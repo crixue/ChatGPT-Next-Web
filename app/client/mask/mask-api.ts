@@ -43,8 +43,7 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
         })
     });
     promptInfoDict["few_shot_examples"] = var0;
-
-    console.log("promptInfoDict:" + JSON.stringify(promptInfoDict));
+    // console.log("promptInfoDict:" + JSON.stringify(promptInfoDict));
 
     const serializePromptRequestVO = {
         title: mask.name + "-prompt",

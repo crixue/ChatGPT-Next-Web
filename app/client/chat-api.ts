@@ -21,6 +21,7 @@ import {
     fetchEventSource,
 } from "@fortaine/fetch-event-source";
 import {filterHistoryMessages} from "@/app/utils/chat";
+import {usePluginsStore} from "@/app/store/plugins";
 
 
 
@@ -38,6 +39,7 @@ export class ChatApi {
 
     async chat(options: ChatOptions, initRetrieverRequest: LangchainRelevantDocsSearchOptions) {
         const currentSession: ChatSession = useChatStore.getState().currentSession();
+        const pluginStore = usePluginsStore.getState();
         const mask: Mask = currentSession.mask;
         const maskModelConfig = mask.modelConfig;
         const historyMsgCount = maskModelConfig.historyMessageCount ?? 0;
@@ -64,11 +66,9 @@ export class ChatApi {
             historyMessages = historyMessages.concat(filteredHistoryMessages);
         }
 
-        // if (haveContext) {
-            const context = (mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
-            console.log("context:"+JSON.stringify(context))
-            promptTemplate = context.filter(msg => msg.role === "user")[0].content;
-        // }
+        const context = (mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+        // console.log("context:"+JSON.stringify(context))
+        promptTemplate = context.filter(msg => msg.role === "user")[0].content;
 
         const requestPayload = {
             query: userLastQuery,
@@ -89,10 +89,9 @@ export class ChatApi {
                 },
             } as StartupMaskRequestVO,
             init_retriever_request: initRetrieverRequest,
-            used_functions: maskModelConfig.checkedPluginIds,
+            used_functions: maskModelConfig.checkedPluginIds.length > 0 ? maskModelConfig.checkedPluginIds : pluginStore.defaultShownPluginIds,
         } as ChatRequestVO;
-
-        console.log("[Request] langchain backend payload: ", requestPayload);
+        // console.log("[Request] langchain backend payload: ", requestPayload);
 
         const controller = new AbortController();
         options.onController?.(controller);

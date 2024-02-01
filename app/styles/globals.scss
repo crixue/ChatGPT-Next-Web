@@ -129,23 +129,22 @@ body {
   border: 1px solid transparent;
 }
 
-select {
-  border: var(--border-in-light);
-  padding: 10px;
-  border-radius: 10px;
-  appearance: none;
-  cursor: pointer;
-  background-color: var(--white);
-  color: var(--black);
-  text-align: center;
-}
+//select {
+//  border: var(--border-in-light);
+//  padding: 10px;
+//  border-radius: 10px;
+//  appearance: none;
+//  cursor: pointer;
+//  background-color: var(--white);
+//  color: var(--black);
+//  text-align: center;
+//}
 
 label {
   cursor: pointer;
 }
 
 input {
-  text-align: center;
   font-family: inherit;
 }
 
@@ -217,21 +216,6 @@ input[type="range"]::-moz-range-thumb:hover {
 
 input[type="range"]::-ms-thumb:hover {
   @include thumbHover();
-}
-
-input[type="number"],
-input[type="text"],
-input[type="password"] {
-  appearance: none;
-  border-radius: 10px;
-  border: var(--border-in-light);
-  min-height: 36px;
-  box-sizing: border-box;
-  background: var(--white);
-  color: var(--black);
-  padding: 0 10px;
-  max-width: 50%;
-  font-family: inherit;
 }
 
 div.math {

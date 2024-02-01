@@ -23,4 +23,7 @@ export interface StartupMaskRequestVO {
 export interface SupportedModelVO {
     name: string;
     alias: string;
+    sequence_length: number;
+    context_tokens_limit: number;
+    available: boolean;
 }

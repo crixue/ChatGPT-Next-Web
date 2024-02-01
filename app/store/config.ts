@@ -1,6 +1,5 @@
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
-import {LLMModel, } from "../client/api";
 import {
     ChatConfigStore,
     DEFAULT_CONFIG,
@@ -8,6 +7,7 @@ import {
     StoreKey
 } from "../constant";
 import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
+import {SupportedModelVO} from "@/app/types/model-vo";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];
 
@@ -69,11 +69,9 @@ export const useAppConfig = create<ChatConfigStore>()(
                 const customModels = await langChainBackendService.listAllModels();
                 const models = customModels.map((m) => {
                     return {
-                        name: m.name,
-                        available: true,
-                        alias: m.alias
+                        ...m, available: true
                     }
-                }) as LLMModel[];
+                }) as SupportedModelVO[];
                 config.modelConfig.model = models[0].name;
                 config.defaultModel = models[0];
                 config.supportedModels = models;
@@ -84,35 +82,6 @@ export const useAppConfig = create<ChatConfigStore>()(
         }),
         {
             name: StoreKey.Config,
-            // version: 3.7,
-            // migrate(persistedState, version) {
-            //     const state = persistedState as ChatConfig;
-            //
-            //     if (version < 3.4) {
-            //         state.modelConfig.sendMemory = true;
-            //         state.modelConfig.historyMessageCount = 4;
-            //         state.modelConfig.compressMessageLengthThreshold = 1000;
-            //         state.modelConfig.frequencyPenalty = 0;
-            //         state.modelConfig.topP = 1;
-            //         // state.modelConfig.template = DEFAULT_INPUT_TEMPLATE;
-            //         state.dontShowMaskSplashScreen = false;
-            //         state.hideBuiltinMasks = false;
-            //     }
-            //
-            //     if (version < 3.5) {
-            //         state.customModels = "claude,claude-100k";
-            //     }
-            //
-            //     if (version < 3.6) {
-            //         // state.modelConfig.enableInjectSystemPrompts = true;
-            //     }
-            //
-            //     if (version < 3.7) {
-            //         state.enableAutoGenerateTitle = true;
-            //     }
-            //
-            //     return state as any;
-            // },
         },
     ),
 );

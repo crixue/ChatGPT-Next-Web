@@ -2,6 +2,7 @@ export interface FunctionPlugin {
     id: string;
     name: string;
     nameAlias: string;
+    defaultShow?: boolean;
     description: string;
     descriptionAlias: string;
     lang?: string;

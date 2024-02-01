@@ -38,7 +38,7 @@ import {ModelConfigList} from "./model-config";
 import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, FileName, ModelConfig, Path} from "../constant";
 import {BUILTIN_MASK_STORE} from "../masks";
 import {Button, Card, Col, Input, InputNumber, Modal, notification, Radio, Select, Slider, Switch, Tag} from "antd";
-import {CheckOutlined, CloseOutlined} from "@ant-design/icons";
+import {CheckOutlined, CloseOutlined, PlusOutlined} from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {nanoid} from "nanoid";
@@ -63,12 +63,15 @@ export function MaskConfig(props: {
     readonly?: boolean;
     shouldSyncFromGlobal?: boolean;
 }) {
-    // console.log("MaskConfig:" + JSON.stringify(props.mask));
+    const config = useAppConfig();
+
+    console.log("MaskConfig:" + JSON.stringify(props.mask));
     const [showPicker, setShowPicker] = useState(false);
     const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
     const [contextSourcesOptions, setContextSourcesOptions] = useState('web_search');
-    const [searchContextNums, setSearchContextNums] = useState(props.mask.relevantSearchOptions.search_top_k);
-    const [webSearchResultsCount, setWebSearchResultsCount] = useState(props.mask.relevantSearchOptions.web_search_results_count);
+    const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
+    const [searchContextNums, setSearchContextNums] = useState(relevantSearchOptions?.search_top_k ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
+    const [webSearchResultsCount, setWebSearchResultsCount] = useState(relevantSearchOptions?.web_search_results_count ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
     const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
     const [isAdvancedConfig, setIsAdvancedConfig] = useState(false);
 
@@ -82,10 +85,10 @@ export function MaskConfig(props: {
     }
 
     const onSearchContextNumsChange = (val: number | null) => {
-        setSearchContextNums(val || 4);
+        setSearchContextNums(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
         props.updateMask(
             (mask) =>
-                (mask.relevantSearchOptions.search_top_k = val || 4),
+                (mask.relevantSearchOptions.search_top_k = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k),
         );
     }
 
@@ -121,35 +124,10 @@ export function MaskConfig(props: {
         copyToClipboard(maskLink);
     };
 
-    const globalConfig = useAppConfig();
-    // console.log("Current mask:" + JSON.stringify(props.mask));
-
     const handleOnAddContext = (checked: boolean) => {
         let context = (props.mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
         const defaultAddedContextStr = Locale.Mask.PromptItem.DefaultAddedContextStr;
         const userRolePrompt = context.find((c) => c.role === "user");
-
-        if(checked) {
-            // check if user role's prompt exists `{context}` in the context, if not exists, add `The source:{context}.` at the beginning of the context
-            if (userRolePrompt) {
-                const userRolePromptContent = userRolePrompt.content;
-                if (!userRolePromptContent.includes("{context}")) {
-                    userRolePrompt.content = defaultAddedContextStr + userRolePromptContent;
-                }
-            }
-        } else {
-            // remove the `{context}` in the context
-            if (userRolePrompt) {
-                const userRolePromptContent = userRolePrompt.content;
-                console.log("userRolePromptContent:" + userRolePromptContent);
-                if (userRolePromptContent.includes(defaultAddedContextStr)) {
-                    const replacedContext = userRolePromptContent.replace(defaultAddedContextStr, "");
-                    userRolePrompt.content = replacedContext;
-                } else if (userRolePromptContent.includes("{context}")) {
-                    userRolePrompt.content = userRolePromptContent.replace("{context}", " ");
-                }  //TODO 应用面具的时候需要验证！
-            }
-        }
 
         // console.log("context:" + JSON.stringify(context));
         props.updateMask((mask) => {
@@ -196,7 +174,7 @@ export function MaskConfig(props: {
                                     props.updateMask((mask) => (mask.avatar = emoji));
                                     setShowPicker(false);
                                 }}
-                            ></AvatarPicker>
+                            />
                         }
                         open={showPicker}
                         onClose={() => setShowPicker(false)}
@@ -214,7 +192,7 @@ export function MaskConfig(props: {
                         type={"text"}
                         defaultValue={props.mask.name}
                         onChange={(e) => {
-                            props.updateMask((mask) => {
+                            props.updateMask((mask) => {  //TODO 这里导致了修改mask name 时，会导致子组件实时刷新
                                 mask.name = e.currentTarget.value
                             });
                         }}/>
@@ -234,8 +212,8 @@ export function MaskConfig(props: {
                         <>
                             <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
                                 <Select
-                                    defaultValue={props.mask.relevantSearchOptions.retriever_type ?? "web_search"}
-                                    value={props.mask.relevantSearchOptions.retriever_type}
+                                    defaultValue={relevantSearchOptions.retriever_type ?? "web_search"}
+                                    value={relevantSearchOptions.retriever_type}
                                     options={[
                                         {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch, value: "web_search"},
                                         {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores, value: "local_vector_stores"},
@@ -260,7 +238,7 @@ export function MaskConfig(props: {
                                                 return;
                                             }
                                             props.updateMask((mask) => {
-                                                mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "";
+                                                mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "" as string;
                                                 mask.relevantSearchOptions.user_folder_id = userFolders[0].id;
                                             });
                                         }
@@ -270,7 +248,7 @@ export function MaskConfig(props: {
                                 />
                             </CustomListItem>
                             {
-                                props.mask.relevantSearchOptions.retriever_type === "web_search" && isAdvancedConfig && (
+                                relevantSearchOptions.retriever_type === "web_search" && isAdvancedConfig && (
                                     <CustomListItem
                                         title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
                                         subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
@@ -297,7 +275,7 @@ export function MaskConfig(props: {
                                         <Col span={4}>
                                             <InputNumber
                                                 min={1}
-                                                max={10}
+                                                max={5}
                                                 step={1}
                                                 style={{margin: '0 4px'}}
                                                 value={searchContextNums}
@@ -308,8 +286,8 @@ export function MaskConfig(props: {
                                 )
                             }
                             {
-                                props.mask.relevantSearchOptions.retriever_type === "local_vector_stores"
-                                    ||  props.mask.relevantSearchOptions.retriever_type === "fixed"? (
+                                relevantSearchOptions.retriever_type === "local_vector_stores"
+                                    ||  relevantSearchOptions.retriever_type === "fixed"? (
                                     <>
                                         {
                                             localVSFoldersOptions.length > 0 ? (
@@ -511,7 +489,7 @@ export function ContextPrompts(props: {
 }) {
     const context = (props.context ?? []).slice(0, 1);  //目前只支持system 的 prompt
     const shownFewShotMessages = props.fewShotMessages;
-    const maskStore = useMaskStore();
+    // const maskStore = useMaskStore();
 
     const addFewShotMsgs = (coupleMsg: [ChatMessage, ChatMessage]) => {
         const randId = nanoid();
@@ -561,7 +539,7 @@ export function ContextPrompts(props: {
                     shownFewShotMessages && Object.keys(shownFewShotMessages).length > 0 ? (
                         Object.entries(shownFewShotMessages).map(([id, value], i) => (
                             <div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
-                                <Card size={"small"} title={"引导案例"} extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
+                                <Card size={"small"} title={Locale.Mask.ContextPrompt.CardTitle} extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
                                     <div className={chatStyle["context-prompt-row"]}>
                                         <div>
                                             <Tag bordered={false} color={Locale.Mask.PromptItem.User.color}>
@@ -593,11 +571,11 @@ export function ContextPrompts(props: {
                                             minLength={1}
                                             autoSize={true}
                                             allowClear={true}
-                                            onFocus={() => {
-                                                if (maskStore.ifShowUserPromptError) {
-                                                    maskStore.setShowUserPromptError(false);
-                                                }
-                                            }}
+                                            // onFocus={() => {
+                                            //     if (maskStore.ifShowUserPromptError) {
+                                            //         maskStore.setShowUserPromptError(false);
+                                            //     }
+                                            // }}
                                             onChange={(e) => {
                                                 const lastAssistantMsg: ChatMessage = value[1];
                                                 const content = e.target.value as any;
@@ -611,18 +589,22 @@ export function ContextPrompts(props: {
                     ) : null
                 }
                 <div>
-                    <Button onClick={() => {
-                        const count = shownFewShotMessages ? Object.keys(shownFewShotMessages).length : 0;
-                        addFewShotMsgs([createMessage({
-                            role: "user",
-                            content: "例子" + (count + 1),
-                            date: new Date().toISOString()
-                        }), createMessage({
-                            role: "assistant",
-                            content: "回答" + (count + 1),
-                            date: new Date().toISOString()
-                        })])}
-                    }>新增引导案例</Button>
+                    <Button
+                        type={"dashed"}
+                        className={chatStyle["add-few-examples-button"]}
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                            const count = shownFewShotMessages ? Object.keys(shownFewShotMessages).length : 0;
+                            addFewShotMsgs([createMessage({
+                                role: "user",
+                                content: Locale.Mask.ContextPrompt.UserExampleContentPrefix + (count + 1),
+                                date: new Date().toISOString()
+                            }), createMessage({
+                                role: "assistant",
+                                content: Locale.Mask.ContextPrompt.AssistantExampleContentPrefix + (count + 1),
+                                date: new Date().toISOString()
+                            })])}
+                    }>{Locale.Mask.ContextPrompt.AddNewFewShotExampleBtn}</Button>
                 </div>
                 {props.context.length === 0 && (
                     <div className={chatStyle["context-prompt-row"]}>
@@ -681,6 +663,7 @@ export function MaskPage() {
         }
     };
 
+    console.log(editingMaskId)
     const editingMask =
         maskStore.get(editingMaskId) ?? BUILTIN_MASK_STORE.get(editingMaskId);
     // console.log("editingMask:" + JSON.stringify(editingMask));
@@ -699,7 +682,7 @@ export function MaskPage() {
         maskApi.deleteMask(id).then((res) => {
             closeMaskModal();
             notify['success']({
-                message: '删除成功',
+                message: Locale.Common.OperateSuccess,
             });
         }).finally(() => {
             maskStore.delete(id);
@@ -729,12 +712,12 @@ export function MaskPage() {
                     mask = {...mask};
                 });
                 notify['success']({
-                    message: '更新成功',
+                    message: Locale.Common.OperateSuccess,
                 });
             }).catch((err: Error) => {
                 console.log(err);
                 notify['error']({
-                    message: '更新失败，请稍后重试',
+                    message: Locale.Common.OperateFailed,
                 });
             }).finally(() => {
                 closeMaskModal();

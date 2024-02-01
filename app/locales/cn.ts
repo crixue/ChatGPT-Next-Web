@@ -22,7 +22,11 @@ const cn = {
         OperateFailed: "操作失败，请稍后重试",
         Complete: "完成",
         Action: "操作",
+        View: "查看",
         Or: "或",
+        UpdateSuccess: "更新成功",
+        CreateSuccess: "创建成功",
+        InProgressTip: "正在处理中，请稍后",
     },
     Error: {
         Unauthorized: isApp
@@ -89,7 +93,7 @@ const cn = {
             if (submitKey === String(SubmitKey.Enter)) {
                 inputHints += "，Shift + Enter 换行";
             }
-            return inputHints + "，/ 触发补全，: 触发命令";
+            return inputHints + "，: 触发命令";
         },
         Send: "发送",
         Config: {
@@ -475,6 +479,12 @@ const cn = {
             Delete: "删除",
             DefaultAddedContextStr: "来源:{context}。 "
         },
+        ContextPrompt: {
+            CardTitle: "引导案例",
+            AddNewFewShotExampleBtn: "添加新的引导案例",
+            UserExampleContentPrefix: "用户的问题",
+            AssistantExampleContentPrefix: "助手的回答",
+        }
 
     },
     NewChat: {
@@ -517,7 +527,8 @@ const cn = {
         Steps: {
             FirstStep: {
                 Title: "第一步",
-                Descriptions: "选择一个知识库"
+                Descriptions: "选择一个知识库",
+                CardTitle: "设置知识库",
             },
             SecondStep: {
                 Title: "第二步",
@@ -525,7 +536,8 @@ const cn = {
             },
             ThirdStep: {
                 Title: "第三步",
-                Descriptions: "开始构建，查看结果"
+                Descriptions: "开始构建，查看结果",
+                CardTitle: "构建结果",
             },
             PreviousStep: "上一步",
             NextStep: "下一步",
@@ -546,20 +558,49 @@ const cn = {
                 folderDesc: "知识库描述",
                 updateAt: "更新时间",
             }
+        },
+        Rules: {
+            PleaseInputLocalVSName: "请输入知识库名称",
+            PleaseInputLocalVSDesc: "请输入知识库描述",
+            Rule1: "请输入空格、字母、数字或下划线组成的字符串"
+        },
+        SelectLocalVS: "选择知识库",
+        StartToBuildNewVS: "点击构建属于您的知识库",
+        StartToBuild: "构建知识库",
+        Descriptions: "通过收集、整理、归纳和标注相关的数据和文献，构建属于您自己的知识库。知识库可以帮助模型更好地理解、分析和回答您的问题，提高模型的性能和准确性。",
+        LocalVSFolderNameHaveExisted: "知识库名称已存在，请重新输入",
+        Upload: {
+            Config: "配置",
+            TriggerAdvancedConfig: "切换高级配置",
+            TriggerSimpleConfig: "切换精简配置",
+            Chinese: "中文",
+            English: "英文",
+            ChunkSizeTitle: "每个文本块的最大长度",
+            ChunkSizeDesc: "控制文本切分成文本块的参数，文本块的大小决定了模型能够处理的最大文本长度。文本块的大小越大，模型能够获取到的信心量越大，但是模型处理的速度越慢。",
+            ChunkOverlapTitle: "文本块的重叠长度",
+            ChunkOverlapDesc: "相邻两个文本块之间的重叠长度。合理地文本块的重叠长度可以保证文本的连贯性和准确性",
+            UploadFileCardTitle: "文件上传",
+            SupportedFileTypeTip: "目前支持 .txt,.doc,.docx,.mp3,.mp4,.wav,.pdf,.ppt,.pptx,.xls,.xlsx,.csv,.html等格式文件的上传与制作，如果您上传的文件格式不在支持范围内，知识库可能会制作失败。",
+            UploadFileTip: "单击或拖动文件到此区域进行上传",
+            RemoveSuccess: "文件移除成功",
+            RemoveFailed: "文件删除失败,请稍后重试",
         }
     },
     ManageLocalVectorStore: {
-        Title: "管理本地知识库",
+        Title: "本地知识库",
         SubTitle: "管理本地知识库，查看知识库的详细信息",
-        ButtonContent: "立即查看"
+        ButtonContent: "立即查看",
+        ViewLocalVS: "查看知识库",
     },
+    LocalVectorStoreName: "知识库",
     Plugins: {
         Title: "插件",
-        SubTitle: "插件能将模型连接到第三方应用程序。这些插件使模型能够与开发人员定义的 API 进行交互，从而增强模型的功能",
+        SubTitle: "插件能将模型连接到第三方应用程序。这些插件使模型能够从开发人员定义的API获取数据，从而增强模型的功能",
         Switch: {
             Checked: "开启",
             Unchecked: "关闭",
-        }
+        },
+        GoToViewBtn: "查看插件",
     }
 };
 

@@ -37,12 +37,6 @@ export interface LLMUsage {
     total: number;
 }
 
-export interface LLMModel {
-    name: string;
-    available: boolean;
-    alias: string;
-}
-
 export interface LangchainBackendBaseLLMConfig {
     temperature: number;
     streaming: boolean;

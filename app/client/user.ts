@@ -1,7 +1,7 @@
 import {useAccessStore} from "@/app/store";
 import {handleServerResponse} from "@/app/common-api";
 import {getBackendApiHeaders} from "@/app/client/api";
-import {UserFolderCreateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
+import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
 import qs from "qs";
 
 
@@ -28,6 +28,19 @@ export class UserApi {
     async createFolder(request: UserFolderCreateReqVO) {
         const res = await fetch(this.path("/api/user-folder/create-user-folder"), {
             method: "PUT",
+            body: JSON.stringify(request),
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<UserFolderVO>(await res.json());
+    }
+
+    async updateFolder(request: UserFolderUpdateReqVO) {
+        const res = await fetch(this.path("/api/user-folder/update-user-folder"), {
+            method: "POST",
             body: JSON.stringify(request),
             headers: getBackendApiHeaders(),
         });

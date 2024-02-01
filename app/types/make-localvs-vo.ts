@@ -1,4 +1,5 @@
 import {PageInfo} from "@/app/types/common-type";
+import {MakeLocalVSConfig} from "@/app/types/mask-vo";
 
 
 export interface MakeLocalVSRequestVO {
@@ -8,6 +9,7 @@ export interface MakeLocalVSRequestVO {
     localVSFolderName: string;  // userFolderId 对应的文件夹名称
     referSpeechRecognizeTaskId?: string;
     oriFilePath?: string;
+    makeVsConfig?: MakeLocalVSConfig;
 }
 
 export interface MakeLocalVectorstoreTaskRecords {

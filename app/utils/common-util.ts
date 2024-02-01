@@ -11,7 +11,7 @@ export const extraPromptPlaceHolders = (input: string) => {
 }
 
 export const isAudioFileType = (fileMimeType: string) => {
-    const contentType = ['audio/mp3', 'audio/mp4', 'audio/wav'];
+    const contentType = ['audio/mp3', 'audio/mp4', 'audio/wav', 'audio/mpeg', 'audio/x-wav', 'audio/x-m4a', 'audio/x-mpeg-3'];
     return contentType.indexOf(fileMimeType) > -1;
 }
 

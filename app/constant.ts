@@ -1,10 +1,11 @@
 import {getClientConfig} from "@/app/config/client";
-import {ConversationMemoryType, LLMModel, MemoryTypeName} from "@/app/client/api";
+import {ConversationMemoryType,} from "@/app/client/api";
 import {nanoid} from "nanoid";
 import {ChatMessage} from "@/app/store";
 import {extraPromptPlaceHolders} from "@/app/utils/common-util";
 import Locales from "./locales";
 import {PluginsPage} from "@/app/components/plugins";
+import {SupportedModelVO} from "@/app/types/model-vo";
 
 export const OWNER = "Yidadaa";
 export const REPO = "ChatGPT-Next-Web";
@@ -131,7 +132,7 @@ export const DEFAULT_CONFIG = {
     hideBuiltinMasks: false, // dont add builtin masks
 
     customModels: "",
-    models: DEFAULT_MODELS as any as LLMModel[],
+    models: DEFAULT_MODELS as any as SupportedModelVO[],
     memoryTypes: DEFAULT_MEMORY_TYPES as any as ConversationMemoryType[],
 
     modelConfig: {
@@ -157,17 +158,17 @@ export const DEFAULT_CONFIG = {
     chatMessages: [
         {
             id: nanoid(),
-            date: Date.now(),
+            date: Date.now().toLocaleString(),
             role: "system",
             content: "你是一个乐于助人的AI帮手，请回答用户的问题，如果你不知道答案，请不要编造答案",
         },
         {
             id: nanoid(),
-            date: Date.now(),
+            date: Date.now().toLocaleString(),
             role: "user",
             content: "The following is the source: {context}. \n The user input is: {query}.",
         }
-    ] as any as ChatMessage[],
+    ]  as ChatMessage[],
 };
 
 export function transformToPromptTemplate(systemInput: string, userInput: string) {
@@ -197,7 +198,7 @@ export const DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS = {
     local_vs_folder_name:"web_search",
     search_type: "similarity",
     search_top_k: 4,
-    web_search_results_count: 5,
+    web_search_results_count: 4,
     use_multi_query_assist:false,
     use_embedding_filter_assist: false,
     use_reorder_assist: true,
@@ -210,11 +211,11 @@ export type SearchContextSourceConfig = typeof DEFAULT_RELEVANT_DOCS_SEARCH_OPTI
 };
 
 export type ChatConfigStore = ChatConfig & {
-    supportedModels: LLMModel[];
-    defaultModel?:  LLMModel;
+    supportedModels: SupportedModelVO[];
+    defaultModel?:  SupportedModelVO;
     reset: () => void;
     update: (updater: (config: ChatConfig) => void) => void;
-    allModels: () => Promise<LLMModel[]>;
+    allModels: () => Promise<SupportedModelVO[]>;
 };
 
 export type ModelConfig = ChatConfig["modelConfig"];

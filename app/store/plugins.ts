@@ -7,6 +7,7 @@ const pluginsService = new PluginsApi();
 
 type PluginsStore = {
     supportedFunctions: FunctionPlugin[];
+    defaultShownPluginIds: string[];
     initSupportedFunctions: () => Promise<void>;
     findPluginById(id: string): FunctionPlugin | undefined;
     findPluginByIdList: (ids: string[]) => FunctionPlugin[] | undefined;
@@ -14,12 +15,14 @@ type PluginsStore = {
 
 export const usePluginsStore = create<PluginsStore>((set, get) => ({
     supportedFunctions: [],
-
+    defaultShownPluginIds: [],
     async initSupportedFunctions() {
         let supportedPlugins = await pluginsService.getSupportedFunctions();
         supportedPlugins = supportedPlugins.filter(plugin => plugin.status > 0);
         set(() => ({
             supportedFunctions: supportedPlugins,
+            defaultShownPluginIds: supportedPlugins.filter(plugin => plugin.defaultShow)
+                .map(plugin => plugin.id),
         }));
     },
     findPluginById(id: string) {

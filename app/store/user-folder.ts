@@ -32,5 +32,5 @@ export const useUserFolderStore = create<UserFolderStore>((set, get) => ({
         set(() => ({
             userFolders: userFolders,
         }));
-    }
+    },
 }))

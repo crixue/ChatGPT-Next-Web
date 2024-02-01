@@ -12,7 +12,7 @@ import {
     Select,
     Switch
 } from "antd";
-import React from "react";
+import React, {useEffect} from "react";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 import {ModelConfig, Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
@@ -102,16 +102,15 @@ export function ModelConfigList(props: {
         }
     }
 
-
     const allSupportPlugins = pluginsStore.supportedFunctions;
-    // console.log("allSupportPlugins:" + allSupportPlugins);
-    const [checkedPluginIds, setCheckedPluginIds] = React.useState<string[]>(props.modelConfig.checkedPluginIds ?? []);
-    // console.log("checkedPluginIds:" + checkedPluginIds);
+    const [checkedPluginIds, setCheckedPluginIds] = React.useState<string[]>(pluginsStore.defaultShownPluginIds);
+    console.log("checkedPluginIds:" + checkedPluginIds);
+
     const onPluginsChange = (val: string[] | null) => {
-        setCheckedPluginIds(val || []);
+        setCheckedPluginIds(val || pluginsStore.defaultShownPluginIds);
         props.updateConfig(
             (config) =>
-                (config.checkedPluginIds = val || []),
+                (config.checkedPluginIds = val || pluginsStore.defaultShownPluginIds),
         );
     }
 
@@ -196,8 +195,8 @@ export function ModelConfigList(props: {
                         style={{ width: '100%' }}
                         placeholder={Locale.Settings.Plugins.ChoosePlugin}
                         defaultValue={checkedPluginIds.map((id, i) => (
-                            allSupportPlugins.find((v) => v.id === id)?.nameAlias || ""
-                        ))
+                                allSupportPlugins.find((v) => v.id === id)?.nameAlias || ""
+                            ))
                         }
                         onChange={onPluginsChange}
                         options={allSupportPlugins.map((v, i) => (

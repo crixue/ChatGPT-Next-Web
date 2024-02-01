@@ -44,3 +44,10 @@ export interface MaskItemResponseVO {
     prompt?: Prompt;
     requiredPermIds?: number[];
 }
+
+export interface MakeLocalVSConfig {
+    cnChunkSize: number;
+    cnChunkOverlap: number;
+    enChunkSize: number;
+    enChunkOverlap: number;
+}
