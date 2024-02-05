@@ -104,7 +104,7 @@ export function ModelConfigList(props: {
 
     const allSupportPlugins = pluginsStore.supportedFunctions;
     const [checkedPluginIds, setCheckedPluginIds] = React.useState<string[]>(pluginsStore.defaultShownPluginIds);
-    console.log("checkedPluginIds:" + checkedPluginIds);
+    // console.log("checkedPluginIds:" + checkedPluginIds);
 
     const onPluginsChange = (val: string[] | null) => {
         setCheckedPluginIds(val || pluginsStore.defaultShownPluginIds);

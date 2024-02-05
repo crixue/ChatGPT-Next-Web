@@ -366,6 +366,11 @@ const cn = {
         Sysmessage: "你是一个助手",
     },
     Mask: {
+        Tags: {
+            Tag0: "面具设置",
+            Tag1: "上下文设置",
+            Tag2: "模型设置",
+        },
         Name: "面具",
         Page: {
             Title: "预设角色面具",
@@ -584,6 +589,9 @@ const cn = {
             UploadFileTip: "单击或拖动文件到此区域进行上传",
             RemoveSuccess: "文件移除成功",
             RemoveFailed: "文件删除失败,请稍后重试",
+            UploadFileSuccess: "文件上传成功",
+            UploadFileFailed: "文件上传失败,请稍后重试",
+            DoNotUploadSameFile: "请不要重复上传相同名称的文件",
         }
     },
     ManageLocalVectorStore: {
@@ -601,7 +609,8 @@ const cn = {
             Unchecked: "关闭",
         },
         GoToViewBtn: "查看插件",
-    }
+    },
+
 };
 
 type DeepPartial<T> = T extends object

@@ -105,8 +105,6 @@ export const UploadPage = (props: {
         // @ts-ignore
         option.onProgress({percent: 20});
         setUploading(true);
-        console.log('file type:', file.type)
-        console.log('file is AV File?', isAVFileType(file.type))
         if (isAVFileType(file.type)) {  //上传音视频文件
             uploadService.uploadAVFileAndDoSpeechRecognition(file, {
                 folderId: props.uploadFolderId,
@@ -119,20 +117,20 @@ export const UploadPage = (props: {
                 // @ts-ignore
                 option.onSuccess(responseResult, uploadItem);
                 notify['success']({
-                    message: `${file.name} 文件上传成功`,
+                    message: `${file.name} ${Locale.MakeLocalVSStore.Upload.UploadFileSuccess}`,
                 });
             }).catch((error) => {
                 // @ts-ignore
-                option.onError("文件上传失败", file);
+                option.onError(Locale.MakeLocalVSStore.Upload.UploadFileFailed, file);
                 const errInfo = JSON.parse(error.message);
                 if(errInfo.code === 63002) {
                     notify['error']({
-                        message: `请勿重复上传相同文件：${file.name}`,
+                        message: `${Locale.MakeLocalVSStore.Upload.DoNotUploadSameFile}：${file.name}`,
                     });
                     return;
                 }
                 notify['error']({
-                    message: `${file.name} 文件上传失败`,
+                    message: `${file.name} ${Locale.MakeLocalVSStore.Upload.UploadFileFailed}`,
                 });
             }).finally(() => {
                 setUploading(false);
@@ -150,20 +148,20 @@ export const UploadPage = (props: {
             // @ts-ignore
             option.onSuccess(responseResult, uploadItem);
             notify['success']({
-                message: `${file.name} 文件上传成功`,
+                message: `${file.name} ${Locale.MakeLocalVSStore.Upload.UploadFileSuccess}`,
             });
         }).catch((error) => {
             // @ts-ignore
-            option.onError("文件上传失败", file);
+            option.onError(Locale.MakeLocalVSStore.Upload.UploadFileFailed, file);
             const errInfo = JSON.parse(error.message);
             if(errInfo.code === 63002) {
                 notify['error']({
-                    message: `请勿重复上传相同文件：${file.name}`,
+                    message: `${Locale.MakeLocalVSStore.Upload.DoNotUploadSameFile}：${file.name}`,
                 });
                 return;
             }
             notify['error']({
-                message: `${file.name} 文件上传失败`,
+                message: `${file.name} ${Locale.MakeLocalVSStore.Upload.UploadFileFailed}`,
             });
         }).finally(() => {
             setUploading(false);
