@@ -5,7 +5,7 @@ import {GlobalLoading} from "@/app/components/global";
 
 require("../polyfill");
 
-import {useState, useEffect} from "react";
+import React, {useState, useEffect} from "react";
 
 import styles from "./home.module.scss";
 

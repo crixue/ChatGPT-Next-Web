@@ -15,7 +15,7 @@ import DragIcon from "../icons/drag.svg";
 
 import {DEFAULT_MASK_AVATAR, Mask, useMaskStore} from "../store/mask";
 import {
-    ChatMessage, createMessage,
+    ChatMessage, createMessage, ModalConfigValidator,
     useAppConfig,
     useChatStore, useUserFolderStore,
 } from "../store";
@@ -45,7 +45,7 @@ import {
     InputNumber,
     Modal,
     notification,
-    Radio,
+    Radio, RadioChangeEvent,
     Select,
     Slider,
     Switch, Tabs,
@@ -57,6 +57,10 @@ import TextArea from "antd/es/input/TextArea";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {nanoid} from "nanoid";
 import {validateMask} from "@/app/utils/mask";
+import {useInitSupportedFunctions} from "@/app/components/plugins";
+import {useGlobalSettingStore} from "@/app/store/global-setting";
+import {usePluginsStore} from "@/app/store/plugins";
+import {useMaskConfigStore} from "@/app/store/mask-config";
 
 // drag and drop helper function
 function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
@@ -72,37 +76,15 @@ export function MaskAvatar(props: { mask: Mask, isTyping?: boolean }) {
 
 export function MaskConfig(props: {
     mask: Mask;
-    updateMask: Updater<Mask>;
+    // updateMask: Updater<Mask>;
     extraListItems?: JSX.Element;
     readonly?: boolean;
     shouldSyncFromGlobal?: boolean;
 }) {
-    const config = useAppConfig();
-
-    // console.log("MaskConfig:" + JSON.stringify(props.mask));
     const [showPicker, setShowPicker] = useState(false);
     const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
-    const [contextSourcesOptions, setContextSourcesOptions] = useState('web_search');
-    const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
-    const [searchContextNums, setSearchContextNums] = useState(relevantSearchOptions?.search_top_k ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
-    const [webSearchResultsCount, setWebSearchResultsCount] = useState(relevantSearchOptions?.web_search_results_count ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
+    // const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
     const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
-
-    const onWebSearchResultsCountChange = (val: number | null) => {
-        setWebSearchResultsCount(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
-        props.updateMask(
-            (mask) =>
-                (mask.relevantSearchOptions.web_search_results_count = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count),
-        );
-    }
-
-    const onSearchContextNumsChange = (val: number | null) => {
-        setSearchContextNums(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
-        props.updateMask(
-            (mask) =>
-                (mask.relevantSearchOptions.search_top_k = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k),
-        );
-    }
 
     const userFolderStore = useUserFolderStore();
     const navigate = useNavigate();
@@ -120,51 +102,48 @@ export function MaskConfig(props: {
         }
     })
 
-    const updateConfig = (updater: (config: ModelConfig) => void) => {
-        const config = {...props.mask.modelConfig};
-        updater(config);
-        props.updateMask((mask) => {
-            mask.modelConfig = config;
-            // if user changed current session mask, it will disable auto sync
-            mask.syncGlobalConfig = false;
-        });
-        // console.log("modelConfig:" + JSON.stringify(props.mask.modelConfig));
-    };
+    // const updateConfig = (updater: (config: ModelConfig) => void) => {
+    //     const config = {...props.mask.modelConfig};
+    //     updater(config);
+    //     props.updateMask((mask) => {
+    //         mask.modelConfig = config;
+    //         // if user changed current session mask, it will disable auto sync
+    //         mask.syncGlobalConfig = false;
+    //     });
+    //     // console.log("modelConfig:" + JSON.stringify(props.mask.modelConfig));
+    // };
 
     const copyMaskLink = () => {
         const maskLink = `${location.protocol}//${location.host}/#${Path.NewChat}?mask=${props.mask.id}`;
         copyToClipboard(maskLink);
     };
 
-    const handleOnAddContext = (checked: boolean) => {
-        let context = (props.mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
-        const defaultAddedContextStr = Locale.Mask.PromptItem.DefaultAddedContextStr;
-        const userRolePrompt = context.find((c) => c.role === "user");
-
-        // console.log("context:" + JSON.stringify(context));
-        props.updateMask((mask) => {
-            mask.haveContext = checked;
-            mask.context = context;
-        });
-    }
-
     const maskNameRef = useRef<string>(props.mask.name);
 
     const Tag0 = () => {
+        const maskConfigStore = useMaskConfigStore();
+        const [fewShotMessages, setFewShotMessages] = useState(props.mask.fewShotContext ?? {});
+        const [context, setContext] = useState(props.mask.context ?? []);
+        const currentMask = maskConfigStore.maskConfig ?? props.mask;
+
         return (
             <>
                 <ContextPrompts
-                    context={props.mask.context}
+                    context={context}
                     updateContext={(updater) => {
-                        const context = props.mask.context.slice();
-                        updater(context);
-                        props.updateMask((mask) => (mask.context = context));
+                        const newContext = context.slice();
+                        updater(newContext);
+                        maskConfigStore.setMaskConfig({...currentMask, context: newContext});
+                        setContext(newContext);
+                        // props.updateMask((mask) => (mask.newContext = newContext));
                     }}
-                    fewShotMessages={props.mask.fewShotContext}
+                    fewShotMessages={fewShotMessages}
                     updateFewShotMessages={(updater) => {
-                        const newFewShotMessages = {...props.mask.fewShotContext};
+                        const newFewShotMessages = {...fewShotMessages};
                         updater(newFewShotMessages);
-                        props.updateMask((mask) => (mask.fewShotContext = newFewShotMessages));
+                        maskConfigStore.setMaskConfig({...currentMask, fewShotContext: newFewShotMessages});
+                        setFewShotMessages(newFewShotMessages);
+                        // props.updateMask((mask) => (mask.fewShotContext = newFewShotMessages));
                     }}
                 />
                 <CustomList>
@@ -173,7 +152,8 @@ export function MaskConfig(props: {
                             content={
                                 <AvatarPicker
                                     onEmojiClick={(emoji) => {
-                                        props.updateMask((mask) => (mask.avatar = emoji));
+                                        maskConfigStore.setMaskConfig({...currentMask, avatar: emoji});
+                                        // props.updateMask((mask) => (mask.avatar = emoji));
                                         setShowPicker(false);
                                     }}
                                 />
@@ -185,7 +165,7 @@ export function MaskConfig(props: {
                                 onClick={() => setShowPicker(true)}
                                 style={{cursor: "pointer"}}
                             >
-                                <MaskAvatar mask={props.mask}/>
+                                <MaskAvatar mask={currentMask}/>
                             </div>
                         </Popover>
                     </CustomListItem>
@@ -195,14 +175,15 @@ export function MaskConfig(props: {
                             style={{
                                 width: "60%",
                             }}
-                            defaultValue={props.mask.name}
+                            defaultValue={currentMask.name}
                             onChange={(e) => {
                                 maskNameRef.current = e.currentTarget.value;
                             }}
                             onBlur={(e) => {
-                                props.updateMask((mask) => {
-                                    mask.name = maskNameRef.current
-                                });
+                                maskConfigStore.setMaskConfig({...currentMask, name: maskNameRef.current});
+                                // props.updateMask((mask) => {
+                                //     mask.name = maskNameRef.current
+                                // });
                             }}
                         />
                     </CustomListItem>
@@ -212,7 +193,131 @@ export function MaskConfig(props: {
     }
 
     const Tag1 = () => {
+        const maskConfigStore = useMaskConfigStore();
+
+        let currentMask = {...props.mask};
+        // console.log("currentMask:" + JSON.stringify(currentMask));
         const [isAdvancedConfig, setIsAdvancedConfig] = useState(false);
+        const [haveContext, setHaveContext] = useState(currentMask.haveContext);
+        const [searchContextNums, setSearchContextNums] =
+            useState(currentMask.relevantSearchOptions?.search_top_k ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
+
+        const [webSearchResultsCount, setWebSearchResultsCount] = useState(
+            currentMask.relevantSearchOptions?.web_search_results_count ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
+        const [contextSourcesOptions, setContextSourcesOptions] =
+            useState((props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS).retriever_type);
+
+        const onWebSearchResultsCountChange = (val: number | null) => {
+            setWebSearchResultsCount(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            const currentMaskConfig = {...maskConfig,
+                relevantSearchOptions:
+                    {...maskConfig.relevantSearchOptions, web_search_results_count: val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count}};
+            // console.log("currentMaskConfig:" + JSON.stringify(currentMaskConfig));
+            maskConfigStore.setMaskConfig(currentMaskConfig);
+            // props.updateMask(
+            //     (mask) =>
+            //         (mask.relevantSearchOptions.web_search_results_count = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count),
+            // );
+        }
+
+        const handleOnAddContext = (checked: boolean) => {
+            let context = (currentMask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+            const defaultAddedContextStr = Locale.Mask.PromptItem.DefaultAddedContextStr;
+            const userRolePrompt = context.find((c) => c.role === "user");
+            setHaveContext(checked);
+            // console.log("context:" + JSON.stringify(context));
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            maskConfigStore.setMaskConfig({...maskConfig, haveContext: checked, context: context});
+            // props.updateMask((mask) => {
+            //     mask.haveContext = checked;
+            //     mask.context = context;
+            // });
+        }
+
+        const onSearchContextNumsChange = (val: number | null) => {
+            setSearchContextNums(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            // console.log("maskConfig For onSearchContextNumsChange:" + JSON.stringify(maskConfig));
+            maskConfigStore.setMaskConfig({...maskConfig,
+                relevantSearchOptions: {...maskConfig.relevantSearchOptions, search_top_k: val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k}});
+            // props.updateMask(
+            //     (mask) =>
+            //         (mask.relevantSearchOptions.search_top_k = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k),
+            // );
+        }
+
+
+        const onContextSourceChange = (value: string) => {
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            maskConfigStore.setMaskConfig({...maskConfig,
+                relevantSearchOptions: {...maskConfig.relevantSearchOptions, retriever_type: value}});
+            // props.updateMask((mask) => {
+            //     mask.relevantSearchOptions.retriever_type = value;
+            // });
+            if (value === "web_search") {
+                maskConfigStore.setMaskConfig({...maskConfig,
+                    relevantSearchOptions: {...maskConfig.relevantSearchOptions, local_vs_folder_name: "web_search"}});
+                // props.updateMask((mask) => {
+                //     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                // });
+            } else if (value === "fixed" || value === "local_vector_stores") {
+                const userFolders = userFolderStore.userFolders;
+                if (userFolders.length === 0) {
+                    maskConfigStore.setMaskConfig({...maskConfig,
+                        relevantSearchOptions: {...maskConfig.relevantSearchOptions,
+                            retriever_type: "web_search", local_vs_folder_name: "web_search"}});
+                    // props.updateMask((mask) => {  //先设置默认值，后续再修改
+                    //     mask.relevantSearchOptions.retriever_type = "web_search";
+                    //     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                    // });
+                    setIsOpenMakingLocalVSModal(true);
+                    return;
+                }
+                maskConfigStore.setMaskConfig({...maskConfig,
+                    relevantSearchOptions: {...maskConfig.relevantSearchOptions,
+                        local_vs_folder_name: userFolders[0].folderName ?? "" as string, user_folder_id: userFolders[0].id}});
+                // props.updateMask((mask) => {
+                //     mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "" as string;
+                //     mask.relevantSearchOptions.user_folder_id = userFolders[0].id;
+                // });
+            }
+            setContextSourcesOptions(value);
+        }
+
+        const onSelectedUserFolderChange = (selectedId: string) => {
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+
+            for (const userFolder of userFolderStore.userFolders) {
+                if (userFolder.id === selectedId) {
+                    maskConfigStore.setMaskConfig({...maskConfig,
+                        relevantSearchOptions: {...maskConfig.relevantSearchOptions,
+                            local_vs_folder_name: userFolder.folderName ?? "", user_folder_id: userFolder.id}});
+                    // props.updateMask((mask) => {
+                    //     mask.relevantSearchOptions.local_vs_folder_name = userFolder.folderName ?? "";
+                    //     mask.relevantSearchOptions.user_folder_id = userFolder.id;
+                    // });
+                    userFolderStore.setCurrentSelectedFolder(userFolder);
+                    break;
+                }
+            }
+        }
+
+        const onHideContextChange = (checked: boolean) => {
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            maskConfigStore.setMaskConfig({...maskConfig, hideContext: checked});
+            // props.updateMask((mask) => {
+            //     mask.hideContext = checked;
+            // });
+        }
+
+        const onIsChineseTextChange = (checked: boolean) => {
+            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            maskConfigStore.setMaskConfig({...maskConfig, isChineseText: checked});
+            // props.updateMask((mask) => {
+            //     mask.isChineseText = checked;
+            // });
+        }
 
         return (
             <>
@@ -240,47 +345,23 @@ export function MaskConfig(props: {
                             onChange={handleOnAddContext}/>
                     </CustomListItem>
                     {
-                        props.mask.haveContext ? (
+                        haveContext ? (
                             <>
                                 <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
                                     <Select
-                                        defaultValue={relevantSearchOptions.retriever_type ?? "web_search"}
-                                        value={relevantSearchOptions.retriever_type}
+                                        defaultValue={contextSourcesOptions ?? "web_search"}
+                                        value={contextSourcesOptions}
                                         options={[
                                             {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch, value: "web_search"},
                                             {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores, value: "local_vector_stores"},
                                             {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed, value: "fixed"},
                                         ]}
-                                        onChange={(value) => {
-                                            props.updateMask((mask) => {
-                                                mask.relevantSearchOptions.retriever_type = value;
-                                            });
-                                            if (value === "web_search") {
-                                                props.updateMask((mask) => {
-                                                    mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                                                });
-                                            } else if (value === "fixed" || value === "local_vector_stores") {
-                                                const userFolders = userFolderStore.userFolders;
-                                                if (userFolders.length === 0) {
-                                                    props.updateMask((mask) => {  //先设置默认值，后续再修改
-                                                        mask.relevantSearchOptions.retriever_type = "web_search";
-                                                        mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                                                    });
-                                                    setIsOpenMakingLocalVSModal(true);
-                                                    return;
-                                                }
-                                                props.updateMask((mask) => {
-                                                    mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "" as string;
-                                                    mask.relevantSearchOptions.user_folder_id = userFolders[0].id;
-                                                });
-                                            }
-                                            setContextSourcesOptions(value);
-                                        }}
+                                        onChange={(value) => {onContextSourceChange}}
                                         style={{width: 130}}
                                     />
                                 </CustomListItem>
                                 {
-                                    relevantSearchOptions.retriever_type === "web_search" && isAdvancedConfig && (
+                                    contextSourcesOptions === "web_search" && isAdvancedConfig && (
                                         <CustomListItem
                                             title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
                                             subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
@@ -318,8 +399,8 @@ export function MaskConfig(props: {
                                     )
                                 }
                                 {
-                                    relevantSearchOptions.retriever_type === "local_vector_stores"
-                                    ||  relevantSearchOptions.retriever_type === "fixed"? (
+                                    contextSourcesOptions === "local_vector_stores"
+                                    ||  contextSourcesOptions === "fixed"? (
                                         <>
                                             {
                                                 localVSFoldersOptions.length > 0 ? (
@@ -349,27 +430,19 @@ export function MaskConfig(props: {
                                                         <Select
                                                             options={localVSFoldersOptions}
                                                             defaultValue={localVSFoldersOptions[0].value}
-                                                            onChange={(selectedId: string) => {
-                                                                for (const userFolder of userFolderStore.userFolders) {
-                                                                    if (userFolder.id === selectedId) {
-                                                                        props.updateMask((mask) => {
-                                                                            mask.relevantSearchOptions.local_vs_folder_name = userFolder.folderName ?? "";
-                                                                            mask.relevantSearchOptions.user_folder_id = userFolder.id;
-                                                                        });
-                                                                        userFolderStore.setCurrentSelectedFolder(userFolder);
-                                                                        break;
-                                                                    }
-                                                                }}
-                                                            }
+                                                            onChange={onSelectedUserFolderChange}
                                                         >
-
                                                         </Select>
                                                     </CustomListItem>
                                                 ) : (() => {
-                                                    props.updateMask((mask) => {  //先设置默认值，后续再修改
-                                                        mask.relevantSearchOptions.retriever_type = "web_search";
-                                                        mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                                                    });
+                                                    const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+                                                    maskConfigStore.setMaskConfig({...maskConfig,
+                                                        relevantSearchOptions: {...maskConfig.relevantSearchOptions,
+                                                            retriever_type: "web_search", local_vs_folder_name: "web_search"}});
+                                                    // props.updateMask((mask) => {  //先设置默认值，后续再修改
+                                                    //     mask.relevantSearchOptions.retriever_type = "web_search";
+                                                    //     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                                                    // });
                                                     setIsOpenMakingLocalVSModal(true);
                                                 })
                                             }
@@ -390,11 +463,7 @@ export function MaskConfig(props: {
                                         checkedChildren={<CheckOutlined/>}
                                         unCheckedChildren={<CloseOutlined/>}
                                         defaultChecked={props.mask.hideContext}
-                                        onChange={(checked) => {
-                                            props.updateMask((mask) => {
-                                                mask.hideContext = checked;
-                                            });
-                                        }}/>
+                                        onChange={onHideContextChange}/>
                                 </CustomListItem>
                             </>
                         ) : null
@@ -407,11 +476,7 @@ export function MaskConfig(props: {
                             checkedChildren={<CheckOutlined/>}
                             unCheckedChildren={<CloseOutlined/>}
                             defaultChecked={props.mask.isChineseText}
-                            onChange={(checked) => {
-                                props.updateMask((mask) => {
-                                    mask.isChineseText = checked;
-                                });
-                            }}/>
+                            onChange={onIsChineseTextChange}/>
                     </CustomListItem>
                     {/*{!props.shouldSyncFromGlobal ? (*/}
                     {/*    <ListItem*/}
@@ -473,6 +538,7 @@ export function MaskConfig(props: {
 
     const Tag2 = () => {
         const [isAdvancedConfig, setIsAdvancedConfig] = useState(false);
+        const currentMask = {...props.mask};
 
         return (
             <>
@@ -481,15 +547,18 @@ export function MaskConfig(props: {
                 </Button>
                 <CustomList>
                     <ModelConfigList
-                        modelConfig={props.mask.modelConfig}
-                        updateConfig={(updater) => {
-                            const modelConfig = {...props.mask.modelConfig};
-                            updater(modelConfig);
-                            props.updateMask((mask) => {
-                                mask.modelConfig = modelConfig;
-                                mask.syncGlobalConfig = false;
-                            });
-                        }}
+                        mask={currentMask}
+                        // modelConfig={props.mask.modelConfig}
+                        // updateConfig={(updater) => {
+                        //     const modelConfig = {...props.mask.modelConfig};
+                        //     updater(modelConfig);
+                        //     maskConfigStore.setMaskConfig({...props.mask,
+                        //         modelConfig: modelConfig, syncGlobalConfig: false});
+                        //     // props.updateMask((mask) => {
+                        //     //     mask.modelConfig = modelConfig;
+                        //     //     mask.syncGlobalConfig = false;
+                        //     // });
+                        // }}
                         isAdvancedConfig={isAdvancedConfig}
                     />
                 </CustomList>
@@ -568,7 +637,6 @@ export function ContextPrompts(props: {
 }) {
     const context = (props.context ?? []).slice(0, 1);  //目前只支持system 的 prompt
     const shownFewShotMessages = props.fewShotMessages;
-    // const maskStore = useMaskStore();
 
     const addFewShotMsgs = (coupleMsg: [ChatMessage, ChatMessage]) => {
         const randId = nanoid();
@@ -615,66 +683,51 @@ export function ContextPrompts(props: {
                     </div>
                 ))}
                 {
-                    shownFewShotMessages && Object.keys(shownFewShotMessages).length > 0 ? (
-                        Object.entries(shownFewShotMessages).map(([id, value], i) => {
-                            const [userContent, setUserContent] = useState<string>(value[0].content ?? "");
-                            const [assistantContent, setAssistantContent] = useState<string>(value[1].content ?? "");
-
-                            return (<div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
-                                <Card size={"small"} title={Locale.Mask.ContextPrompt.CardTitle}
-                                      extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
-                                    <div className={chatStyle["context-prompt-row"]}>
-                                        <div>
-                                            <Tag bordered={false} color={Locale.Mask.PromptItem.User.color}>
-                                                {Locale.Mask.PromptItem.User.name}
-                                            </Tag>
-                                        </div>
-                                        <TextArea
-                                            value={userContent}
-                                            minLength={1}
-                                            maxLength={400}
-                                            autoSize={true}
-                                            allowClear={true}
-                                            onChange={(e) => {
-                                                const lastUserMsg: ChatMessage = value[0];
-                                                const content = e.target.value as any;
-                                                setUserContent(content);
-                                                // updateFewShotMsgs(id, [{...lastUserMsg, content}, value[1]])
-                                            }}
-                                            onBlur={(e) => {
-                                                const lastUserMsg: ChatMessage = value[0];
-                                                updateFewShotMsgs(id, [{...lastUserMsg, content: userContent}, value[1]])
-                                            }}
-                                        />
+                    Object.entries(shownFewShotMessages).map(([id, value], i) => {
+                        return (<div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
+                            <Card size={"small"} title={Locale.Mask.ContextPrompt.CardTitle}
+                                  extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
+                                <div className={chatStyle["context-prompt-row"]}>
+                                    <div>
+                                        <Tag bordered={false} color={Locale.Mask.PromptItem.User.color}>
+                                            {Locale.Mask.PromptItem.User.name}
+                                        </Tag>
                                     </div>
-                                    <div className={chatStyle["context-prompt-row"]}>
-                                        <div>
-                                            <Tag bordered={false} color={Locale.Mask.PromptItem.Assistant.color}>
-                                                {Locale.Mask.PromptItem.Assistant.name}
-                                            </Tag>
-                                        </div>
-                                        <TextArea
-                                            value={assistantContent}
-                                            minLength={1}
-                                            maxLength={400}
-                                            autoSize={true}
-                                            allowClear={true}
-                                            onChange={(e) => {
-                                                const lastAssistantMsg: ChatMessage = value[1];
-                                                const content = e.target.value as any;
-                                                setAssistantContent(content);
-                                                // updateFewShotMsgs(id, [value[0], {...lastAssistantMsg, content}])
-                                            }}
-                                            onBlur={(e) => {
-                                                const lastAssistantMsg: ChatMessage = value[1];
-                                                updateFewShotMsgs(id, [value[0], {...lastAssistantMsg, content: assistantContent}])
-                                            }}
-                                        />
+                                    <TextArea
+                                        defaultValue={value[0].content ?? ""}
+                                        minLength={1}
+                                        maxLength={400}
+                                        autoSize={true}
+                                        allowClear={true}
+                                        onBlur={(e) => {
+                                            const lastUserMsg: ChatMessage = value[0];
+                                            value[0].content = e.target.value;
+                                            updateFewShotMsgs(id, [{...lastUserMsg, content: value[0].content ?? ""}, value[1]])
+                                        }}
+                                    />
+                                </div>
+                                <div className={chatStyle["context-prompt-row"]}>
+                                    <div>
+                                        <Tag bordered={false} color={Locale.Mask.PromptItem.Assistant.color}>
+                                            {Locale.Mask.PromptItem.Assistant.name}
+                                        </Tag>
                                     </div>
-                                </Card>
-                            </div>
-                        )})
-                    ) : null
+                                    <TextArea
+                                        defaultValue={value[1].content ?? ""}
+                                        minLength={1}
+                                        maxLength={400}
+                                        autoSize={true}
+                                        allowClear={true}
+                                        onBlur={(e) => {
+                                            const lastAssistantMsg: ChatMessage = value[1];
+                                            value[1].content = e.target.value;
+                                            updateFewShotMsgs(id, [value[0], {...lastAssistantMsg, content: value[1].content ?? ""}])
+                                        }}
+                                    />
+                                </div>
+                            </Card>
+                        </div>
+                    )})
                 }
                 <div>
                     <Button
@@ -777,14 +830,15 @@ export function MaskPage() {
         });
     }
 
-    const updateMask = (mask?: Mask) => {
-        if (!mask) {
+    const updateMask = () => {
+        const applyedMask = useMaskConfigStore.getState().maskConfig;
+        if (!applyedMask) {
             return;
         }
         try {
-            validateMask(session.mask);
+            validateMask(applyedMask);
         } catch (e: any) {
-            console.log("validate mask failed", e);
+            console.log("validate applyedMask failed", e);
             maskStore.setShowUserPromptError(true);
             notify['error']({
                 message: e.message,
@@ -793,11 +847,11 @@ export function MaskPage() {
             return;
         }
 
-        const maskUpdateRequestVO = assembleSaveOrUpdateMaskRequest(mask);
+        const maskUpdateRequestVO = assembleSaveOrUpdateMaskRequest(applyedMask);
         maskApi.updateMask(maskUpdateRequestVO)
             .then((res: void) => {
-                maskStore.update(mask.id, (mask) => {
-                    mask = {...mask};
+                maskStore.update(applyedMask.id, (mask) => {
+                    return applyedMask;
                 });
                 notify['success']({
                     message: Locale.Common.OperateSuccess,
@@ -814,9 +868,10 @@ export function MaskPage() {
 
     const handleOnApplyMask = async (mask: Mask) => {
         // create or update mask setting
-        updateMask(mask);
+        updateMask();
         navigate(Path.Chat);
-        chatStore.newSession(mask);
+        const applyMask = useMaskConfigStore.getState().maskConfig ?? mask;
+        chatStore.newSession(applyMask);
     }
 
     const downloadAll = () => {
@@ -986,14 +1041,14 @@ export function MaskPage() {
                 <Modal
                     open={isModalOpen}
                     title={Locale.Mask.EditModal.Title(editingMask?.builtin)}
-                    onCancel={() => updateMask(editingMask)}
+                    onCancel={() => {}}
                     width={"75vw"}
                     footer={[
                         <Button
                             icon={<DownloadIcon/>}
                             key="updateMask"
                             onClick={() => {
-                                updateMask(editingMask)
+                                updateMask()
                             }}
                         >{Locale.Mask.Config.SaveAs}</Button>,
                         <Button
@@ -1023,9 +1078,9 @@ export function MaskPage() {
                 >
                     <MaskConfig
                         mask={editingMask}
-                        updateMask={(updater) =>
-                            maskStore.update(editingMaskId!, updater)
-                        }
+                        // updateMask={(updater) =>
+                        //     maskStore.update(editingMaskId!, updater)
+                        // }
                         readonly={editingMask.builtin}
                     />
                 </Modal>

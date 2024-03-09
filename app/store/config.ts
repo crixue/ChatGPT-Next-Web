@@ -30,7 +30,7 @@ export const ModalConfigValidator = {
         return x as ModelType;
     },
     maxTokens(x: number) {
-        return limitNumber(x, 0, 100000, 2000);
+        return limitNumber(x, 0, 4000, 2000);
     },
     presence_penalty(x: number) {
         return limitNumber(x, -2, 2, 0);
@@ -39,10 +39,13 @@ export const ModalConfigValidator = {
         return limitNumber(x, -2, 2, 0);
     },
     temperature(x: number) {
-        return limitNumber(x, 0, 1, 1);
+        return limitNumber(x, 0, 1, 0.5);
     },
     top_p(x: number) {
-        return limitNumber(x, 0, 1, 1);
+        return limitNumber(x, 0, 1, 0.9);
+    },
+    historyMessageCount(x: number) {
+        return limitNumber(x, 0, 10, 4);
     },
 };
 

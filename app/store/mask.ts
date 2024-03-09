@@ -41,7 +41,7 @@ export type MaskState = typeof DEFAULT_MASK_STATE;
 type MaskStore = MaskState & {
     initMasks: () => void;
     create: (mask?: Partial<Mask>) => Promise<Mask>;
-    update: (id: string, updater: (mask: Mask) => void) => void;
+    update: (id: string, updater: (mask: Mask) => Mask) => void;
     delete: (id: string) => void;
     search: (text: string) => Mask[];
     get: (id?: string) => Mask | null;
@@ -107,12 +107,12 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
 
             return masks[createdMask.id];
         },
-        update(id, updater: (mask: Mask) => void) {
+        update(id, updater: (mask: Mask) => Mask) {
             const masks = get().masks;
             const mask = masks[id];
             if (!mask) return;
-            const updateMask = {...mask};
-            updater(updateMask);
+            let updateMask = {...mask};
+            updateMask = updater(updateMask);
             masks[id] = updateMask;
             set(() => ({masks}));
         },

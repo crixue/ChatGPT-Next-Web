@@ -1,4 +1,4 @@
-import {ModalConfigValidator, useAppConfig} from "../store";
+import {Mask, ModalConfigValidator, useAppConfig} from "../store";
 
 import Locale from "../locales";
 import {CustomListItem, showConfirm,} from "./ui-lib";
@@ -12,94 +12,151 @@ import {
     Select,
     Switch
 } from "antd";
-import React, {useEffect} from "react";
+import React, {FocusEvent, useEffect} from "react";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 import {ModelConfig, Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
 import {usePluginsStore} from "@/app/store/plugins";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
+import {useMaskConfigStore} from "@/app/store/mask-config";
 
+
+const simpleParseFloat = (val: string, defaultVal: string) => {
+    return parseFloat(parseFloat(val || defaultVal).toFixed(1));
+}
 
 export function ModelConfigList(props: {
-    modelConfig: ModelConfig;
-    updateConfig: (updater: (config: ModelConfig) => void) => void;
+    mask: Mask;
+    // modelConfig: ModelConfig;
+    // updateConfig: (updater: (config: ModelConfig) => void) => void;
     isAdvancedConfig: boolean;
 }) {
     useInitSupportedFunctions(true);
 
     // console.log(props.modelConfig);
+    const currentMask = {...props.mask};
+
     const config = useAppConfig();
     const globalSettingStore = useGlobalSettingStore();
     const pluginsStore = usePluginsStore();
+    const maskConfigStore = useMaskConfigStore();
     const navigate = useNavigate();
 
     const [notify, contextHolder] = notification.useNotification();
-    const [temperature, setTemperature] = React.useState<number>(props.modelConfig.temperature);
-    const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(props.modelConfig.frequencyPenalty);
+    const [temperature, setTemperature] = React.useState<number>(currentMask.modelConfig.temperature);
 
-    const onTemperatureChange = (val: number | null) => {
-        setTemperature(val || 1);
-        props.updateConfig(
-            (config) =>
-            {
-                config.temperature = ModalConfigValidator.temperature(val || 1,);
+    const onTemperatureChange = (value: string) => {
+        const defaultVal = 0.5;
+        const val = ModalConfigValidator.temperature(simpleParseFloat(value, defaultVal.toString()));
+        setTemperature(val || defaultVal);
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+                modelConfig: {
+                    ...maskConfig.modelConfig,
+                    temperature: val || defaultVal,
+                }
+            });
+
+        // props.updateConfig(
+        //     (config) =>
+        //     {
+        //         config.temperature = ModalConfigValidator.temperature(val || 1,);
+        //     }
+        // );
+    }
+
+    const [topP, setTopP] = React.useState<number>(props.mask.modelConfig.topP);
+    const onTopPChange = (value: string) => {
+        const defaultVal = 0.9;
+        // props.updateConfig(
+        //     (config) =>
+        //         (config.topP = ModalConfigValidator.top_p(
+        //             val || 1,
+        //         )),
+        // );
+        const val = ModalConfigValidator.top_p(simpleParseFloat(value, defaultVal.toString()));
+        setTopP(val || defaultVal);
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                topP: val || defaultVal,
             }
-        );
+        });
     }
 
-    const [topP, setTopP] = React.useState<number>(props.modelConfig.topP);
-    const onTopPChange = (val: number | null) => {
-        // console.log("Before update topP:" + props.modelConfig.topP + " And after update topP:" + val);
-        props.updateConfig(
-            (config) =>
-                (config.topP = ModalConfigValidator.top_p(
-                    val || 1,
-                )),
-        );
-        setTopP(val || 1);
+    const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(currentMask.modelConfig.frequencyPenalty);
+    const onFrequencyPenaltyChange = (value: string) => {
+        const defaultVal = 1.2;
+        const val = ModalConfigValidator.frequencyPenalty(simpleParseFloat(value, defaultVal.toString()));
+        setFrequencyPenalty(val || defaultVal);
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                frequencyPenalty: val || defaultVal,
+            }
+        });
+        // props.updateConfig(
+        //     (config) =>
+        //         (config.frequencyPenalty = ModalConfigValidator.frequencyPenalty(
+        //             val || 1.1,
+        //         )),
+        // );
     }
 
-    const onFrequencyPenaltyChange = (val: number | null) => {
-        setFrequencyPenalty(val || 1.1);
-        props.updateConfig(
-            (config) =>
-                (config.frequencyPenalty = ModalConfigValidator.frequencyPenalty(
-                    val || 1.1,
-                )),
-        );
+    const [historyMessageCount, setHistoryMessageCount] = React.useState(currentMask.modelConfig.historyMessageCount);
+    const onHistoryMessageCountChange = (value: string) => {
+        const defaultVal = 0;
+        const val = ModalConfigValidator.historyMessageCount(parseInt(value) || defaultVal);
+        setHistoryMessageCount(val);
+        if (val > 0) {
+            setContainHistory(true);
+        }
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                historyMessageCount: val,
+            }
+        });
+        // props.updateConfig(
+        //     (config) =>
+        //
+        //     {config.historyMessageCount = val || 0;},
+        // );
     }
-
-    const [historyMessageCount, setHistoryMessageCount] = React.useState(props.modelConfig.historyMessageCount);
-    const onHistoryMessageCountChange = (val: number | null) => {
-        setHistoryMessageCount(val || 0);
-        props.updateConfig(
-            (config) =>
-
-            {config.historyMessageCount = val || 0;},
-        );
-    }
-
-    const [streamingMode, setStreamingMode] = React.useState<boolean>(props.modelConfig.streaming ?? true);
-    // console.log("streamingMode:" + streamingMode);
-    const onStreamingModeChange = (checked: boolean) => {
-        // checked = !checked;
-        // console.log("streamingMode now:" + checked);
-        setStreamingMode(checked);
-        props.updateConfig(
-            (config) =>
-                (config.streaming = checked),
-        );
-    }
-
-    const [containHistory, setContainHistory] = React.useState<boolean>(props.modelConfig.historyMessageCount == 0 ? false : true);
+    const [containHistory, setContainHistory] = React.useState<boolean>(props.mask.modelConfig.historyMessageCount != 0);
     const onContainHistoryChange = (checked: boolean) => {
         // console.log("containHistory now:" + checked);
         setContainHistory(checked);
         if(!checked) {
-            onHistoryMessageCountChange(0);
+            onHistoryMessageCountChange("0");
         } else {
-            onHistoryMessageCountChange(4);
+            onHistoryMessageCountChange("4");
         }
+    }
+    const [streamingMode, setStreamingMode] = React.useState<boolean>(props.mask.modelConfig.streaming ?? true);
+    // console.log("streamingMode:" + streamingMode);
+    const onStreamingModeChange = (checked: boolean) => {
+        // console.log("streamingMode now:" + checked);
+        setStreamingMode(checked);
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                streaming: checked,
+            }
+        });
+        // props.updateConfig(
+        //     (config) =>
+        //         (config.streaming = checked),
+        // );
     }
 
     const allSupportPlugins = pluginsStore.supportedFunctions;
@@ -108,10 +165,18 @@ export function ModelConfigList(props: {
 
     const onPluginsChange = (val: string[] | null) => {
         setCheckedPluginIds(val || pluginsStore.defaultShownPluginIds);
-        props.updateConfig(
-            (config) =>
-                (config.checkedPluginIds = val || pluginsStore.defaultShownPluginIds),
-        );
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                checkedPluginIds: val || pluginsStore.defaultShownPluginIds,
+            }
+        });
+        // props.updateConfig(
+        //     (config) =>
+        //         (config.checkedPluginIds = val || pluginsStore.defaultShownPluginIds),
+        // );
     }
 
     const chatModeOptions = [
@@ -131,12 +196,38 @@ export function ModelConfigList(props: {
     const onChatModeChange = ({ target: { value } }: RadioChangeEvent) => {
         setChatMode(value);
         if(value === "creative") {
-            onTemperatureChange(0.8);
+            onTemperatureChange("0.8");
         } else if(value === "balanced") {
-            onTemperatureChange(0.5);
+            onTemperatureChange("0.5");
         } else {
-            onTemperatureChange(0.2);
+            onTemperatureChange("0.2");
         }
+    }
+
+    const [maxTokens, setMaxTokens] = React.useState<number>(props.mask.modelConfig.maxTokens || 200);
+    const onMaxTokensChange = (value: string) => {
+        const defaultVal = 2000;
+        const val = ModalConfigValidator.maxTokens(parseInt(value) || defaultVal);
+        setMaxTokens(val || defaultVal);
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                maxTokens: val || defaultVal,
+            }
+        });
+    }
+
+    const onModelChange = (val: string | null) => {
+        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+        maskConfigStore.setMaskConfig({
+            ...maskConfig,
+            modelConfig: {
+                ...maskConfig.modelConfig,
+                model: val || "",
+            }
+        });
     }
 
     const SingleConfig = () => {
@@ -273,14 +364,7 @@ export function ModelConfigList(props: {
                         options={config.supportedModels.map((v, i) => (
                             {label: v.alias, value: v.name}
                         ))}
-                        onChange={(value) => {
-                            props.updateConfig(
-                                (config) =>
-                                    (config.model = ModalConfigValidator.model(
-                                        value,
-                                    )),
-                            );
-                        }}
+                        onChange={onModelChange}
                     />
                 </CustomListItem>
 
@@ -294,8 +378,11 @@ export function ModelConfigList(props: {
                             max={1} // lets limit it to 0-1
                             step={0.1}
                             style={{margin: '0 4px'}}
-                            value={temperature}
-                            onChange={onTemperatureChange}
+                            defaultValue={temperature}
+                            onBlur={(event) => {
+                                const val = event.target.value;
+                                onTemperatureChange(val);
+                            }}
                         />
                     </Col>
                 </CustomListItem>
@@ -309,8 +396,11 @@ export function ModelConfigList(props: {
                             max={1} // lets limit it to 0-1
                             step={0.1}
                             style={{margin: '0 4px'}}
-                            value={topP}
-                            onChange={onTopPChange}
+                            defaultValue={topP}
+                            onBlur={(event) => {
+                                const val = event.target.value;
+                                onTopPChange(val);
+                            }}
                         />
                     </Col>
                 </CustomListItem>
@@ -319,18 +409,14 @@ export function ModelConfigList(props: {
                     subTitle={Locale.Settings.MaxTokens.SubTitle}
                 >
                     <InputNumber
-                        defaultValue={props.modelConfig.maxTokens}
                         min={50}
-                        max={16000}
+                        max={2000}
                         controls
-                        onChange={(val) =>
-                            props.updateConfig(
-                                (config) =>
-                                    (config.maxTokens = ModalConfigValidator.maxTokens(
-                                        val || 2000,
-                                    )),
-                            )
-                        }
+                        defaultValue={maxTokens}
+                        onBlur={(event) => {
+                            const val = event.target.value;
+                            onMaxTokensChange(val);
+                        }}
                     />
                 </CustomListItem>
                 <CustomListItem
@@ -343,8 +429,11 @@ export function ModelConfigList(props: {
                             max={2} // lets limit it to 0-1
                             step={0.1}
                             style={{margin: '0 4px'}}
-                            value={frequencyPenalty}
-                            onChange={onFrequencyPenaltyChange}
+                            defaultValue={frequencyPenalty}
+                            onBlur={(event) => {
+                                const val = event.target.value;
+                                onFrequencyPenaltyChange(val);
+                            }}
                         />
                     </Col>
                 </CustomListItem>
@@ -358,8 +447,11 @@ export function ModelConfigList(props: {
                             max={10} // lets limit it to 0-1
                             step={1}
                             style={{margin: '0 4px'}}
-                            value={historyMessageCount}
-                            onChange={onHistoryMessageCountChange}
+                            defaultValue={historyMessageCount}
+                            onBlur={(event) => {
+                                const val = event.target.value;
+                                onHistoryMessageCountChange(val);
+                            }}
                         />
                     </Col>
                 </CustomListItem>

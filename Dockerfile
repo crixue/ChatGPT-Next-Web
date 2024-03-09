@@ -1,21 +1,50 @@
-FROM node:18-alpine AS base
+# docker build -t art.local:8081/docker-local/lingro-web:latest .
+FROM ubuntu:20.04 as base
 
 FROM base AS deps
 
-RUN apk add --no-cache libc6-compat
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 备份原有的 sources.list 文件
+RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
+
+RUN echo "\
+deb http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse\n\
+deb http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse\n\
+deb http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse\n\
+deb http://mirrors.aliyun.com/ubuntu/ focal-proposed main restricted universe multiverse\n\
+deb http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse\n\
+deb-src http://mirrors.aliyun.com/ubuntu/ focal main restricted universe multiverse\n\
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-security main restricted universe multiverse\n\
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-updates main restricted universe multiverse\n\
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-proposed main restricted universe multiverse\n\
+deb-src http://mirrors.aliyun.com/ubuntu/ focal-backports main restricted universe multiverse" > /etc/apt/sources.list
+
+RUN apt-get update && apt-get install -y tzdata
+
+# 设置时区为上海
+RUN ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN dpkg-reconfigure --frontend noninteractive tzdata
+
+RUN apt-get install -y --no-install-recommends curl software-properties-common git proxychains
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
+RUN npm install -g yarn
 
 WORKDIR /app
 
 COPY package.json yarn.lock ./
 
-RUN yarn config set registry 'https://registry.npmmirror.com/'
-RUN yarn install
+RUN yarn config set registry 'https://registry.npm.taobao.org/'
+# 禁用 SSL 证书验证
+ENV NODE_TLS_REJECT_UNAUTHORIZED=0
+# 在安装依赖之前禁用 yarn 的 SSL 证书验证
+RUN yarn config set strict-ssl false
 
-FROM base AS builder
+RUN yarn add package.json
 
-RUN apk update && apk add --no-cache git
+FROM deps AS builder
 
-ENV OPENAI_API_KEY=""
 ENV CODE=""
 
 WORKDIR /app
@@ -26,8 +55,6 @@ RUN yarn build
 
 FROM base AS runner
 WORKDIR /app
-
-RUN apk add proxychains-ng
 
 ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
