@@ -242,7 +242,6 @@ function DangerItems() {
 
 function SyncItems() {
     const syncStore = useSyncStore();
-    const webdav = syncStore.webDavConfig;
 
     // not ready: https://github.com/Yidadaa/ChatGPT-Next-Web/issues/920#issuecomment-1609866332
     return null;
@@ -267,47 +266,47 @@ function SyncItems() {
                 subTitle={"20 次对话，100 条消息，200 提示词，20 面具"}
             ></CustomListItem>
 
-            <CustomListItem
-                title={"Web Dav Server"}
-                subTitle={Locale.Settings.AccessCode.SubTitle}
-            >
-                <input
-                    value={webdav.server}
-                    type="text"
-                    placeholder={"https://example.com"}
-                    onChange={(e) => {
-                        syncStore.update(
-                            (config) => (config.server = e.currentTarget.value),
-                        );
-                    }}
-                />
-            </CustomListItem>
+            {/*<CustomListItem*/}
+            {/*    title={"Web Dav Server"}*/}
+            {/*    subTitle={Locale.Settings.AccessCode.SubTitle}*/}
+            {/*>*/}
+            {/*    <input*/}
+            {/*        value={webdav.server}*/}
+            {/*        type="text"*/}
+            {/*        placeholder={"https://example.com"}*/}
+            {/*        onChange={(e) => {*/}
+            {/*            syncStore.update(*/}
+            {/*                (config) => (config.server = e.currentTarget.value),*/}
+            {/*            );*/}
+            {/*        }}*/}
+            {/*    />*/}
+            {/*</CustomListItem>*/}
 
-            <CustomListItem title="Web Dav User Name" subTitle="user name here">
-                <input
-                    value={webdav.username}
-                    type="text"
-                    placeholder={"username"}
-                    onChange={(e) => {
-                        syncStore.update(
-                            (config) => (config.username = e.currentTarget.value),
-                        );
-                    }}
-                />
-            </CustomListItem>
+            {/*<CustomListItem title="Web Dav User Name" subTitle="user name here">*/}
+            {/*    <input*/}
+            {/*        value={webdav.username}*/}
+            {/*        type="text"*/}
+            {/*        placeholder={"username"}*/}
+            {/*        onChange={(e) => {*/}
+            {/*            syncStore.update(*/}
+            {/*                (config) => (config.username = e.currentTarget.value),*/}
+            {/*            );*/}
+            {/*        }}*/}
+            {/*    />*/}
+            {/*</CustomListItem>*/}
 
-            <CustomListItem title="Web Dav Password" subTitle="password here">
-                <input
-                    value={webdav.password}
-                    type="text"
-                    placeholder={"password"}
-                    onChange={(e) => {
-                        syncStore.update(
-                            (config) => (config.password = e.currentTarget.value),
-                        );
-                    }}
-                />
-            </CustomListItem>
+            {/*<CustomListItem title="Web Dav Password" subTitle="password here">*/}
+            {/*    <input*/}
+            {/*        value={webdav.password}*/}
+            {/*        type="text"*/}
+            {/*        placeholder={"password"}*/}
+            {/*        onChange={(e) => {*/}
+            {/*            syncStore.update(*/}
+            {/*                (config) => (config.password = e.currentTarget.value),*/}
+            {/*            );*/}
+            {/*        }}*/}
+            {/*    />*/}
+            {/*</CustomListItem>*/}
         </CustomList>
     );
 }
