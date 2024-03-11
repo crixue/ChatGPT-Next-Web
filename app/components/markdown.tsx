@@ -142,6 +142,8 @@ export function Markdown(
 ) {
   const mdRef = useRef<HTMLDivElement>(null);
 
+  // console.log("Markdown render content: " + props.content);
+
   return (
     <div
       className="markdown-body"

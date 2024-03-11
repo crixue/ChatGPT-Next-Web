@@ -4,13 +4,14 @@ import EmojiPicker, {
   Theme as EmojiTheme,
 } from "emoji-picker-react";
 
-import { ModelType } from "../store";
-
 import BotIcon from "../icons/bot.svg";
 import BlackBotIcon from "../icons/black-bot.svg";
+import {getClientConfig} from "@/app/config/client";
+
 
 export function getEmojiUrl(unified: string, style: EmojiStyle) {
-  return `https://cdn.staticfile.org/emoji-datasource-apple/14.0.0/img/${style}/64/${unified}.png`;
+  return `${getClientConfig()?.emojiPrefixUrl}/img/${style}/64/${unified}.png`;
+  // return `https://cdn.staticfile.org/emoji-datasource-apple/14.0.0/img/${style}/64/${unified}.png`;
 }
 
 export function AvatarPicker(props: {
@@ -28,15 +29,13 @@ export function AvatarPicker(props: {
   );
 }
 
-export function Avatar(props: { model?: ModelType; avatar?: string }) {
-  if (props.model) {
+export function Avatar(props: { isModel?: boolean; avatar?: string; spin?: boolean }) {
+  if (props.isModel) {
     return (
       <div className="no-dark">
-        {props.model?.startsWith("gpt-4") ? (
-          <BlackBotIcon className="user-avatar" />
-        ) : (
-          <BotIcon className="user-avatar" />
-        )}
+        {
+            props.spin ? <BlackBotIcon className="user-avatar spin-avatar" /> : <BlackBotIcon className="user-avatar" />
+        }
       </div>
     );
   }

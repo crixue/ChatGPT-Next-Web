@@ -1,126 +1,139 @@
-import { BUILTIN_MASKS } from "../masks";
-import { getLang, Lang } from "../locales";
-import { DEFAULT_TOPIC, ChatMessage } from "./chat";
-import { ModelConfig, useAppConfig } from "./config";
-import { StoreKey } from "../constant";
-import { nanoid } from "nanoid";
-import { createPersistStore } from "../utils/store";
+import {create} from "zustand";
+import {getLang, Lang} from "../locales";
+import {DEFAULT_TOPIC, ChatMessage} from "./chat";
+
+import {
+    DEFAULT_CONFIG, DEFAULT_PROMPT_TEMPLATE,
+    DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+    ModelConfig, PromptTemplate,
+    SearchContextSourceConfig, StoreKey
+} from "../constant";
+import {nanoid} from "nanoid";
+import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
+import {MaskItemResponseVO} from "@/app/types/mask-vo";
 
 export type Mask = {
-  id: string;
-  createdAt: number;
-  avatar: string;
-  name: string;
-  hideContext?: boolean;
-  context: ChatMessage[];
-  syncGlobalConfig?: boolean;
-  modelConfig: ModelConfig;
-  lang: Lang;
-  builtin: boolean;
+    id: string;
+    createdAt: number;
+    updateAt: number;
+    avatar: string;
+    name: string;
+    hideContext?: boolean;
+    isChineseText?: boolean;
+    haveContext?: boolean;
+    relevantSearchOptions: SearchContextSourceConfig;
+    relevantSearchOptionsJsonStr?: string;
+    promptId?: string,
+    context: ChatMessage[];
+    fewShotContext: Record<string, [ChatMessage, ChatMessage]>;
+    syncGlobalConfig?: boolean;
+    modelConfig: ModelConfig;
+    modelConfigJsonStr?: string;
+    lang: Lang;
+    builtin: boolean;
 };
 
 export const DEFAULT_MASK_STATE = {
-  masks: {} as Record<string, Mask>,
+    masks: {} as Record<string, Mask>,
 };
 
 export type MaskState = typeof DEFAULT_MASK_STATE;
+type MaskStore = MaskState & {
+    initMasks: () => void;
+    create: (mask?: Partial<Mask>) => Promise<Mask>;
+    update: (id: string, updater: (mask: Mask) => Mask) => void;
+    delete: (id: string) => void;
+    search: (text: string) => Mask[];
+    get: (id?: string) => Mask | null;
+    getAll: () => Mask[];
+    ifShowUserPromptError: boolean;
+    setShowUserPromptError: (show: boolean) => void;
+};
 
 export const DEFAULT_MASK_AVATAR = "gpt-bot";
 export const createEmptyMask = () =>
-  ({
-    id: nanoid(),
-    avatar: DEFAULT_MASK_AVATAR,
-    name: DEFAULT_TOPIC,
-    context: [],
-    syncGlobalConfig: true, // use global config as default
-    modelConfig: { ...useAppConfig.getState().modelConfig },
-    lang: getLang(),
-    builtin: false,
-    createdAt: Date.now(),
-  }) as Mask;
-
-export const useMaskStore = createPersistStore(
-  { ...DEFAULT_MASK_STATE },
-
-  (set, get) => ({
-    create(mask?: Partial<Mask>) {
-      const masks = get().masks;
-      const id = nanoid();
-      masks[id] = {
-        ...createEmptyMask(),
-        ...mask,
-        id,
+    ({
+        id: nanoid(),
+        avatar: DEFAULT_MASK_AVATAR,
+        name: DEFAULT_TOPIC,
+        hideContext: false,
+        isChineseText: true,
+        haveContext: true,
+        relevantSearchOptions: DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+        promptId: "",
+        context: DEFAULT_CONFIG.chatMessages,
+        fewShotContext: {},
+        syncGlobalConfig: true, // use global config as default
+        modelConfig: {...DEFAULT_CONFIG.modelConfig},
+        lang: getLang(),
         builtin: false,
-      };
+        createdAt: Date.now(),
+    } as Mask);
 
-      set(() => ({ masks }));
-      get().markUpdate();
 
-      return masks[id];
-    },
-    updateMask(id: string, updater: (mask: Mask) => void) {
-      const masks = get().masks;
-      const mask = masks[id];
-      if (!mask) return;
-      const updateMask = { ...mask };
-      updater(updateMask);
-      masks[id] = updateMask;
-      set(() => ({ masks }));
-      get().markUpdate();
-    },
-    delete(id: string) {
-      const masks = get().masks;
-      delete masks[id];
-      set(() => ({ masks }));
-      get().markUpdate();
-    },
+export const useMaskStore = create<MaskStore>()((set, get) => ({
+        // ...DEFAULT_MASK_STATE,
+        masks: {} as Record<string, Mask>,
+        async initMasks() {
+            const masks =  {} as Record<string, Mask>;
+            const allMasks = await maskApi.getAllMasks();
+            allMasks.forEach((m) => {
+                const modelConfigJsonStr = m.modelConfigJsonStr;
+                if(modelConfigJsonStr) {
+                    m.modelConfig = JSON.parse(modelConfigJsonStr);
+                } else {
+                    m.modelConfig = DEFAULT_CONFIG["modelConfig"];
+                }
 
-    get(id?: string) {
-      return get().masks[id ?? 1145141919810];
-    },
-    getAll() {
-      const userMasks = Object.values(get().masks).sort(
-        (a, b) => b.createdAt - a.createdAt,
-      );
-      const config = useAppConfig.getState();
-      if (config.hideBuiltinMasks) return userMasks;
-      const buildinMasks = BUILTIN_MASKS.map(
-        (m) =>
-          ({
-            ...m,
-            modelConfig: {
-              ...config.modelConfig,
-              ...m.modelConfig,
-            },
-          }) as Mask,
-      );
-      return userMasks.concat(buildinMasks);
-    },
-    search(text: string) {
-      return Object.values(get().masks);
-    },
-  }),
-  {
-    name: StoreKey.Mask,
-    version: 3.1,
+                if (m.relevantSearchOptionsJsonStr) {
+                    m.relevantSearchOptions = JSON.parse(m.relevantSearchOptionsJsonStr,);
+                } else {
+                    m.relevantSearchOptions = DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
+                }
+                masks[m.id] = m;
+            });
+            set(() => ({masks}));
+        },
+        async create(mask) {
+            const masks = get().masks;
+            const newMask = {...createEmptyMask()};
+            console.log("newMask:" + JSON.stringify(newMask));
+            const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
+            const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
+            let createdMask = resp.mask;
+            createdMask = {...newMask, id: createdMask.id, promptId: createdMask.promptId};  // 因为返回的mask没有context和fewShotContext，手动添加
+            masks[createdMask.id] = createdMask;
+            set(() => ({masks}));
 
-    migrate(state, version) {
-      const newState = JSON.parse(JSON.stringify(state)) as MaskState;
+            return masks[createdMask.id];
+        },
+        update(id, updater: (mask: Mask) => Mask) {
+            const masks = get().masks;
+            const mask = masks[id];
+            if (!mask) return;
+            let updateMask = {...mask};
+            updateMask = updater(updateMask);
+            masks[id] = updateMask;
+            set(() => ({masks}));
+        },
+        delete(id) {
+            const masks = get().masks;
+            delete masks[id];
+            set(() => ({masks}));
+        },
 
-      // migrate mask id to nanoid
-      if (version < 3) {
-        Object.values(newState.masks).forEach((m) => (m.id = nanoid()));
-      }
-
-      if (version < 3.1) {
-        const updatedMasks: Record<string, Mask> = {};
-        Object.values(newState.masks).forEach((m) => {
-          updatedMasks[m.id] = m;
-        });
-        newState.masks = updatedMasks;
-      }
-
-      return newState as any;
-    },
-  },
+        get(id) {
+            return get().masks[id ?? 1145141919810];
+        },
+        getAll() {
+            return Object.values(get().masks).sort((a, b) => a.updateAt - b.updateAt);
+        },
+        search(text) {
+            return Object.values(get().masks);
+        },
+        ifShowUserPromptError: false,
+        setShowUserPromptError(show: boolean) {
+            set(() => ({ifShowUserPromptError: show}));
+        }
+    })
 );

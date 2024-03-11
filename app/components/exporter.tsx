@@ -3,10 +3,10 @@ import { ChatMessage, useAppConfig, useChatStore } from "../store";
 import Locale from "../locales";
 import styles from "./exporter.module.scss";
 import {
-  List,
-  ListItem,
+  CustomList,
+  CustomListItem,
   Modal,
-  Select,
+  CustomSelect,
   showImageModal,
   showModal,
   showToast,
@@ -29,10 +29,10 @@ import NextImage from "next/image";
 
 import { toBlob, toJpeg, toPng } from "html-to-image";
 import { DEFAULT_MASK_AVATAR } from "../store/mask";
-import { api } from "../client/api";
 import { prettyObject } from "../utils/format";
 import { EXPORT_MESSAGE_CLASS_NAME } from "../constant";
 import { getClientConfig } from "../config/client";
+import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,
@@ -183,12 +183,12 @@ export function MessageExporter() {
         className={styles["message-exporter-body"]}
         style={currentStep.value !== "select" ? { display: "none" } : {}}
       >
-        <List>
-          <ListItem
+        <CustomList>
+          <CustomListItem
             title={Locale.Export.Format.Title}
             subTitle={Locale.Export.Format.SubTitle}
           >
-            <Select
+            <CustomSelect
               value={exportConfig.format}
               onChange={(e) =>
                 updateExportConfig(
@@ -202,9 +202,9 @@ export function MessageExporter() {
                   {f}
                 </option>
               ))}
-            </Select>
-          </ListItem>
-          <ListItem
+            </CustomSelect>
+          </CustomListItem>
+          <CustomListItem
             title={Locale.Export.IncludeContext.Title}
             subTitle={Locale.Export.IncludeContext.SubTitle}
           >
@@ -217,8 +217,8 @@ export function MessageExporter() {
                 );
               }}
             ></input>
-          </ListItem>
-        </List>
+          </CustomListItem>
+        </CustomList>
         <MessageSelector
           selection={selection}
           updateSelection={updateSelection}
@@ -276,6 +276,9 @@ export function RenderExport(props: {
     </div>
   );
 }
+
+
+const api = new LangchainBackendApi();
 
 export function PreviewActions(props: {
   download: () => void;

@@ -32,9 +32,31 @@
   justify-content: space-between;
   align-items: center;
   min-height: 40px;
+  border-top: var(--border-in-light);
   border-bottom: var(--border-in-light);
   padding: 10px 20px;
   animation: slide-in ease 0.6s;
+
+  .sub-list-header {
+    display: flex;
+    align-items: center;
+    border-left: 3px solid var(--primary);
+    padding-left: 10px;
+
+    .list-icon {
+      margin-right: 10px;
+    }
+
+    .list-item-title {
+      font-size: 14px;
+      font-weight: bolder;
+    }
+
+    .list-item-sub-title {
+      font-size: 12px;
+      font-weight: normal;
+    }
+  }
 
   .list-header {
     display: flex;

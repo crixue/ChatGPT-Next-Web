@@ -1,0 +1,31 @@
+.local-vs-container {
+  padding: 36px 20px;
+  height: 100%;
+  overflow: auto;
+
+  .local-vs-item {
+    min-height: 40px;
+    max-height: 550px;
+    overflow-y: auto;
+    //border-bottom: var(--border-in-light);
+    padding: 10px 20px;
+    animation: slide-in ease 0.6s;
+
+    .local-vs-item-content {
+
+    }
+  }
+
+  .step-btns {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row-reverse;
+    padding-right: 20px;
+  }
+
+}
+
+.action-item {
+  padding-right: 8px;
+
+}
