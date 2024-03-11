@@ -1,8 +1,7 @@
 import { getClientConfig } from "../config/client";
-import { ApiPath, DEFAULT_CORS_HOST } from "../constant";
 
 export function corsPath(path: string) {
-  const baseUrl = getClientConfig()?.isApp ? `${DEFAULT_CORS_HOST}` : "";
+  const baseUrl = getClientConfig()?.isApp ? "${DEFAULT_CORS_HOST}" : "";
 
   if (!path.startsWith("/")) {
     path = "/" + path;
@@ -25,7 +24,7 @@ export function corsFetch(
     throw Error("[CORS Fetch] url must starts with http/https");
   }
 
-  let proxyUrl = options.proxyUrl ?? corsPath(ApiPath.Cors);
+  let proxyUrl = options.proxyUrl ?? corsPath("");
   if (!proxyUrl.endsWith("/")) {
     proxyUrl += "/";
   }
