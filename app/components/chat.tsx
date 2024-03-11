@@ -91,7 +91,6 @@ import {validateMask} from "@/app/utils/mask";
 import {SendOutlined} from "@ant-design/icons";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
 import {useMaskConfigStore} from "@/app/store/mask-config";
-import whyDidYouRender from "@welldone-software/why-did-you-render";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
