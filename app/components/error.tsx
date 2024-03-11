@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { IconButton } from "./button";
 import GithubIcon from "../icons/github.svg";
@@ -5,7 +7,6 @@ import ResetIcon from "../icons/reload.svg";
 import { ISSUE_URL } from "../constant";
 import Locale from "../locales";
 import { showConfirm } from "./ui-lib";
-import { useSyncStore } from "../store/sync";
 
 interface IErrorBoundaryState {
   hasError: boolean;
@@ -22,15 +23,6 @@ export class ErrorBoundary extends React.Component<any, IErrorBoundaryState> {
   componentDidCatch(error: Error, info: React.ErrorInfo) {
     // Update state with error details
     this.setState({ hasError: true, error, info });
-  }
-
-  clearAndSaveData() {
-    try {
-      useSyncStore.getState().export();
-    } finally {
-      localStorage.clear();
-      location.reload();
-    }
   }
 
   render() {
@@ -52,16 +44,6 @@ export class ErrorBoundary extends React.Component<any, IErrorBoundaryState> {
                 bordered
               />
             </a>
-            <IconButton
-              icon={<ResetIcon />}
-              text="Clear All Data"
-              onClick={async () => {
-                if (await showConfirm(Locale.Settings.Danger.Reset.Confirm)) {
-                  this.clearAndSaveData();
-                }
-              }}
-              bordered
-            />
           </div>
         </div>
       );

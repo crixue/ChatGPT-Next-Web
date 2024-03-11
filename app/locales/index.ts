@@ -15,7 +15,6 @@ import cn from "./cn";
 // import ko from "./ko";
 // import ar from "./ar";
 // import bn from "./bn";
-import { merge } from "../utils/merge";
 
 import type { LocaleType } from "./cn";
 export type { LocaleType, PartialLocaleType } from "./cn";
@@ -69,9 +68,6 @@ const DEFAULT_LANG = "cn";
 
 const fallbackLang = cn;
 const targetLang = ALL_LANGS[getLang()] as LocaleType;
-
-// if target lang missing some fields, it will use fallback lang string
-merge(fallbackLang, targetLang);
 
 export default fallbackLang as LocaleType;
 

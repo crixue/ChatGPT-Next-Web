@@ -23,7 +23,6 @@ import {
 import {IconButton} from "./button";
 import {
     useChatStore,
-    useUpdateStore,
     useAccessStore,
     useAppConfig,
 } from "../store";
@@ -42,7 +41,6 @@ import {InputRange} from "./input-range";
 import {useNavigate} from "react-router-dom";
 import {Avatar, AvatarPicker} from "./emoji";
 import {getClientConfig} from "../config/client";
-import {useSyncStore} from "../store/sync";
 import {nanoid} from "nanoid";
 import {Button} from "antd";
 
@@ -240,116 +238,11 @@ function DangerItems() {
     );
 }
 
-function SyncItems() {
-    const syncStore = useSyncStore();
-
-    // not ready: https://github.com/Yidadaa/ChatGPT-Next-Web/issues/920#issuecomment-1609866332
-    return null;
-
-    return (
-        <CustomList>
-            <CustomListItem
-                title={"上次同步：" + new Date().toLocaleString()}
-                subTitle={"20 次对话，100 条消息，200 提示词，20 面具"}
-            >
-                <IconButton
-                    icon={<ResetIcon/>}
-                    text="同步"
-                    onClick={() => {
-                        syncStore.check().then(console.log);
-                    }}
-                />
-            </CustomListItem>
-
-            <CustomListItem
-                title={"本地备份"}
-                subTitle={"20 次对话，100 条消息，200 提示词，20 面具"}
-            ></CustomListItem>
-
-            {/*<CustomListItem*/}
-            {/*    title={"Web Dav Server"}*/}
-            {/*    subTitle={Locale.Settings.AccessCode.SubTitle}*/}
-            {/*>*/}
-            {/*    <input*/}
-            {/*        value={webdav.server}*/}
-            {/*        type="text"*/}
-            {/*        placeholder={"https://example.com"}*/}
-            {/*        onChange={(e) => {*/}
-            {/*            syncStore.update(*/}
-            {/*                (config) => (config.server = e.currentTarget.value),*/}
-            {/*            );*/}
-            {/*        }}*/}
-            {/*    />*/}
-            {/*</CustomListItem>*/}
-
-            {/*<CustomListItem title="Web Dav User Name" subTitle="user name here">*/}
-            {/*    <input*/}
-            {/*        value={webdav.username}*/}
-            {/*        type="text"*/}
-            {/*        placeholder={"username"}*/}
-            {/*        onChange={(e) => {*/}
-            {/*            syncStore.update(*/}
-            {/*                (config) => (config.username = e.currentTarget.value),*/}
-            {/*            );*/}
-            {/*        }}*/}
-            {/*    />*/}
-            {/*</CustomListItem>*/}
-
-            {/*<CustomListItem title="Web Dav Password" subTitle="password here">*/}
-            {/*    <input*/}
-            {/*        value={webdav.password}*/}
-            {/*        type="text"*/}
-            {/*        placeholder={"password"}*/}
-            {/*        onChange={(e) => {*/}
-            {/*            syncStore.update(*/}
-            {/*                (config) => (config.password = e.currentTarget.value),*/}
-            {/*            );*/}
-            {/*        }}*/}
-            {/*    />*/}
-            {/*</CustomListItem>*/}
-        </CustomList>
-    );
-}
-
 export function Settings() {
     const navigate = useNavigate();
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const config = useAppConfig();
     const updateConfig = config.update;
-
-    const updateStore = useUpdateStore();
-    const [checkingUpdate, setCheckingUpdate] = useState(false);
-    const currentVersion = updateStore.formatVersion(updateStore.version);
-    const remoteId = updateStore.formatVersion(updateStore.remoteVersion);
-    const hasNewVersion = currentVersion !== remoteId;
-    const updateUrl = getClientConfig()?.isApp ? RELEASE_URL : UPDATE_URL;
-
-    function checkUpdate(force = false) {
-        setCheckingUpdate(true);
-        updateStore.getLatestVersion(force).then(() => {
-            setCheckingUpdate(false);
-        });
-
-        console.log("[Update] local version ", updateStore.version);
-        console.log("[Update] remote version ", updateStore.remoteVersion);
-    }
-
-    const usage = {
-        used: updateStore.used,
-        subscription: updateStore.subscription,
-    };
-    const [loadingUsage, setLoadingUsage] = useState(false);
-
-    function checkUsage(force = false) {
-        if (accessStore.hideBalanceQuery) {
-            return;
-        }
-
-        setLoadingUsage(true);
-        updateStore.updateUsage(force).finally(() => {
-            setLoadingUsage(false);
-        });
-    }
 
     const accessStore = useAccessStore();
     const enabledAccessControl = useMemo(
@@ -571,7 +464,7 @@ export function Settings() {
                     </CustomListItem>
                 </CustomList>
 
-                <SyncItems/>
+                {/*<SyncItems/>*/}
 
                 <CustomList>
                     <CustomListItem
