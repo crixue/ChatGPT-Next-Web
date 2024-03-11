@@ -77,7 +77,6 @@ const en: LocaleType = {
     Send: "Send",
     Config: {
       Reset: "Reset to Default",
-      SaveAs: "Save as Mask",
     },
     IsContext: "Contextual Prompt",
   },
@@ -208,10 +207,6 @@ const en: LocaleType = {
         Title: "Edit Prompt",
       },
     },
-    HistoryCount: {
-      Title: "Attached Messages Count",
-      SubTitle: "Number of sent messages attached per request",
-    },
     CompressThreshold: {
       Title: "History Compression Threshold",
       SubTitle:
@@ -320,25 +315,6 @@ const en: LocaleType = {
       Download: "Download",
       Clone: "Clone",
     },
-    Config: {
-      Avatar: "Bot Avatar",
-      Name: "Bot Name",
-      Sync: {
-        Title: "Use Global Config",
-        SubTitle: "Use global config in this chat",
-        Confirm: "Confirm to override custom config with global config?",
-      },
-      HideContext: {
-        Title: "Hide Context Prompts",
-        SubTitle: "Do not show in-context prompts in chat",
-      },
-      Share: {
-        Title: "Share This Mask",
-        SubTitle: "Generate a link to this mask",
-        Action: "Copy Link",
-      },
-    },
-  },
   NewChat: {
     Return: "Return",
     Skip: "Just Start",

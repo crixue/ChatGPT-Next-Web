@@ -53,12 +53,10 @@ COPY . .
 
 RUN yarn build
 
-FROM base AS runner
-WORKDIR /app
-
 ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
 ENV CODE=""
+ENV PATH="/usr/bin:${PATH}"
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
@@ -87,3 +85,5 @@ CMD if [ -n "$PROXY_URL" ]; then \
     else \
         node server.js; \
     fi
+
+#CMD ["tail", "-f", "/dev/null"]
