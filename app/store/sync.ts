@@ -1,4 +1,3 @@
-import { Updater } from "../typing";
 import { ApiPath, StoreKey } from "../constant";
 import { createPersistStore } from "../utils/store";
 import {
@@ -26,7 +25,7 @@ export const useSyncStore = createPersistStore(
   {
     provider: ProviderType.WebDAV,
     useProxy: true,
-    proxyUrl: corsPath(ApiPath.Cors),
+    proxyUrl: corsPath(""),
 
     webdav: {
       endpoint: "",
@@ -70,7 +69,7 @@ export const useSyncStore = createPersistStore(
         location.reload();
       } catch (e) {
         console.error("[Import]", e);
-        showToast(Locale.Settings.Sync.ImportFailed);
+        showToast("Locale.Settings.Sync.ImportFailed");
       }
     },
 

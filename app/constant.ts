@@ -219,3 +219,6 @@ export type ChatConfigStore = ChatConfig & {
 };
 
 export type ModelConfig = ChatConfig["modelConfig"];
+
+export class ApiPath {
+}
