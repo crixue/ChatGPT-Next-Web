@@ -53,6 +53,9 @@ COPY . .
 
 RUN yarn build
 
+FROM base AS runner
+WORKDIR /app
+
 ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
 ENV CODE=""
