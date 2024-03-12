@@ -43,28 +43,23 @@ RUN yarn config set strict-ssl false
 
 RUN yarn add package.json
 
-FROM deps AS builder
-
-ENV CODE=""
-
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN yarn build
 
-FROM base AS runner
+FROM deps AS runner
 WORKDIR /app
 
 ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
 ENV CODE=""
 ENV PATH="/usr/bin:${PATH}"
+ENV HOSTNAME="0.0.0.0"
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/.next/server ./.next/server
+COPY --from=deps /app/public ./public
+COPY --from=deps /app/.next/standalone ./
+COPY --from=deps /app/.next/static ./.next/static
+COPY --from=deps /app/.next/server ./.next/server
 
 EXPOSE 3000
 
