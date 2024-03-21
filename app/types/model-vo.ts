@@ -8,9 +8,9 @@ export interface StartUpModelRequestVO {
 
 
 export interface StartupMaskRequestVO {
-    max_tokens_limit: number;
-    memory_type: MemoryTypeName;
-    memory_additional_args?: Map<string, string>;
+    // max_tokens_limit: number;
+    // memory_type: MemoryTypeName;
+    // memory_additional_args?: Map<string, string>;
     prompt_serialized_type: string;
     prompt_id: string;
     is_chinese_text: boolean;

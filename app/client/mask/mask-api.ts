@@ -132,6 +132,19 @@ class ClientApi {
         return handleServerResponse<Mask[]>(await res.json());
     }
 
+    async getMask(maskId: string): Promise<Mask> {
+        const res = await fetch(this.path("/api/mask/get?maskId=" + maskId), {
+            method: "GET",
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        const maskItemResponseVO = handleServerResponse<MaskItemResponseVO>(await res.json());
+        return maskItemResponseVO.mask;
+    }
+
 }
 
 export const maskApi = new ClientApi();

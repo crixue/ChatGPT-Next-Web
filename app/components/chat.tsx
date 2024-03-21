@@ -90,7 +90,6 @@ import {ContextDoc, RelevantDocMetadata} from "@/app/types/chat";
 import {validateMask} from "@/app/utils/mask";
 import {SendOutlined} from "@ant-design/icons";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
-import {useMaskConfigStore} from "@/app/store/mask-config";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
@@ -102,11 +101,8 @@ export function SessionConfigModel(props: { onClose: () => void }) {
     const session = chatStore.currentSession();
     const [notify, contextHolder] = notification.useNotification();
 
-    const handleOnApplyMask = () => {
-        const applyMask = useMaskConfigStore.getState().maskConfig;
-        if (!applyMask) {
-            return;
-        }
+    const handleOnApplyMask = (mask: Mask) => {
+        const applyMask = {...mask};
         // console.log("CurrentMask:"+JSON.stringify(applyMask));
         try {
             validateMask(applyMask);
@@ -149,7 +145,7 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                         icon={<CopyIcon/>}
                         bordered
                         text={Locale.Mask.Config.ApplyMask}
-                        onClick={handleOnApplyMask}
+                        onClick={() => handleOnApplyMask(session.mask)}
                         // onClick={() => {
                         //     navigate(Path.Masks);
                         //     setTimeout(() => {
@@ -161,11 +157,14 @@ export function SessionConfigModel(props: { onClose: () => void }) {
             >
                 <MaskConfig
                     mask={session.mask}
-                    // updateMask={(updater) => {
-                    //     const mask = {...session.mask};
-                    //     updater(mask);
-                    //     chatStore.updateCurrentSession((session) => (session.mask = mask));
-                    // }}
+                    updateMask={(updater) => {
+                        const mask = {...session.mask};
+                        updater(mask);
+                        chatStore.updateCurrentSession((session) => {
+                            session.mask = mask;
+                            session.topic = mask.name;
+                        });
+                    }}
                     shouldSyncFromGlobal
                 />
             </Modal>
@@ -188,7 +187,9 @@ function PromptToast(props: {
                 <div
                     className={styles["prompt-toast-inner"] + " clickable"}
                     role="button"
-                    onClick={() => props.setShowModal(true)}
+                    onClick={() => {
+                        props.setShowModal(true);
+                    }}
                 >
                     <BrainIcon/>
                     <span className={styles["prompt-toast-content"]}>
@@ -197,7 +198,9 @@ function PromptToast(props: {
                 </div>
             )}
             {props.showModal && (
-                <SessionConfigModel onClose={() => props.setShowModal(false)}/>
+                <SessionConfigModel onClose={() => {
+                    props.setShowModal(false);
+                }}/>
             )}
         </div>
     );
@@ -549,9 +552,8 @@ export function ChatActions(props: {
 
 export function EditMessageModal(props: { onClose: () => void }) {
     const chatStore = useChatStore();
-    const maskConfigStore = useMaskConfigStore();
     const session = chatStore.currentSession();
-    const mask = maskConfigStore.maskConfig ?? session.mask;
+    const mask = session.mask;
     const [context, setContext] = useState(mask.context ?? []);
     const [fewShotMessages, setFewShotMessages] = useState(mask.fewShotContext);
 
@@ -595,7 +597,9 @@ export function EditMessageModal(props: { onClose: () => void }) {
                             value={session.topic}
                             onInput={(e) =>
                                 chatStore.updateCurrentSession(
-                                    (session) => (session.topic = e.currentTarget.value),
+                                    (session) => (
+                                        session.topic = e.currentTarget.value
+                                    ),
                                 )
                             }
                         ></input>
@@ -606,14 +610,12 @@ export function EditMessageModal(props: { onClose: () => void }) {
                     updateContext={(updater) => {
                         const newMessages = context.slice();
                         updater(newMessages);
-                        maskConfigStore.setMaskConfig({...mask, context: newMessages});
                         setContext(newMessages);
                     }}
                     fewShotMessages={fewShotMessages}
                     updateFewShotMessages={(updater) => {
                         const newFewShotMessages = {...fewShotMessages};
                         updater(newFewShotMessages);
-                        maskConfigStore.setMaskConfig({...mask, fewShotContext: newFewShotMessages});
                         setFewShotMessages(newFewShotMessages);
                     }}
                 />
@@ -1162,7 +1164,8 @@ function _Chat() {
                         i > 0 &&
                         !(message.preview || message.content.length === 0) &&
                         !isContext;
-                    const showTyping = message.preview || message.streaming;
+                    const showTyping = message.preview
+                        // || message.streaming;
 
                     const shouldShowClearContextDivider = i === clearContextIndex - 1;
 

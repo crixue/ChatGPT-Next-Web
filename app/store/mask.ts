@@ -31,6 +31,7 @@ export type Mask = {
     modelConfigJsonStr?: string;
     lang: Lang;
     builtin: boolean;
+    isCreatedNew?: boolean;  // 是否是新创建的mask
 };
 
 export const DEFAULT_MASK_STATE = {
@@ -40,8 +41,8 @@ export const DEFAULT_MASK_STATE = {
 export type MaskState = typeof DEFAULT_MASK_STATE;
 type MaskStore = MaskState & {
     initMasks: () => void;
-    create: (mask?: Partial<Mask>) => Promise<Mask>;
-    update: (id: string, updater: (mask: Mask) => Mask) => void;
+    create: (mask?: Partial<Mask>) => Mask;
+    update: (id: string, updater: (mask: Mask) => void) => void;
     delete: (id: string) => void;
     search: (text: string) => Mask[];
     get: (id?: string) => Mask | null;
@@ -53,7 +54,7 @@ type MaskStore = MaskState & {
 export const DEFAULT_MASK_AVATAR = "gpt-bot";
 export const createEmptyMask = () =>
     ({
-        id: nanoid(),
+        id: nanoid(6),
         avatar: DEFAULT_MASK_AVATAR,
         name: DEFAULT_TOPIC,
         hideContext: false,
@@ -90,29 +91,32 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
                 } else {
                     m.relevantSearchOptions = DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
                 }
+                //createdAt: 2024-03-21T14:15:59.000+00:00 covert to timestamp
+                m.createdAt = new Date(m.createdAt).getTime();
+                m.updateAt = new Date(m.updateAt).getTime();
                 masks[m.id] = m;
             });
             set(() => ({masks}));
         },
-        async create(mask) {
+        create(mask) {
             const masks = get().masks;
-            const newMask = {...createEmptyMask()};
+            const newMask = {...createEmptyMask(), isCreatedNew: true};
             console.log("newMask:" + JSON.stringify(newMask));
-            const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
-            const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
-            let createdMask = resp.mask;
-            createdMask = {...newMask, id: createdMask.id, promptId: createdMask.promptId};  // 因为返回的mask没有context和fewShotContext，手动添加
-            masks[createdMask.id] = createdMask;
+            // const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
+            // const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
+            // let createdMask = resp.mask;
+            // createdMask = {...newMask, id: createdMask.id, promptId: createdMask.promptId};  // 因为返回的mask没有context和fewShotContext，手动添加
+            masks[newMask.id] = newMask;
             set(() => ({masks}));
 
-            return masks[createdMask.id];
+            return masks[newMask.id];
         },
-        update(id, updater: (mask: Mask) => Mask) {
+        update(id, updater: (mask: Mask) => void) {
             const masks = get().masks;
             const mask = masks[id];
             if (!mask) return;
             let updateMask = {...mask};
-            updateMask = updater(updateMask);
+            updater(updateMask);
             masks[id] = updateMask;
             set(() => ({masks}));
         },
@@ -121,7 +125,6 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
             delete masks[id];
             set(() => ({masks}));
         },
-
         get(id) {
             return get().masks[id ?? 1145141919810];
         },

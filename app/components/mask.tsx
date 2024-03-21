@@ -33,7 +33,6 @@ import {useNavigate} from "react-router-dom";
 import chatStyle from "./chat.module.scss";
 import React, {useEffect, useRef, useState} from "react";
 import {copyToClipboard, downloadAs, readFromFile} from "../utils";
-import {Updater} from "../typing";
 import {ModelConfigList} from "./model-config";
 import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, FileName, ModelConfig, Path} from "../constant";
 import {BUILTIN_MASK_STORE} from "../masks";
@@ -57,10 +56,8 @@ import TextArea from "antd/es/input/TextArea";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {nanoid} from "nanoid";
 import {validateMask} from "@/app/utils/mask";
-import {useInitSupportedFunctions} from "@/app/components/plugins";
-import {useGlobalSettingStore} from "@/app/store/global-setting";
-import {usePluginsStore} from "@/app/store/plugins";
-import {useMaskConfigStore} from "@/app/store/mask-config";
+import {MaskItemResponseVO} from "@/app/types/mask-vo";
+import {Updater} from "@/app/typing";
 
 // drag and drop helper function
 function reorder<T>(list: T[], startIndex: number, endIndex: number): T[] {
@@ -76,7 +73,7 @@ export function MaskAvatar(props: { mask: Mask, isTyping?: boolean }) {
 
 export function MaskConfig(props: {
     mask: Mask;
-    // updateMask: Updater<Mask>;
+    updateMask: Updater<Mask>;
     extraListItems?: JSX.Element;
     readonly?: boolean;
     shouldSyncFromGlobal?: boolean;
@@ -121,10 +118,10 @@ export function MaskConfig(props: {
     const maskNameRef = useRef<string>(props.mask.name);
 
     const Tag0 = () => {
-        const maskConfigStore = useMaskConfigStore();
+        // const maskConfigStore = useMaskConfigStore();
         const [fewShotMessages, setFewShotMessages] = useState(props.mask.fewShotContext ?? {});
         const [context, setContext] = useState(props.mask.context ?? []);
-        const currentMask = maskConfigStore.maskConfig ?? props.mask;
+        const currentMask = props.mask;
 
         return (
             <>
@@ -133,17 +130,17 @@ export function MaskConfig(props: {
                     updateContext={(updater) => {
                         const newContext = context.slice();
                         updater(newContext);
-                        maskConfigStore.setMaskConfig({...currentMask, context: newContext});
+                        // maskConfigStore.setMaskConfig({...currentMask, context: newContext});
                         setContext(newContext);
-                        // props.updateMask((mask) => (mask.newContext = newContext));
+                        props.updateMask((mask) => (mask.context = newContext));
                     }}
                     fewShotMessages={fewShotMessages}
                     updateFewShotMessages={(updater) => {
                         const newFewShotMessages = {...fewShotMessages};
                         updater(newFewShotMessages);
-                        maskConfigStore.setMaskConfig({...currentMask, fewShotContext: newFewShotMessages});
+                        // maskConfigStore.setMaskConfig({...currentMask, fewShotContext: newFewShotMessages});
                         setFewShotMessages(newFewShotMessages);
-                        // props.updateMask((mask) => (mask.fewShotContext = newFewShotMessages));
+                        props.updateMask((mask) => (mask.fewShotContext = newFewShotMessages));
                     }}
                 />
                 <CustomList>
@@ -152,8 +149,8 @@ export function MaskConfig(props: {
                             content={
                                 <AvatarPicker
                                     onEmojiClick={(emoji) => {
-                                        maskConfigStore.setMaskConfig({...currentMask, avatar: emoji});
-                                        // props.updateMask((mask) => (mask.avatar = emoji));
+                                        // maskConfigStore.setMaskConfig({...currentMask, avatar: emoji});
+                                        props.updateMask((mask) => (mask.avatar = emoji));
                                         setShowPicker(false);
                                     }}
                                 />
@@ -180,10 +177,10 @@ export function MaskConfig(props: {
                                 maskNameRef.current = e.currentTarget.value;
                             }}
                             onBlur={(e) => {
-                                maskConfigStore.setMaskConfig({...currentMask, name: maskNameRef.current});
-                                // props.updateMask((mask) => {
-                                //     mask.name = maskNameRef.current
-                                // });
+                                // maskConfigStore.setMaskConfig({...currentMask, name: maskNameRef.current});
+                                props.updateMask((mask) => {
+                                    mask.name = maskNameRef.current
+                                });
                             }}
                         />
                     </CustomListItem>
@@ -193,11 +190,11 @@ export function MaskConfig(props: {
     }
 
     const Tag1 = () => {
-        const maskConfigStore = useMaskConfigStore();
+        // const maskConfigStore = useMaskConfigStore();
 
         let currentMask = {...props.mask};
         // console.log("currentMask:" + JSON.stringify(currentMask));
-        const [isAdvancedConfig, setIsAdvancedConfig] = useState(false);
+        const [isAdvancedConfig, setIsAdvancedConfig] = useState(true);
         const [haveContext, setHaveContext] = useState(currentMask.haveContext);
         const [searchContextNums, setSearchContextNums] =
             useState(currentMask.relevantSearchOptions?.search_top_k ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
@@ -208,17 +205,15 @@ export function MaskConfig(props: {
             useState((props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS).retriever_type);
 
         const onWebSearchResultsCountChange = (val: number | null) => {
+            if (val == null) return;
             setWebSearchResultsCount(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-            const currentMaskConfig = {...maskConfig,
-                relevantSearchOptions:
-                    {...maskConfig.relevantSearchOptions, web_search_results_count: val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count}};
-            // console.log("currentMaskConfig:" + JSON.stringify(currentMaskConfig));
-            maskConfigStore.setMaskConfig(currentMaskConfig);
-            // props.updateMask(
-            //     (mask) =>
-            //         (mask.relevantSearchOptions.web_search_results_count = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count),
-            // );
+        }
+
+        const onWebSearchResultsCountBlur = (val: number | null) => {
+            props.updateMask(
+                (mask) =>
+                    (mask.relevantSearchOptions.web_search_results_count = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count),
+            );
         }
 
         const handleOnAddContext = (checked: boolean) => {
@@ -227,76 +222,64 @@ export function MaskConfig(props: {
             const userRolePrompt = context.find((c) => c.role === "user");
             setHaveContext(checked);
             // console.log("context:" + JSON.stringify(context));
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-            maskConfigStore.setMaskConfig({...maskConfig, haveContext: checked, context: context});
-            // props.updateMask((mask) => {
-            //     mask.haveContext = checked;
-            //     mask.context = context;
-            // });
+            props.updateMask((mask) => {
+                mask.haveContext = checked;
+                mask.context = context;
+            });
         }
 
         const onSearchContextNumsChange = (val: number | null) => {
+            if (val == null) return;
             setSearchContextNums(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-            // console.log("maskConfig For onSearchContextNumsChange:" + JSON.stringify(maskConfig));
-            maskConfigStore.setMaskConfig({...maskConfig,
-                relevantSearchOptions: {...maskConfig.relevantSearchOptions, search_top_k: val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k}});
-            // props.updateMask(
-            //     (mask) =>
-            //         (mask.relevantSearchOptions.search_top_k = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k),
-            // );
         }
 
+        const onSearchContextNumsBlur = (val: number | null) => {
+            setSearchContextNums(val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
+            props.updateMask(
+                (mask) =>
+                    (mask.relevantSearchOptions.search_top_k = val || DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k),
+            );
+        }
 
         const onContextSourceChange = (value: string) => {
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-            maskConfigStore.setMaskConfig({...maskConfig,
-                relevantSearchOptions: {...maskConfig.relevantSearchOptions, retriever_type: value}});
-            // props.updateMask((mask) => {
-            //     mask.relevantSearchOptions.retriever_type = value;
-            // });
+            props.updateMask((mask) => {
+                mask.relevantSearchOptions.retriever_type = value;
+            });
             if (value === "web_search") {
-                maskConfigStore.setMaskConfig({...maskConfig,
-                    relevantSearchOptions: {...maskConfig.relevantSearchOptions, local_vs_folder_name: "web_search"}});
-                // props.updateMask((mask) => {
-                //     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                // });
+                // maskConfigStore.setMaskConfig({...maskConfig,
+                //     relevantSearchOptions: {...maskConfig.relevantSearchOptions, local_vs_folder_name: "web_search"}});
+                setContextSourcesOptions(value);
+                props.updateMask((mask) => {
+                    mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                });
             } else if (value === "fixed" || value === "local_vector_stores") {
                 const userFolders = userFolderStore.userFolders;
                 if (userFolders.length === 0) {
-                    maskConfigStore.setMaskConfig({...maskConfig,
-                        relevantSearchOptions: {...maskConfig.relevantSearchOptions,
-                            retriever_type: "web_search", local_vs_folder_name: "web_search"}});
-                    // props.updateMask((mask) => {  //先设置默认值，后续再修改
-                    //     mask.relevantSearchOptions.retriever_type = "web_search";
-                    //     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                    // });
+                    props.updateMask((mask) => {  //先设置默认值，后续再修改
+                        mask.relevantSearchOptions.retriever_type = "web_search";
+                        mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                    });
+                    setContextSourcesOptions(value);
                     setIsOpenMakingLocalVSModal(true);
                     return;
                 }
-                maskConfigStore.setMaskConfig({...maskConfig,
-                    relevantSearchOptions: {...maskConfig.relevantSearchOptions,
-                        local_vs_folder_name: userFolders[0].folderName ?? "" as string, user_folder_id: userFolders[0].id}});
-                // props.updateMask((mask) => {
-                //     mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "" as string;
-                //     mask.relevantSearchOptions.user_folder_id = userFolders[0].id;
-                // });
+                setContextSourcesOptions(value);
+                props.updateMask((mask) => {
+                    mask.relevantSearchOptions.local_vs_folder_name = userFolders[0].folderName ?? "" as string;
+                    mask.relevantSearchOptions.user_folder_id = userFolders[0].id;
+                });
             }
-            setContextSourcesOptions(value);
         }
 
         const onSelectedUserFolderChange = (selectedId: string) => {
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
+            const maskConfig = currentMask;
 
             for (const userFolder of userFolderStore.userFolders) {
                 if (userFolder.id === selectedId) {
-                    maskConfigStore.setMaskConfig({...maskConfig,
-                        relevantSearchOptions: {...maskConfig.relevantSearchOptions,
-                            local_vs_folder_name: userFolder.folderName ?? "", user_folder_id: userFolder.id}});
-                    // props.updateMask((mask) => {
-                    //     mask.relevantSearchOptions.local_vs_folder_name = userFolder.folderName ?? "";
-                    //     mask.relevantSearchOptions.user_folder_id = userFolder.id;
-                    // });
+                    props.updateMask((mask) => {
+                        mask.relevantSearchOptions.local_vs_folder_name = userFolder.folderName ?? "";
+                        mask.relevantSearchOptions.user_folder_id = userFolder.id;
+                    });
                     userFolderStore.setCurrentSelectedFolder(userFolder);
                     break;
                 }
@@ -304,19 +287,17 @@ export function MaskConfig(props: {
         }
 
         const onHideContextChange = (checked: boolean) => {
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-            maskConfigStore.setMaskConfig({...maskConfig, hideContext: checked});
-            // props.updateMask((mask) => {
-            //     mask.hideContext = checked;
-            // });
+            const maskConfig = currentMask;
+            props.updateMask((mask) => {
+                mask.hideContext = checked;
+            });
         }
 
         const onIsChineseTextChange = (checked: boolean) => {
-            const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-            maskConfigStore.setMaskConfig({...maskConfig, isChineseText: checked});
-            // props.updateMask((mask) => {
-            //     mask.isChineseText = checked;
-            // });
+            const maskConfig = currentMask;
+            props.updateMask((mask) => {
+                mask.isChineseText = checked;
+            });
         }
 
         return (
@@ -330,9 +311,9 @@ export function MaskConfig(props: {
                 >
                     <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
                 </Modal>
-                <Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>
-                    {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}
-                </Button>
+                {/*<Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>*/}
+                {/*    {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}*/}
+                {/*</Button>*/}
                 <CustomList>
                     <CustomListItem
                         title={Locale.Mask.Config.HaveContext.Title}
@@ -349,14 +330,13 @@ export function MaskConfig(props: {
                             <>
                                 <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
                                     <Select
-                                        defaultValue={contextSourcesOptions ?? "web_search"}
-                                        value={contextSourcesOptions}
+                                        value={contextSourcesOptions ?? "web_search"}
                                         options={[
                                             {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch, value: "web_search"},
                                             {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores, value: "local_vector_stores"},
                                             {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed, value: "fixed"},
                                         ]}
-                                        onChange={(value) => {onContextSourceChange}}
+                                        onChange={(value) => onContextSourceChange(value)}
                                         style={{width: 130}}
                                     />
                                 </CustomListItem>
@@ -372,8 +352,9 @@ export function MaskConfig(props: {
                                                     max={9}
                                                     step={1}
                                                     style={{margin: '0 4px'}}
-                                                    value={webSearchResultsCount}
+                                                    defaultValue={webSearchResultsCount}
                                                     onChange={onWebSearchResultsCountChange}
+                                                    onBlur={event => onWebSearchResultsCountBlur(Number(event.target.value ?? 5))}
                                                 />
                                             </Col>
                                         </CustomListItem>
@@ -391,7 +372,10 @@ export function MaskConfig(props: {
                                                     max={5}
                                                     step={1}
                                                     style={{margin: '0 4px'}}
-                                                    value={searchContextNums}
+                                                    defaultValue={searchContextNums}
+                                                    onBlur={event => {
+                                                        onSearchContextNumsBlur(Number(event.target.value ?? 4));
+                                                    }}
                                                     onChange={onSearchContextNumsChange}
                                                 />
                                             </Col>
@@ -435,14 +419,10 @@ export function MaskConfig(props: {
                                                         </Select>
                                                     </CustomListItem>
                                                 ) : (() => {
-                                                    const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-                                                    maskConfigStore.setMaskConfig({...maskConfig,
-                                                        relevantSearchOptions: {...maskConfig.relevantSearchOptions,
-                                                            retriever_type: "web_search", local_vs_folder_name: "web_search"}});
-                                                    // props.updateMask((mask) => {  //先设置默认值，后续再修改
-                                                    //     mask.relevantSearchOptions.retriever_type = "web_search";
-                                                    //     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                                                    // });
+                                                    props.updateMask((mask) => {  //先设置默认值，后续再修改
+                                                        mask.relevantSearchOptions.retriever_type = "web_search";
+                                                        mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                                                    });
                                                     setIsOpenMakingLocalVSModal(true);
                                                 })
                                             }
@@ -542,23 +522,21 @@ export function MaskConfig(props: {
 
         return (
             <>
-                <Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>
-                    {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}
-                </Button>
+                {/*<Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>*/}
+                {/*    {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}*/}
+                {/*</Button>*/}
                 <CustomList>
                     <ModelConfigList
                         mask={currentMask}
-                        // modelConfig={props.mask.modelConfig}
-                        // updateConfig={(updater) => {
-                        //     const modelConfig = {...props.mask.modelConfig};
-                        //     updater(modelConfig);
-                        //     maskConfigStore.setMaskConfig({...props.mask,
-                        //         modelConfig: modelConfig, syncGlobalConfig: false});
-                        //     // props.updateMask((mask) => {
-                        //     //     mask.modelConfig = modelConfig;
-                        //     //     mask.syncGlobalConfig = false;
-                        //     // });
-                        // }}
+                        modelConfig={props.mask.modelConfig}
+                        updateConfig={(updater) => {
+                            const modelConfig = {...props.mask.modelConfig};
+                            updater(modelConfig);
+                            props.updateMask((mask) => {
+                                mask.modelConfig = modelConfig;
+                                mask.syncGlobalConfig = false;
+                            });
+                        }}
                         isAdvancedConfig={isAdvancedConfig}
                     />
                 </CustomList>
@@ -805,8 +783,7 @@ export function MaskPage() {
     };
 
     // console.log(editingMaskId)
-    const editingMask =
-        maskStore.get(editingMaskId) ?? BUILTIN_MASK_STORE.get(editingMaskId);
+    const editingMask = maskStore.get(editingMaskId);
     // console.log("editingMask:" + JSON.stringify(editingMask));
 
     const openMaskModal = (maskId: string) => {
@@ -830,13 +807,32 @@ export function MaskPage() {
         });
     }
 
-    const updateMask = () => {
-        const applyedMask = useMaskConfigStore.getState().maskConfig;
-        if (!applyedMask) {
-            return;
+    const createMaskOnDB = async (newMask: Mask) => {
+        const updateMask = newMask;
+        const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(updateMask);
+        try{
+            const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
+            let createdMask = resp.mask;
+            createdMask = {...updateMask, id: createdMask.id, promptId: createdMask.promptId, isCreatedNew: false};  // 因为返回的mask没有context和fewShotContext，手动添加
+            maskStore.update(createdMask.id, (mask) => {
+                mask.id = createdMask.id;
+                mask.promptId = createdMask.promptId;
+                mask.isCreatedNew = false;
+            });
+        } catch (e: any) {
+            console.log("createMaskOnDB failed", e);
+            notify['error']({
+                message: Locale.Common.OperateFailed,
+            });
+            maskStore.delete(updateMask.id);
+        } finally {
+            closeMaskModal();
         }
+    }
+
+    const updateMask = (updatedMask: Mask) => {
         try {
-            validateMask(applyedMask);
+            validateMask(updatedMask);
         } catch (e: any) {
             console.log("validate applyedMask failed", e);
             maskStore.setShowUserPromptError(true);
@@ -847,12 +843,12 @@ export function MaskPage() {
             return;
         }
 
-        const maskUpdateRequestVO = assembleSaveOrUpdateMaskRequest(applyedMask);
+        const maskUpdateRequestVO = assembleSaveOrUpdateMaskRequest(updatedMask);
         maskApi.updateMask(maskUpdateRequestVO)
             .then((res: void) => {
-                maskStore.update(applyedMask.id, (mask) => {
-                    return applyedMask;
-                });
+                // maskStore.update(updatedMask.id, (mask) => {
+                //     mask = updatedMask;
+                // });
                 notify['success']({
                     message: Locale.Common.OperateSuccess,
                 });
@@ -868,36 +864,44 @@ export function MaskPage() {
 
     const handleOnApplyMask = async (mask: Mask) => {
         // create or update mask setting
-        updateMask();
+        if(mask.isCreatedNew){
+            createMaskOnDB(mask);
+        } else {
+            updateMask(mask);
+        }
         navigate(Path.Chat);
-        const applyMask = useMaskConfigStore.getState().maskConfig ?? mask;
-        chatStore.newSession(applyMask);
+        chatStore.newSession(mask);
+    }
+
+    const handleOnChat = (mask: Mask) => {
+        navigate(Path.Chat);
+        chatStore.newSession(mask);
     }
 
     const downloadAll = () => {
         downloadAs(JSON.stringify(masks), FileName.Masks);
     };
 
-    const importFromFile = () => {
-        readFromFile().then((content) => {
-            try {
-                const importMasks = JSON.parse(content);
-                if (Array.isArray(importMasks)) {
-                    for (const mask of importMasks) {
-                        if (mask.name) {
-                            maskStore.create(mask);
-                        }
-                    }
-                    return;
-                }
-                //if the content is a single mask.
-                if (importMasks.name) {
-                    maskStore.create(importMasks);
-                }
-            } catch {
-            }
-        });
-    };
+    // const importFromFile = () => {
+    //     readFromFile().then((content) => {
+    //         try {
+    //             const importMasks = JSON.parse(content);
+    //             if (Array.isArray(importMasks)) {
+    //                 for (const mask of importMasks) {
+    //                     if (mask.name) {
+    //                         maskStore.create(mask);
+    //                     }
+    //                 }
+    //                 return;
+    //             }
+    //             //if the content is a single mask.
+    //             if (importMasks.name) {
+    //                 maskStore.create(importMasks);
+    //             }
+    //         } catch {
+    //         }
+    //     });
+    // };
 
     return (
         <ErrorBoundary>
@@ -968,14 +972,8 @@ export function MaskPage() {
                             text={Locale.Mask.Page.Create}
                             bordered
                             onClick={() => {
-                                maskStore.create().then((mask) => {
-                                    openMaskModal(mask.id);
-                                }).catch((err: Error) => {
-                                    console.log(err);
-                                    notify['error']({
-                                        message: Locale.Common.OperateFailed,
-                                    });
-                                });
+                                const newMask = maskStore.create();
+                                openMaskModal(newMask.id);
                             }}
                         />
                     </div>
@@ -1003,7 +1001,7 @@ export function MaskPage() {
                                         icon={<AddIcon/>}
                                         text={Locale.Mask.Item.Chat}
                                         onClick={() => {
-                                            handleOnApplyMask(m);
+                                            handleOnChat(m);
                                         }}
                                     />
                                     {m.builtin ? (
@@ -1016,7 +1014,9 @@ export function MaskPage() {
                                         <IconButton
                                             icon={<EditIcon/>}
                                             text={Locale.Mask.Item.Edit}
-                                            onClick={() => openMaskModal(m.id)}
+                                            onClick={() => {
+                                                openMaskModal(m.id);
+                                            }}
                                         />
                                     )}
                                     {!m.builtin && (
@@ -1041,14 +1041,23 @@ export function MaskPage() {
                 <Modal
                     open={isModalOpen}
                     title={Locale.Mask.EditModal.Title(editingMask?.builtin)}
-                    onCancel={() => {}}
+                    onCancel={() => {
+                        closeMaskModal();
+                        if (editingMask.isCreatedNew) {
+                            maskStore.delete(editingMask.id);
+                        }
+                    }}
                     width={"75vw"}
                     footer={[
                         <Button
                             icon={<DownloadIcon/>}
                             key="updateMask"
                             onClick={() => {
-                                updateMask()
+                                if (editingMask.isCreatedNew) {
+                                    createMaskOnDB(editingMask);
+                                } else {
+                                    updateMask(editingMask);
+                                }
                             }}
                         >{Locale.Mask.Config.SaveAs}</Button>,
                         <Button
@@ -1078,9 +1087,9 @@ export function MaskPage() {
                 >
                     <MaskConfig
                         mask={editingMask}
-                        // updateMask={(updater) =>
-                        //     maskStore.update(editingMaskId!, updater)
-                        // }
+                        updateMask={(updater) =>
+                            maskStore.update(editingMaskId!, updater)
+                        }
                         readonly={editingMask.builtin}
                     />
                 </Modal>

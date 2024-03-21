@@ -23,9 +23,6 @@ import {
 import {filterHistoryMessages} from "@/app/utils/chat";
 import {usePluginsStore} from "@/app/store/plugins";
 
-
-
-
 export class ChatApi {
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().openaiUrl;
@@ -43,9 +40,8 @@ export class ChatApi {
         const mask: Mask = currentSession.mask;
         const maskModelConfig = mask.modelConfig;
         const historyMsgCount = maskModelConfig.historyMessageCount ?? 0;
-        const fewShotContext = mask.fewShotContext;
+        const fewShotContext = mask.fewShotContext ?? {};
         const messages = options.messages;
-        const haveContext = mask?.haveContext ?? false;
         let promptTemplate: string | undefined;
         const streamingMode = !!options.config.stream;
 
@@ -77,7 +73,7 @@ export class ChatApi {
             init_model_request: {
                 is_chinese_text: mask?.isChineseText ?? true,
                 prompt_id: mask?.promptId ?? "",
-                have_context: haveContext,
+                have_context: mask?.haveContext ?? false,
                 prompt_serialized_type: "chat_prompt",
                 llm_type: maskModelConfig.model,
                 model_config: {

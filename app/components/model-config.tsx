@@ -18,7 +18,6 @@ import {ModelConfig, Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
 import {usePluginsStore} from "@/app/store/plugins";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
-import {useMaskConfigStore} from "@/app/store/mask-config";
 
 
 const simpleParseFloat = (val: string, defaultVal: string) => {
@@ -27,8 +26,8 @@ const simpleParseFloat = (val: string, defaultVal: string) => {
 
 export function ModelConfigList(props: {
     mask: Mask;
-    // modelConfig: ModelConfig;
-    // updateConfig: (updater: (config: ModelConfig) => void) => void;
+    modelConfig: ModelConfig;
+    updateConfig: (updater: (config: ModelConfig) => void) => void;
     isAdvancedConfig: boolean;
 }) {
     useInitSupportedFunctions(true);
@@ -39,7 +38,6 @@ export function ModelConfigList(props: {
     const config = useAppConfig();
     const globalSettingStore = useGlobalSettingStore();
     const pluginsStore = usePluginsStore();
-    const maskConfigStore = useMaskConfigStore();
     const navigate = useNavigate();
 
     const [notify, contextHolder] = notification.useNotification();
@@ -49,42 +47,23 @@ export function ModelConfigList(props: {
         const defaultVal = 0.5;
         const val = ModalConfigValidator.temperature(simpleParseFloat(value, defaultVal.toString()));
         setTemperature(val || defaultVal);
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-                modelConfig: {
-                    ...maskConfig.modelConfig,
-                    temperature: val || defaultVal,
-                }
-            });
-
-        // props.updateConfig(
-        //     (config) =>
-        //     {
-        //         config.temperature = ModalConfigValidator.temperature(val || 1,);
-        //     }
-        // );
+        props.updateConfig(
+            (config) =>
+            {
+                config.temperature = ModalConfigValidator.temperature(val || 1,);
+            }
+        );
     }
 
     const [topP, setTopP] = React.useState<number>(props.mask.modelConfig.topP);
     const onTopPChange = (value: string) => {
         const defaultVal = 0.9;
-        // props.updateConfig(
-        //     (config) =>
-        //         (config.topP = ModalConfigValidator.top_p(
-        //             val || 1,
-        //         )),
-        // );
         const val = ModalConfigValidator.top_p(simpleParseFloat(value, defaultVal.toString()));
+        props.updateConfig(
+            (config) =>
+                (config.topP = val || defaultVal),
+        );
         setTopP(val || defaultVal);
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                topP: val || defaultVal,
-            }
-        });
     }
 
     const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(currentMask.modelConfig.frequencyPenalty);
@@ -92,20 +71,12 @@ export function ModelConfigList(props: {
         const defaultVal = 1.2;
         const val = ModalConfigValidator.frequencyPenalty(simpleParseFloat(value, defaultVal.toString()));
         setFrequencyPenalty(val || defaultVal);
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                frequencyPenalty: val || defaultVal,
-            }
-        });
-        // props.updateConfig(
-        //     (config) =>
-        //         (config.frequencyPenalty = ModalConfigValidator.frequencyPenalty(
-        //             val || 1.1,
-        //         )),
-        // );
+        props.updateConfig(
+            (config) =>
+                (config.frequencyPenalty = ModalConfigValidator.frequencyPenalty(
+                    val || 1.1,
+                )),
+        );
     }
 
     const [historyMessageCount, setHistoryMessageCount] = React.useState(currentMask.modelConfig.historyMessageCount);
@@ -116,19 +87,11 @@ export function ModelConfigList(props: {
         if (val > 0) {
             setContainHistory(true);
         }
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                historyMessageCount: val,
-            }
-        });
-        // props.updateConfig(
-        //     (config) =>
-        //
-        //     {config.historyMessageCount = val || 0;},
-        // );
+        props.updateConfig(
+            (config) =>
+
+            {config.historyMessageCount = val || 0;},
+        );
     }
     const [containHistory, setContainHistory] = React.useState<boolean>(props.mask.modelConfig.historyMessageCount != 0);
     const onContainHistoryChange = (checked: boolean) => {
@@ -145,18 +108,10 @@ export function ModelConfigList(props: {
     const onStreamingModeChange = (checked: boolean) => {
         // console.log("streamingMode now:" + checked);
         setStreamingMode(checked);
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                streaming: checked,
-            }
-        });
-        // props.updateConfig(
-        //     (config) =>
-        //         (config.streaming = checked),
-        // );
+        props.updateConfig(
+            (config) =>
+                (config.streaming = checked),
+        );
     }
 
     const allSupportPlugins = pluginsStore.supportedFunctions;
@@ -165,18 +120,10 @@ export function ModelConfigList(props: {
 
     const onPluginsChange = (val: string[] | null) => {
         setCheckedPluginIds(val || pluginsStore.defaultShownPluginIds);
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                checkedPluginIds: val || pluginsStore.defaultShownPluginIds,
-            }
-        });
-        // props.updateConfig(
-        //     (config) =>
-        //         (config.checkedPluginIds = val || pluginsStore.defaultShownPluginIds),
-        // );
+        props.updateConfig(
+            (config) =>
+                (config.checkedPluginIds = val || pluginsStore.defaultShownPluginIds),
+        );
     }
 
     const chatModeOptions = [
@@ -209,25 +156,13 @@ export function ModelConfigList(props: {
         const defaultVal = 2000;
         const val = ModalConfigValidator.maxTokens(parseInt(value) || defaultVal);
         setMaxTokens(val || defaultVal);
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                maxTokens: val || defaultVal,
-            }
-        });
+        props.updateConfig(
+            (config) =>
+                (config.maxTokens = val || defaultVal),
+        );
     }
 
     const onModelChange = (val: string | null) => {
-        const maskConfig = maskConfigStore.maskConfig ?? currentMask;
-        maskConfigStore.setMaskConfig({
-            ...maskConfig,
-            modelConfig: {
-                ...maskConfig.modelConfig,
-                model: val || "",
-            }
-        });
     }
 
     const SingleConfig = () => {
@@ -304,6 +239,44 @@ export function ModelConfigList(props: {
                         unCheckedChildren={Locale.Settings.ContainHistory.Switch.Unchecked}
                         defaultChecked={containHistory}
                         onChange={onContainHistoryChange}/>
+                </CustomListItem>
+                {
+                    containHistory && (
+                        <CustomListItem
+                            title={Locale.Settings.HistoryWindowCount.Title}
+                            subTitle={Locale.Settings.HistoryWindowCount.SubTitle}
+                        >
+                            <Col span={4}>
+                                <InputNumber
+                                    min={1}
+                                    max={10} // lets limit it to 0-1
+                                    step={1}
+                                    style={{margin: '0 4px'}}
+                                    defaultValue={historyMessageCount}
+                                    onBlur={(event) => {
+                                        const val = event.target.value;
+                                        onHistoryMessageCountChange(val);
+                                    }}
+                                />
+                            </Col>
+                        </CustomListItem>
+                    )
+                }
+                <CustomListItem
+                    title={Locale.Settings.MaxTokens.Title}
+                    subTitle={Locale.Settings.MaxTokens.SubTitle}
+                >
+                    <InputNumber
+                        disabled={true}
+                        min={50}
+                        max={2000}
+                        controls
+                        defaultValue={maxTokens}
+                        onBlur={(event) => {
+                            const val = event.target.value;
+                            onMaxTokensChange(val);
+                        }}
+                    />
                 </CustomListItem>
             </>
         )
