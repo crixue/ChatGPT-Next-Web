@@ -78,27 +78,6 @@ export function MaskConfig(props: {
     readonly?: boolean;
     shouldSyncFromGlobal?: boolean;
 }) {
-    const [showPicker, setShowPicker] = useState(false);
-    const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
-    // const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
-    const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
-
-    const userFolderStore = useUserFolderStore();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        needRetrieveUserLocalVSFolders && (async () => {
-            await userFolderStore.initUserLocalVSFolders();
-        })();
-    }, [needRetrieveUserLocalVSFolders]);
-
-    const localVSFoldersOptions = userFolderStore.userFolders.map((folder) => {
-        return {
-            label: folder.folderName,
-            value: folder.id,
-        }
-    })
-
     // const updateConfig = (updater: (config: ModelConfig) => void) => {
     //     const config = {...props.mask.modelConfig};
     //     updater(config);
@@ -121,6 +100,7 @@ export function MaskConfig(props: {
         // const maskConfigStore = useMaskConfigStore();
         const [fewShotMessages, setFewShotMessages] = useState(props.mask.fewShotContext ?? {});
         const [context, setContext] = useState(props.mask.context ?? []);
+        const [showPicker, setShowPicker] = useState(false);
         const currentMask = props.mask;
 
         return (
@@ -193,6 +173,9 @@ export function MaskConfig(props: {
         // const maskConfigStore = useMaskConfigStore();
 
         let currentMask = {...props.mask};
+        const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
+        // const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
+        const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
         // console.log("currentMask:" + JSON.stringify(currentMask));
         const [isAdvancedConfig, setIsAdvancedConfig] = useState(true);
         const [haveContext, setHaveContext] = useState(currentMask.haveContext);
@@ -203,6 +186,22 @@ export function MaskConfig(props: {
             currentMask.relevantSearchOptions?.web_search_results_count ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
         const [contextSourcesOptions, setContextSourcesOptions] =
             useState((props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS).retriever_type);
+
+        const userFolderStore = useUserFolderStore();
+        const navigate = useNavigate();
+
+        useEffect(() => {
+            needRetrieveUserLocalVSFolders && (async () => {
+                await userFolderStore.initUserLocalVSFolders();
+            })();
+        }, [needRetrieveUserLocalVSFolders]);
+
+        const localVSFoldersOptions = userFolderStore.userFolders.map((folder) => {
+            return {
+                label: folder.folderName,
+                value: folder.id,
+            }
+        })
 
         const onWebSearchResultsCountChange = (val: number | null) => {
             if (val == null) return;
@@ -272,8 +271,6 @@ export function MaskConfig(props: {
         }
 
         const onSelectedUserFolderChange = (selectedId: string) => {
-            const maskConfig = currentMask;
-
             for (const userFolder of userFolderStore.userFolders) {
                 if (userFolder.id === selectedId) {
                     props.updateMask((mask) => {
@@ -413,7 +410,7 @@ export function MaskConfig(props: {
                                                     >
                                                         <Select
                                                             options={localVSFoldersOptions}
-                                                            defaultValue={localVSFoldersOptions[0].value}
+                                                            defaultValue={userFolderStore.currentSelectedFolder?.id ?? localVSFoldersOptions[0].value}
                                                             onChange={onSelectedUserFolderChange}
                                                         >
                                                         </Select>
