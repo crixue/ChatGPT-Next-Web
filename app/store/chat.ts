@@ -63,7 +63,7 @@ export interface ChatSession {
 }
 
 // export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
-export const DEFAULT_TOPIC = "新的聊天"
+export const DEFAULT_TOPIC = "新的面具"
 export const BOT_HELLO: ChatMessage = createMessage({
     role: "assistant",
     // content: Locale.Store.BotHello,
@@ -436,7 +436,7 @@ export const useChatStore = create<ChatStore>()(
             },
 
             getMessagesWithMemory() {
-                const session = get().currentSession();
+                const session: ChatSession = get().currentSession();
                 const modelConfig = session.mask.modelConfig;
                 const clearContextIndex = session.clearContextIndex ?? 0;
                 const messages = session.messages.slice();

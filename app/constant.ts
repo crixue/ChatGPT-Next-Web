@@ -146,14 +146,6 @@ export const DEFAULT_CONFIG = {
         streaming: true,
         historyMessageCount: 0,
         checkedPluginIds: [] as string[],
-        // memoryType: {
-        //     name: "ConversationBufferWindowMemory" as MemoryTypeName,
-        //     available: true
-        // },
-        // sendMemory: true,
-        // compressMessageLengthThreshold: 2000,
-        // enableInjectSystemPrompts: true,
-        // template: DEFAULT_INPUT_TEMPLATE,
     },
     chatMessages: [
         {

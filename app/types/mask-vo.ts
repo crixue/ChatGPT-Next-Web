@@ -11,26 +11,26 @@ export interface FewShotMessageVO {
 export interface PromptInfoDict {
     user?: PromptInfoDict;
     system?: PromptInfoDict;
-    few_shot_examples?: FewShotMessageVO[];
+    fewShotExamples?: FewShotMessageVO[];
     template?: string;
     prefix?: string;
-    example_prompt_template?: string;
+    examplePromptTemplate?: string;
     examples?: string[];
     suffix?: string;
 }
 
 
 export interface SerializeInfo {
-    file_name?: string;
-    prompt_type: "default_prompt" | "chat_prompt" | "few_shot_prompt";
-    have_context?: boolean;
-    prompt_info_dict?: PromptInfoDict;
+    fileName?: string;
+    promptType: "default_prompt" | "chat_prompt" | "few_shot_prompt";
+    haveContext?: boolean;
+    promptInfoDict?: PromptInfoDict;
 }
 
 export interface SerializePromptRequestVO {
     title?: string;
-    prompt_folder_name?: string;
-    serialize_info?: SerializeInfo;
+    promptFolderName?: string;
+    serializeInfo?: SerializeInfo;
 }
 
 export interface MaskCreationRequestVO {

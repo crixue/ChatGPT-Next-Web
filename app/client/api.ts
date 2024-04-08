@@ -146,7 +146,7 @@ export function getBackendApiHeaders() {
     // }
 
     //TODO mock a user id
-    headers["GATEWAY-REQUEST-USER-ID"] = "jOMBSR9l";
+    headers["GATEWAY-REQUEST-USER-ID"] = "VFdbGwV0";
 
     return headers;
 }

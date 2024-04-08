@@ -77,6 +77,7 @@ export function MaskConfig(props: {
     extraListItems?: JSX.Element;
     readonly?: boolean;
     shouldSyncFromGlobal?: boolean;
+    onGoToMakeLocalVS?: (val: boolean) => void;
 }) {
     // const updateConfig = (updater: (config: ModelConfig) => void) => {
     //     const config = {...props.mask.modelConfig};
@@ -175,7 +176,6 @@ export function MaskConfig(props: {
         let currentMask = {...props.mask};
         const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
         // const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
-        const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
         // console.log("currentMask:" + JSON.stringify(currentMask));
         const [isAdvancedConfig, setIsAdvancedConfig] = useState(true);
         const [haveContext, setHaveContext] = useState(currentMask.haveContext);
@@ -259,7 +259,10 @@ export function MaskConfig(props: {
                         mask.relevantSearchOptions.local_vs_folder_name = "web_search";
                     });
                     setContextSourcesOptions(value);
-                    setIsOpenMakingLocalVSModal(true);
+                    if(props.onGoToMakeLocalVS != null) {
+                        props.onGoToMakeLocalVS(true);
+                    }
+                    // setIsOpenMakingLocalVSModal(true);
                     return;
                 }
                 setContextSourcesOptions(value);
@@ -299,15 +302,6 @@ export function MaskConfig(props: {
 
         return (
             <>
-                <Modal title={Locale.Settings.MakingLocalVS.Title}
-                       open={isOpenMakingLocalVSModal}
-                       onOk={() => navigate(Path.MakeLocalVSStore)}
-                       okText={Locale.Settings.MakingLocalVS.ButtonContent}
-                       onCancel={() => setIsOpenMakingLocalVSModal(false)}
-                       cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
-                >
-                    <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
-                </Modal>
                 {/*<Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>*/}
                 {/*    {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}*/}
                 {/*</Button>*/}
@@ -338,7 +332,7 @@ export function MaskConfig(props: {
                                     />
                                 </CustomListItem>
                                 {
-                                    contextSourcesOptions === "web_search" && isAdvancedConfig && (
+                                    (contextSourcesOptions === "web_search" ||  contextSourcesOptions === "fixed") && isAdvancedConfig && (
                                         <CustomListItem
                                             title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
                                             subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
@@ -410,7 +404,7 @@ export function MaskConfig(props: {
                                                     >
                                                         <Select
                                                             options={localVSFoldersOptions}
-                                                            defaultValue={userFolderStore.currentSelectedFolder?.id ?? localVSFoldersOptions[0].value}
+                                                            defaultValue={props.mask.relevantSearchOptions.user_folder_id ?? localVSFoldersOptions[0].value}
                                                             onChange={onSelectedUserFolderChange}
                                                         >
                                                         </Select>
@@ -420,7 +414,10 @@ export function MaskConfig(props: {
                                                         mask.relevantSearchOptions.retriever_type = "web_search";
                                                         mask.relevantSearchOptions.local_vs_folder_name = "web_search";
                                                     });
-                                                    setIsOpenMakingLocalVSModal(true);
+                                                    if(props.onGoToMakeLocalVS != null) {
+                                                        props.onGoToMakeLocalVS(true);
+                                                    }
+                                                    // setIsOpenMakingLocalVSModal(true);
                                                 })
                                             }
                                         </>
@@ -560,10 +557,8 @@ export function MaskConfig(props: {
     ];
 
     return (
-        <>
-            <Tabs defaultActiveKey="0" items={items} />
-        </>
-    )
+        <Tabs defaultActiveKey="0" items={items} />
+    );
 }
 
 function ContextPromptItem(props: {
@@ -767,6 +762,7 @@ export function MaskPage() {
     const [notify, contextHolder] = notification.useNotification();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMaskId, setEditingMaskId] = useState<string | undefined>();
+    const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
 
     // simple search, will refactor later
     const onSearch = (text: string) => {
@@ -1035,61 +1031,75 @@ export function MaskPage() {
             </div>
 
             {editingMask && (
-                <Modal
-                    open={isModalOpen}
-                    title={Locale.Mask.EditModal.Title(editingMask?.builtin)}
-                    onCancel={() => {
-                        closeMaskModal();
-                        if (editingMask.isCreatedNew) {
-                            maskStore.delete(editingMask.id);
+                <>
+                    <Modal
+                        open={isModalOpen}
+                        title={Locale.Mask.EditModal.Title(editingMask?.builtin)}
+                        onCancel={() => {
+                            closeMaskModal();
+                            if (editingMask.isCreatedNew) {
+                                maskStore.delete(editingMask.id);
+                            }
+                        }}
+                        width={"75vw"}
+                        footer={[
+                            <Button
+                                icon={<DownloadIcon/>}
+                                key="updateMask"
+                                onClick={() => {
+                                    if (editingMask.isCreatedNew) {
+                                        createMaskOnDB(editingMask);
+                                    } else {
+                                        updateMask(editingMask);
+                                    }
+                                }}
+                            >{Locale.Mask.Config.SaveAs}</Button>,
+                            <Button
+                                icon={<DownloadIcon/>}
+                                key="applyMask"
+                                onClick={() => {
+                                    handleOnApplyMask(editingMask)
+                                }}
+                            >{Locale.Mask.Config.ApplyMask}</Button>,
+                            <Button
+                                icon={<DeleteIcon/>}
+                                key="deleteMask"
+                                onClick={() => {
+                                    deleteMask(editingMask?.id)
+                                }}
+                            >{Locale.Mask.Config.DeleteMask}</Button>,
+                            <Button
+                                key="copy"
+                                icon={<CopyIcon/>}
+                                onClick={() => {
+                                    navigate(Path.Masks);
+                                    maskStore.create(editingMask);
+                                    setEditingMaskId(undefined);
+                                }}
+                            >{Locale.Mask.EditModal.Clone}</Button>,
+                        ]}
+                    >
+                        <MaskConfig
+                            mask={editingMask}
+                            updateMask={(updater) =>
+                                maskStore.update(editingMaskId!, updater)
+                            }
+                            onGoToMakeLocalVS={(val) => setIsOpenMakingLocalVSModal(val)}
+                            readonly={editingMask.builtin
                         }
-                    }}
-                    width={"75vw"}
-                    footer={[
-                        <Button
-                            icon={<DownloadIcon/>}
-                            key="updateMask"
-                            onClick={() => {
-                                if (editingMask.isCreatedNew) {
-                                    createMaskOnDB(editingMask);
-                                } else {
-                                    updateMask(editingMask);
-                                }
-                            }}
-                        >{Locale.Mask.Config.SaveAs}</Button>,
-                        <Button
-                            icon={<DownloadIcon/>}
-                            key="applyMask"
-                            onClick={() => {
-                                handleOnApplyMask(editingMask)
-                            }}
-                        >{Locale.Mask.Config.ApplyMask}</Button>,
-                        <Button
-                            icon={<DeleteIcon/>}
-                            key="deleteMask"
-                            onClick={() => {
-                                deleteMask(editingMask?.id)
-                            }}
-                        >{Locale.Mask.Config.DeleteMask}</Button>,
-                        <Button
-                            key="copy"
-                            icon={<CopyIcon/>}
-                            onClick={() => {
-                                navigate(Path.Masks);
-                                maskStore.create(editingMask);
-                                setEditingMaskId(undefined);
-                            }}
-                        >{Locale.Mask.EditModal.Clone}</Button>,
-                    ]}
-                >
-                    <MaskConfig
-                        mask={editingMask}
-                        updateMask={(updater) =>
-                            maskStore.update(editingMaskId!, updater)
-                        }
-                        readonly={editingMask.builtin}
-                    />
-                </Modal>
+                        />
+                    </Modal>
+                    <Modal title={Locale.Settings.MakingLocalVS.Title}
+                           open={isOpenMakingLocalVSModal}
+                           onOk={() => navigate(Path.MakeLocalVSStore)}
+                           okText={Locale.Settings.MakingLocalVS.ButtonContent}
+                           onCancel={() => setIsOpenMakingLocalVSModal(false)}
+                           cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
+                    >
+                        <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
+                    </Modal>
+                </>
+
             )}
         </ErrorBoundary>
     );

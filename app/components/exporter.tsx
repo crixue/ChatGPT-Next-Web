@@ -5,7 +5,7 @@ import styles from "./exporter.module.scss";
 import {
   CustomList,
   CustomListItem,
-  Modal,
+  CustomModal,
   CustomSelect,
   showImageModal,
   showModal,
@@ -41,11 +41,11 @@ const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
 export function ExportMessageModal(props: { onClose: () => void }) {
   return (
     <div className="modal-mask">
-      <Modal title={Locale.Export.Title} onClose={props.onClose}>
+      <CustomModal title={Locale.Export.Title} onClose={props.onClose}>
         <div style={{ minHeight: "40vh" }}>
           <MessageExporter />
         </div>
-      </Modal>
+      </CustomModal>
     </div>
   );
 }

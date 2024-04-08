@@ -62,9 +62,9 @@ export class ChatApi {
             historyMessages = historyMessages.concat(filteredHistoryMessages);
         }
 
-        const context = (mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
-        // console.log("context:"+JSON.stringify(context))
-        promptTemplate = context.filter(msg => msg.role === "user")[0].content;
+        // const context = (mask.context ?? []).slice(0, 2);  //目前只支持system 和 一个user role 的 prompt
+        // // console.log("context:"+JSON.stringify(context))
+        // promptTemplate = context.filter(msg => msg.role === "user")[0].content;
 
         const requestPayload = {
             query: userLastQuery,

@@ -14,7 +14,7 @@ import {
     CustomTextAreaInput,
     CustomList,
     CustomListItem,
-    Modal,
+    CustomModal,
     Popover,
     CustomSelect,
     showConfirm,
@@ -50,7 +50,7 @@ function EditPromptModal(props: { id: string; onClose: () => void }) {
 
     return prompt ? (
         <div className="modal-mask">
-            <Modal
+            <CustomModal
                 title={Locale.Settings.Prompt.EditModal.Title}
                 onClose={props.onClose}
                 actions={[
@@ -88,7 +88,7 @@ function EditPromptModal(props: { id: string; onClose: () => void }) {
                         }
                     ></CustomTextAreaInput>
                 </div>
-            </Modal>
+            </CustomModal>
         </div>
     ) : null;
 }
@@ -115,7 +115,7 @@ function UserPromptModal(props: { onClose?: () => void }) {
 
     return (
         <div className="modal-mask">
-            <Modal
+            <CustomModal
                 title={Locale.Settings.Prompt.Modal.Title}
                 onClose={() => props.onClose?.()}
                 actions={[
@@ -185,7 +185,7 @@ function UserPromptModal(props: { onClose?: () => void }) {
                         ))}
                     </div>
                 </div>
-            </Modal>
+            </CustomModal>
 
             {editingPromptId !== undefined && (
                 <EditPromptModal

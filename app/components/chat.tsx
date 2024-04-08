@@ -64,7 +64,7 @@ import styles from "./chat.module.scss";
 
 import {
     CustomListItem,
-    Modal,
+    CustomModal,
     Selector,
     showConfirm,
     showPrompt,
@@ -85,7 +85,7 @@ import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
 import {ExportMessageModal} from "./exporter";
 import {getClientConfig} from "../config/client";
-import {Button, Drawer, List, notification} from "antd";
+import {Button, Drawer, List, Modal, notification} from "antd";
 import {ContextDoc, RelevantDocMetadata} from "@/app/types/chat";
 import {validateMask} from "@/app/utils/mask";
 import {SendOutlined} from "@ant-design/icons";
@@ -100,6 +100,8 @@ export function SessionConfigModel(props: { onClose: () => void }) {
     const chatStore = useChatStore();
     const session = chatStore.currentSession();
     const [notify, contextHolder] = notification.useNotification();
+    const navigate = useNavigate();
+    const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
 
     const handleOnApplyMask = (mask: Mask) => {
         const applyMask = {...mask};
@@ -123,7 +125,7 @@ export function SessionConfigModel(props: { onClose: () => void }) {
     return (
         <div className="modal-mask">
             {contextHolder}
-            <Modal
+            <CustomModal
                 title={Locale.Context.Edit}
                 onClose={() => props.onClose()}
                 actions={[
@@ -146,12 +148,6 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                         bordered
                         text={Locale.Mask.Config.ApplyMask}
                         onClick={() => handleOnApplyMask(session.mask)}
-                        // onClick={() => {
-                        //     navigate(Path.Masks);
-                        //     setTimeout(() => {
-                        //         maskStore.create(session.mask);
-                        //     }, 500);
-                        // }}
                     />,
                 ]}
             >
@@ -165,8 +161,18 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                             session.topic = mask.name;
                         });
                     }}
+                    onGoToMakeLocalVS={(val) => setIsOpenMakingLocalVSModal(val)}
                     shouldSyncFromGlobal
                 />
+            </CustomModal>
+            <Modal title={Locale.Settings.MakingLocalVS.Title}
+                 open={isOpenMakingLocalVSModal}
+                 onOk={() => navigate(Path.MakeLocalVSStore)}
+                 okText={Locale.Settings.MakingLocalVS.ButtonContent}
+                 onCancel={() => setIsOpenMakingLocalVSModal(false)}
+                 cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
+            >
+                <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
             </Modal>
         </div>
     );
@@ -559,7 +565,7 @@ export function EditMessageModal(props: { onClose: () => void }) {
 
     return (
         <div className="modal-mask">
-            <Modal
+            <CustomModal
                 title={Locale.Chat.EditMessage.Title}
                 onClose={props.onClose}
                 actions={[
@@ -619,7 +625,7 @@ export function EditMessageModal(props: { onClose: () => void }) {
                         setFewShotMessages(newFewShotMessages);
                     }}
                 />
-            </Modal>
+            </CustomModal>
         </div>
     );
 }

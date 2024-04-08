@@ -109,7 +109,7 @@ interface ModalProps {
     onClose?: () => void;
 }
 
-export function Modal(props: ModalProps) {
+export function CustomModal(props: ModalProps) {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
@@ -185,7 +185,7 @@ export function showModal(props: ModalProps) {
         }
     };
 
-    root.render(<Modal {...props} onClose={closeModal}></Modal>);
+    root.render(<CustomModal {...props} onClose={closeModal}></CustomModal>);
 }
 
 export type ToastProps = {
@@ -311,7 +311,7 @@ export function showConfirm(content: any) {
 
     return new Promise<boolean>((resolve) => {
         root.render(
-            <Modal
+            <CustomModal
                 title={Locale.UI.Confirm}
                 actions={[
                     <IconButton
@@ -344,7 +344,7 @@ export function showConfirm(content: any) {
                 onClose={closeModal}
             >
                 {content}
-            </Modal>,
+            </CustomModal>,
         );
     });
 }
@@ -386,7 +386,7 @@ export function showPrompt(content: any, value = "", rows = 3) {
         let userInput = value;
 
         root.render(
-            <Modal
+            <CustomModal
                 title={content}
                 actions={[
                     <IconButton
@@ -421,7 +421,7 @@ export function showPrompt(content: any, value = "", rows = 3) {
                     value={value}
                     rows={rows}
                 ></PromptInput>
-            </Modal>,
+            </CustomModal>,
         );
     });
 }

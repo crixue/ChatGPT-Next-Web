@@ -22,13 +22,9 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     }
 
     const chatMsgs = mask.context;
-    const promptInfoDict = {user: {}, system: {}, few_shot_examples: []} as PromptInfoDict;
+    const promptInfoDict = {system: {}, fewShotExamples: []} as PromptInfoDict;
     for(const item of chatMsgs){
-        if (item.role == "user") {
-            promptInfoDict["user"] = {
-                template: item.content,
-            }
-        } else if (item.role == "system") {
+        if (item.role == "system") {
             promptInfoDict["system"] = {
                 template: item.content,
             }
@@ -42,16 +38,16 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
             chatMessages: value,
         })
     });
-    promptInfoDict["few_shot_examples"] = var0;
+    promptInfoDict["fewShotExamples"] = var0;
     // console.log("promptInfoDict:" + JSON.stringify(promptInfoDict));
 
     const serializePromptRequestVO = {
         title: mask.name + "-prompt",
-        prompt_folder_name: "chat_prompt",  //prompt_folder_name暂时写死
-        serialize_info: {
-            prompt_type: "chat_prompt",  // prompt_folder_name暂时写死
-            have_context: mask.haveContext,
-            prompt_info_dict: promptInfoDict,
+        promptFolderName: "chat_prompt",  //prompt_folder_name暂时写死
+        serializeInfo: {
+            promptType: "chat_prompt",  // prompt_folder_name暂时写死
+            haveContext: mask.haveContext,
+            promptInfoDict: promptInfoDict,
         } as SerializeInfo,
     } as SerializePromptRequestVO;
 
