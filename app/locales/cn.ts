@@ -289,9 +289,9 @@ const cn = {
             }
         },
         StreamingMode: {
-            Title: "流式模式",
-            SubTitleStreamingMode: "流式模式下，模型会实时返回生成的结果，直到所有内容都全部返回",
-            SubTitleNotStreamingMode: "非流式模式下，会等到所有结果生成完毕后，才会一次性返回所有的结果，这种方式结果可能会返回比较慢",
+            Title: "开启流式输出",
+            SubTitleStreamingMode: "流式输出下，模型会实时返回生成的结果，直到所有内容都全部返回",
+            SubTitleNotStreamingMode: "非流式输出下，会等到所有结果生成完毕后，才会一次性返回所有的结果，这种方式结果可能会返回比较慢",
             Switch: {
                 Checked: "流式",
                 Unchecked: "非流式",
@@ -312,7 +312,7 @@ const cn = {
             SubTitle: "与随机性类似，但不要和随机性一起更改",
         },
         MaxTokens: {
-            Title: "单次回复限制 (max_tokens)",
+            Title: "单次回复字数",
             SubTitle: "单次交互所用的最大 Token 数",
         },
         PresencePenalty: {

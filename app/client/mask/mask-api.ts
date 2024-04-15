@@ -55,7 +55,6 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     mask.modelConfig = {
         ...mask.modelConfig,
         model: mask.modelConfig.model == "" ? modelName: mask.modelConfig.model,
-        haveContext: mask.haveContext ?? true,
     }
     mask = {...mask,
         modelConfigJsonStr: JSON.stringify(mask.modelConfig),

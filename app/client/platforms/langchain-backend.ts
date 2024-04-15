@@ -11,18 +11,9 @@ import {
     LLMUsage
 } from "../api";
 import Locale from "../../locales";
-import {StartupMaskRequestVO, StartUpModelRequestVO, SupportedModelVO} from "@/app/types/model-vo";
+import {StartUpModelRequestVO, SupportedModelVO} from "@/app/types/model-vo";
 import {handleServerResponse} from "../../common-api";
 import {getClientConfig} from "@/app/config/client";
-
-export interface OpenAIListModelResponse {
-    object: string;
-    data: Array<{
-        id: string;
-        object: string;
-        root: string;
-    }>;
-}
 
 export class LangchainBackendApi {
 
@@ -32,30 +23,6 @@ export class LangchainBackendApi {
         let openaiUrl = useAccessStore.getState().openaiUrl;
         // console.log("openaiUrl:" + openaiUrl)
         return [openaiUrl, path].join("/");
-    }
-
-    async triggerNewModel() {
-        const modelConfig = useAppConfig.getState().modelConfig;
-        const request: StartUpModelRequestVO = {
-            llm_type: modelConfig.model,
-            llm_model_config: {
-                max_tokens: modelConfig.maxTokens,
-                temperature: modelConfig.temperature,
-                top_p: modelConfig.topP,
-                repetition_penalty: modelConfig.frequencyPenalty,
-                streaming: true,  //暂时写死
-            },
-        };
-
-        const res = await fetch(this.path("llm-backend/v1/trigger-model"), {
-            method: "POST",
-            body: JSON.stringify(request),
-            headers: getBackendApiHeaders(),
-        });
-
-        if (!res.ok) {
-            throw new Error(await res.text());
-        }
     }
 
     async listAllModels() {

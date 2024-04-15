@@ -14,8 +14,8 @@ export interface RequestMessage {
     content: string;
 }
 
-export interface LLMConfig {
-    model: string;
+export interface ChatOptionsLLMConfig {
+    model?: string;
     temperature?: number;
     top_p?: number;
     stream?: boolean;
@@ -25,7 +25,7 @@ export interface LLMConfig {
 
 export interface ChatOptions {
     messages: ChatMessage[];
-    config: LLMConfig;
+    config: ChatOptionsLLMConfig;
     onUpdate?: (message: string, chunk?: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
     onFinish: (message: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
     onError?: (err: Error) => void;
@@ -38,11 +38,14 @@ export interface LLMUsage {
 }
 
 export interface LangchainBackendBaseLLMConfig {
+    model?: string;
     temperature: number;
     streaming: boolean;
     max_tokens: number;
     top_p: number;
     repetition_penalty: number;
+    historyMessageCount?: number;
+    checkedPluginIds?: string[];
 }
 
 export type MemoryTypeName =

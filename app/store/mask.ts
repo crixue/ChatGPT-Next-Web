@@ -3,14 +3,14 @@ import {getLang, Lang} from "../locales";
 import {DEFAULT_TOPIC, ChatMessage} from "./chat";
 
 import {
-    DEFAULT_CONFIG, DEFAULT_PROMPT_TEMPLATE,
+    DEFAULT_CONFIG,
     DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
-    ModelConfig, PromptTemplate,
     SearchContextSourceConfig, StoreKey
 } from "../constant";
 import {nanoid} from "nanoid";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
 import {MaskItemResponseVO} from "@/app/types/mask-vo";
+import {LangchainBackendBaseLLMConfig} from "@/app/client/api";
 
 export type Mask = {
     id: string;
@@ -27,7 +27,7 @@ export type Mask = {
     context: ChatMessage[];
     fewShotContext: Record<string, [ChatMessage, ChatMessage]>;
     syncGlobalConfig?: boolean;
-    modelConfig: ModelConfig;
+    modelConfig: LangchainBackendBaseLLMConfig;
     modelConfigJsonStr?: string;
     lang: Lang;
     builtin: boolean;
@@ -65,7 +65,7 @@ export const createEmptyMask = () =>
         context: DEFAULT_CONFIG.chatMessages,
         fewShotContext: {},
         syncGlobalConfig: true, // use global config as default
-        modelConfig: {...DEFAULT_CONFIG.modelConfig},
+        modelConfig: {...DEFAULT_CONFIG.modelConfig} as unknown as LangchainBackendBaseLLMConfig,
         lang: getLang(),
         builtin: false,
         createdAt: Date.now(),
@@ -83,7 +83,7 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
                 if(modelConfigJsonStr) {
                     m.modelConfig = JSON.parse(modelConfigJsonStr);
                 } else {
-                    m.modelConfig = DEFAULT_CONFIG["modelConfig"];
+                    m.modelConfig = DEFAULT_CONFIG["modelConfig"] as unknown as LangchainBackendBaseLLMConfig;
                 }
 
                 if (m.relevantSearchOptionsJsonStr) {

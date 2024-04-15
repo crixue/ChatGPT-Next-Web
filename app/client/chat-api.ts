@@ -78,14 +78,14 @@ export class ChatApi {
                 llm_type: maskModelConfig.model,
                 model_config: {
                     temperature: maskModelConfig.temperature,
-                    top_p: maskModelConfig.topP,
+                    top_p: maskModelConfig.top_p,
                     streaming: maskModelConfig.streaming,
-                    max_tokens: maskModelConfig.maxTokens,
-                    repetition_penalty: maskModelConfig.frequencyPenalty,
+                    max_tokens: maskModelConfig.max_tokens,
+                    repetition_penalty: maskModelConfig.repetition_penalty,
                 },
             } as StartupMaskRequestVO,
             init_retriever_request: initRetrieverRequest,
-            used_functions: maskModelConfig.checkedPluginIds.length > 0 ? maskModelConfig.checkedPluginIds : pluginStore.defaultShownPluginIds,
+            used_functions: maskModelConfig.checkedPluginIds ?? [].length > 0 ? maskModelConfig.checkedPluginIds : pluginStore.defaultShownPluginIds,
         } as ChatRequestVO;
         // console.log("[Request] langchain backend payload: ", requestPayload);
 

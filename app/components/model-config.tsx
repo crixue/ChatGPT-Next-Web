@@ -36,7 +36,6 @@ export function ModelConfigList(props: {
     const currentMask = {...props.mask};
 
     const config = useAppConfig();
-    const globalSettingStore = useGlobalSettingStore();
     const pluginsStore = usePluginsStore();
     const navigate = useNavigate();
 
@@ -55,25 +54,25 @@ export function ModelConfigList(props: {
         );
     }
 
-    const [topP, setTopP] = React.useState<number>(props.mask.modelConfig.topP);
+    const [topP, setTopP] = React.useState<number>(currentMask.modelConfig.top_p);
     const onTopPChange = (value: string) => {
         const defaultVal = 0.9;
         const val = ModalConfigValidator.top_p(simpleParseFloat(value, defaultVal.toString()));
         props.updateConfig(
             (config) =>
-                (config.topP = val || defaultVal),
+                (config.top_p = val || defaultVal),
         );
         setTopP(val || defaultVal);
     }
 
-    const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(currentMask.modelConfig.frequencyPenalty);
+    const [frequencyPenalty, setFrequencyPenalty] = React.useState<number>(currentMask.modelConfig.repetition_penalty);
     const onFrequencyPenaltyChange = (value: string) => {
         const defaultVal = 1.2;
         const val = ModalConfigValidator.frequencyPenalty(simpleParseFloat(value, defaultVal.toString()));
         setFrequencyPenalty(val || defaultVal);
         props.updateConfig(
             (config) =>
-                (config.frequencyPenalty = ModalConfigValidator.frequencyPenalty(
+                (config.repetition_penalty = ModalConfigValidator.frequencyPenalty(
                     val || 1.1,
                 )),
         );
@@ -93,7 +92,7 @@ export function ModelConfigList(props: {
             {config.historyMessageCount = val || 0;},
         );
     }
-    const [containHistory, setContainHistory] = React.useState<boolean>(props.mask.modelConfig.historyMessageCount != 0);
+    const [containHistory, setContainHistory] = React.useState<boolean>((currentMask.modelConfig?.historyMessageCount ?? 0) != 0);
     const onContainHistoryChange = (checked: boolean) => {
         // console.log("containHistory now:" + checked);
         setContainHistory(checked);
@@ -103,7 +102,7 @@ export function ModelConfigList(props: {
             onHistoryMessageCountChange("4");
         }
     }
-    const [streamingMode, setStreamingMode] = React.useState<boolean>(props.mask.modelConfig.streaming ?? true);
+    const [streamingMode, setStreamingMode] = React.useState<boolean>(currentMask.modelConfig.streaming ?? true);
     // console.log("streamingMode:" + streamingMode);
     const onStreamingModeChange = (checked: boolean) => {
         // console.log("streamingMode now:" + checked);
@@ -115,7 +114,7 @@ export function ModelConfigList(props: {
     }
 
     const allSupportPlugins = pluginsStore.supportedFunctions;
-    const [checkedPluginIds, setCheckedPluginIds] = React.useState<string[]>(pluginsStore.defaultShownPluginIds);
+    const [checkedPluginIds, setCheckedPluginIds] = React.useState<string[]>(currentMask.modelConfig.checkedPluginIds ?? pluginsStore.defaultShownPluginIds);
     // console.log("checkedPluginIds:" + checkedPluginIds);
 
     const onPluginsChange = (val: string[] | null) => {
@@ -151,14 +150,14 @@ export function ModelConfigList(props: {
         }
     }
 
-    const [maxTokens, setMaxTokens] = React.useState<number>(props.mask.modelConfig.maxTokens || 200);
+    const [maxTokens, setMaxTokens] = React.useState<number>(props.mask.modelConfig.max_tokens || 2000);
     const onMaxTokensChange = (value: string) => {
         const defaultVal = 2000;
         const val = ModalConfigValidator.maxTokens(parseInt(value) || defaultVal);
         setMaxTokens(val || defaultVal);
         props.updateConfig(
             (config) =>
-                (config.maxTokens = val || defaultVal),
+                (config.max_tokens = val || defaultVal),
         );
     }
 

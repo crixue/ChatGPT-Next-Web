@@ -309,13 +309,13 @@ export const useChatStore = create<ChatStore>()(
                 const relevantSearchOptions = currentMask.relevantSearchOptions;
                 const haveContext = currentMask.haveContext;
 
-                const userContent = fillTemplateWith(content, modelConfig);
+                // const userContent = fillTemplateWith(content, modelConfig);
                 // console.log("[User Input] after template: ", userContent);
                 // console.log("[User Input] current mask: ", JSON.stringify(currentMask));
 
                 const userMessage: ChatMessage = createMessage({
                     role: "user",
-                    content: userContent,
+                    content: content,
                 });
 
                 const botMessage: ChatMessage = createMessage({
@@ -479,7 +479,7 @@ export const useChatStore = create<ChatStore>()(
                 // short term memory
                 const shortTermMemoryStartIndex = Math.max(
                     0,
-                    totalMessageCount - modelConfig.historyMessageCount,
+                    totalMessageCount - (modelConfig?.historyMessageCount ?? 0),
                 );
 
                 // lets concat send messages, including 4 parts:
@@ -493,7 +493,7 @@ export const useChatStore = create<ChatStore>()(
                     : shortTermMemoryStartIndex;
                 // and if user has cleared history messages, we should exclude the memory too.
                 const contextStartIndex = Math.max(clearContextIndex, memoryStartIndex);
-                const maxTokenThreshold = modelConfig.maxTokens;
+                const maxTokenThreshold = modelConfig.max_tokens ?? 2000;
 
                 // get recent messages as much as possible
                 const reversedRecentMessages = [];
