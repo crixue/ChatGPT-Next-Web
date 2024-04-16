@@ -12,12 +12,12 @@ import {
     Select,
     Switch
 } from "antd";
-import React, {FocusEvent, useEffect} from "react";
-import {useGlobalSettingStore} from "@/app/store/global-setting";
+import React from "react";
 import {ModelConfig, Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
 import {usePluginsStore} from "@/app/store/plugins";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
+import { LangchainBackendBaseLLMConfig } from "../client/api";
 
 
 const simpleParseFloat = (val: string, defaultVal: string) => {
@@ -26,8 +26,8 @@ const simpleParseFloat = (val: string, defaultVal: string) => {
 
 export function ModelConfigList(props: {
     mask: Mask;
-    modelConfig: ModelConfig;
-    updateConfig: (updater: (config: ModelConfig) => void) => void;
+    modelConfig: LangchainBackendBaseLLMConfig;
+    updateConfig: (updater: (config: LangchainBackendBaseLLMConfig) => void) => void;
     isAdvancedConfig: boolean;
 }) {
     useInitSupportedFunctions(true);
