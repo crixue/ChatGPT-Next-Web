@@ -2,12 +2,10 @@ import {ACCESS_CODE_PREFIX} from "../constant";
 import {ChatMessage, ModelType, useAccessStore} from "../store";
 import {ChatResponseVO, ChatStreamResponseVO, ContextDoc} from "@/app/types/chat";
 import {FunctionPlugin} from "@/app/types/plugins";
+import {useAuthStore} from "@/app/store/auth";
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
-
-export const Models = ["gpt-3.5-turbo", "gpt-4"] as const;
-export type ChatModel = ModelType;
 
 export interface RequestMessage {
     role?: MessageRole;
@@ -79,28 +77,6 @@ export interface LangchainRelevantDocsSearchOptions {
     en_chunk_overlap?: number;
 }
 
-
-type ProviderName = "openai" | "azure" | "claude" | "palm";
-
-interface Model {
-    name: string;
-    provider: ProviderName;
-    ctxlen: number;
-}
-
-interface ChatProvider {
-    name: ProviderName;
-    apiConfig: {
-        baseUrl: string;
-        apiKey: string;
-        summaryModel: Model;
-    };
-    models: Model[];
-
-    chat: () => void;
-    usage: () => void;
-}
-
 export function getHeaders() {
     const accessStore = useAccessStore.getState();
     let headers: Record<string, string> = {
@@ -127,7 +103,7 @@ export function getHeaders() {
 }
 
 export function getBackendApiHeaders() {
-    const accessStore = useAccessStore.getState();
+    const authStore = useAuthStore.getState();
     let headers: Record<string, string> = {
         "Content-Type": "application/json",
         "x-requested-with": "XMLHttpRequest",
@@ -148,8 +124,8 @@ export function getBackendApiHeaders() {
     //   );
     // }
 
-    //TODO mock a user id
-    headers["GATEWAY-REQUEST-USER-ID"] = "VFdbGwV0";
+    // //TODO mock a user id
+    // headers["GATEWAY-REQUEST-USER-ID"] = "VFdbGwV0";
 
     return headers;
 }

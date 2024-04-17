@@ -2,17 +2,15 @@ import {LangchainBackendPath, REQUEST_TIMEOUT_MS,} from "@/app/constant";
 import {
     ChatMessage,
     useAccessStore,
-    useAppConfig,
 } from "@/app/store";
 
 import {
     getBackendApiHeaders,
-    getHeaders,
     LLMUsage
-} from "../api";
-import Locale from "../../locales";
+} from "./api";
+import Locale from "../locales";
 import {StartUpModelRequestVO, SupportedModelVO} from "@/app/types/model-vo";
-import {handleServerResponse} from "../../common-api";
+import {handleServerResponse} from "../common-api";
 import {getClientConfig} from "@/app/config/client";
 
 export class LangchainBackendApi {
@@ -28,7 +26,7 @@ export class LangchainBackendApi {
     async listAllModels() {
         const res = await fetch(this.path("llm-backend/v1/llm-list"), {
             method: "GET",
-            headers: getHeaders(),
+            headers: getBackendApiHeaders(),
         });
 
         if (!res.ok) {
@@ -57,12 +55,12 @@ export class LangchainBackendApi {
                 ),
                 {
                     method: "GET",
-                    headers: getHeaders(),
+                    headers: getBackendApiHeaders(),
                 },
             ),
             fetch(this.path(LangchainBackendPath.SubsPath), {
                 method: "GET",
-                headers: getHeaders(),
+                headers: getBackendApiHeaders(),
             }),
         ]);
 

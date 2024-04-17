@@ -6,7 +6,7 @@ import {
     DEFAULT_MODELS,
     StoreKey
 } from "../constant";
-import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
+import {LangchainBackendApi} from "@/app/client/langchain-backend";
 import {SupportedModelVO} from "@/app/types/model-vo";
 
 export type ModelType = (typeof DEFAULT_MODELS)[number]["name"];

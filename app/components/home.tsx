@@ -31,6 +31,8 @@ import {useAppConfig} from "../store/config";
 import {AuthPage} from "./auth";
 import {getClientConfig} from "../config/client";
 import {useAccessStore, useMaskStore} from "../store";
+import {UnauthenticatedApp} from "@/app/components/unauthenticated";
+import {useAuthStore} from "@/app/store/auth";
 
 export function Loading(props: { noLogo?: boolean }) {
     return (
@@ -138,8 +140,10 @@ const loadAsyncGoogleFont = () => {
 function Screen() {
     const config = useAppConfig();
     const location = useLocation();
+    const authStore = useAuthStore();
     const isHome = location.pathname === Path.Home;
-    const isAuth = location.pathname === Path.Auth;
+    // const isAuth = location.pathname === Path.Auth;
+    const isAuth = authStore.user === null || !authStore.token;
     const isMobileScreen = useMobileScreen();
 
     useEffect(() => {
@@ -149,17 +153,17 @@ function Screen() {
     return (
         <div
             className={
-                styles.container +
                 ` ${
-                    config.tightBorder && !isMobileScreen
+                    (config.tightBorder && !isMobileScreen) || isAuth
                         ? styles["tight-container"]
                         : styles.container
-                }}`
+                }`
             }
         >
             {isAuth ? (
                 <>
-                    <AuthPage/>
+                    <UnauthenticatedApp/>
+                    {/*<AuthPage/>*/}
                 </>
             ) : (
                 <>
@@ -192,6 +196,19 @@ export function useLoadData() {
     }, []);
 }
 
+export function useRefreshToken() {
+    useEffect(() => {
+        (async () => {
+            const token = useAuthStore.getState().token;
+            if(!token|| token === "") {
+                return;
+            }
+            await useAuthStore.getState().refreshToken(token);
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+}
+
 
 export function useInitMasks() {
     useEffect(() => {
@@ -207,6 +224,7 @@ export function Home() {
     useInitMasks();
     useSwitchTheme();
     useLoadData();
+    useRefreshToken();
     useHtmlLang();
 
     useEffect(() => {

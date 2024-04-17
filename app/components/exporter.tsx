@@ -32,7 +32,7 @@ import { DEFAULT_MASK_AVATAR } from "../store/mask";
 import { prettyObject } from "../utils/format";
 import { EXPORT_MESSAGE_CLASS_NAME } from "../constant";
 import { getClientConfig } from "../config/client";
-import {LangchainBackendApi} from "@/app/client/platforms/langchain-backend";
+import {LangchainBackendApi} from "@/app/client/langchain-backend";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
   loading: () => <LoadingIcon />,

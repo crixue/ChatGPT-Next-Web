@@ -8,7 +8,7 @@ import {
     SearchContextSourceConfig, StoreKey
 } from "../constant";
 import {nanoid} from "nanoid";
-import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
+import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask-api";
 import {MaskItemResponseVO} from "@/app/types/mask-vo";
 import {LangchainBackendBaseLLMConfig} from "@/app/client/api";
 

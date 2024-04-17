@@ -7,7 +7,6 @@ import {useAppConfig} from "./config";
 import {createEmptyMask, Mask} from "./mask";
 import {
     ModelConfig, StoreKey,
-    SUMMARIZE_MODEL,
 } from "../constant";
 import {
     ChatOptions,
@@ -88,11 +87,6 @@ function createEmptySession(): ChatSession {
     };
 }
 
-function getSummarizeModel(currentModel: string) {
-    // if it is using gpt-* models, force to use 3.5 to summarize
-    return currentModel.startsWith("gpt") ? SUMMARIZE_MODEL : currentModel;
-}
-
 interface ChatStore {
     sessions: ChatSession[];
     currentSessionIndex: number;
@@ -122,29 +116,6 @@ interface ChatStore {
 
 function countMessages(msgs: ChatMessage[]) {
     return msgs.reduce((pre, cur) => pre + estimateTokenLength(cur.content), 0);
-}
-
-function fillTemplateWith(input: string, modelConfig: ModelConfig) {
-    // const vars = {
-    //     model: modelConfig.model,
-    //     time: new Date().toLocaleString(),
-    //     lang: getLang(),
-    //     input: input,
-    // };
-    //
-    // let output = modelConfig.template ?? DEFAULT_INPUT_TEMPLATE;
-    //
-    // // must contains {{input}}
-    // const inputVar = "{{input}}";
-    // if (!output.includes(inputVar)) {
-    //     output += "\n" + inputVar;
-    // }
-    //
-    // Object.entries(vars).forEach(([name, value]) => {
-    //     output = output.replaceAll(`{{${name}}}`, value);
-    // });
-
-    return input;
 }
 
 export function extractUsedPlugins(res: ChatStreamResponseVO | ChatResponseVO) {
@@ -545,99 +516,6 @@ export const useChatStore = create<ChatStore>()(
                     session.memoryPrompt = "";
                 });
             },
-
-            // summarizeSession() {
-            //     const config = useAppConfig.getState();
-            //     const session = get().currentSession();
-            //
-            //     // remove error messages if any
-            //     const messages = session.messages;
-            //
-            //     // should summarize topic after chating more than 50 words
-            //     const SUMMARIZE_MIN_LEN = 50;
-            //     if (
-            //         config.enableAutoGenerateTitle &&
-            //         session.topic === DEFAULT_TOPIC &&
-            //         countMessages(messages) >= SUMMARIZE_MIN_LEN
-            //     ) {
-            //         const topicMessages = messages.concat(
-            //             createMessage({
-            //                 role: "user",
-            //                 content: Locale.Store.Prompt.Topic,
-            //             }),
-            //         );
-            //         chatApi.chat({
-            //             messages: topicMessages,
-            //             config: {
-            //                 model: getSummarizeModel(session.mask.modelConfig.model),
-            //             },
-            //             onFinish(message) {
-            //                 get().updateCurrentSession(
-            //                     (session) =>
-            //                         (session.topic =
-            //                             message.length > 0 ? trimTopic(message) : DEFAULT_TOPIC),
-            //                 );
-            //             },
-            //         });
-            //     }
-            //
-            //     const modelConfig = session.mask.modelConfig;
-            //     const summarizeIndex = Math.max(
-            //         session.lastSummarizeIndex,
-            //         session.clearContextIndex ?? 0,
-            //     );
-            //     let toBeSummarizedMsgs = messages
-            //         .filter((msg) => !msg.isError)
-            //         .slice(summarizeIndex);
-            //
-            //     const historyMsgLength = countMessages(toBeSummarizedMsgs);
-            //
-            //     if (historyMsgLength > modelConfig?.maxTokens ?? 4000) {
-            //         const n = toBeSummarizedMsgs.length;
-            //         toBeSummarizedMsgs = toBeSummarizedMsgs.slice(
-            //             Math.max(0, n - modelConfig.historyMessageCount),
-            //         );
-            //     }
-            //
-            //     // add memory prompt
-            //     toBeSummarizedMsgs.unshift(get().getMemoryPrompt());
-            //
-            //     const lastSummarizeIndex = session.messages.length;
-            //
-            //     // console.log(
-            //     //     "[Chat History] ",
-            //     //     toBeSummarizedMsgs,
-            //     //     historyMsgLength,
-            //     // );
-            //
-            //     // if (historyMsgLength > modelConfig.compressMessageLengthThreshold &&
-            //     //     modelConfig.sendMemory) {
-            //     //     chatApi.chat({
-            //     //         messages: toBeSummarizedMsgs.concat(
-            //     //             createMessage({
-            //     //                 role: "system",
-            //     //                 content: Locale.Store.Prompt.Summarize,
-            //     //                 date: "",
-            //     //             }),
-            //     //         ),
-            //     //         config: {
-            //     //             ...modelConfig,
-            //     //             stream: true,
-            //     //             model: getSummarizeModel(session.mask.modelConfig.model),
-            //     //         },
-            //     //         onUpdate(message) {
-            //     //             session.memoryPrompt = message;
-            //     //         },
-            //     //         onFinish(message) {
-            //     //             console.log("[Memory] ", message);
-            //     //             session.lastSummarizeIndex = lastSummarizeIndex;
-            //     //         },
-            //     //         onError(err) {
-            //     //             console.error("[Summarize] ", err);
-            //     //         },
-            //     //     });
-            //     // }
-            // },
 
             updateStat(message) {
                 get().updateCurrentSession((session) => {

@@ -43,6 +43,7 @@ import {Avatar, AvatarPicker} from "./emoji";
 import {getClientConfig} from "../config/client";
 import {nanoid} from "nanoid";
 import {Button} from "antd";
+import {useAuthStore} from "@/app/store/auth";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
     const promptStore = usePromptStore();
@@ -245,6 +246,7 @@ export function Settings() {
     const updateConfig = config.update;
 
     const accessStore = useAccessStore();
+    const authStore = useAuthStore();
     const enabledAccessControl = useMemo(
         () => accessStore.enabledAccessControl(),
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -514,6 +516,21 @@ export function Settings() {
                 </CustomList>
 
                 <DangerItems/>
+
+                <CustomList>
+                    <CustomListItem
+                        title={Locale.Logout.Title}
+                    >
+                        <Button
+                            type="primary"
+                            onClick={() => {
+                                authStore.logout();
+                            }}
+                        >
+                            {Locale.Logout.LogoutBtn}
+                        </Button>
+                    </CustomListItem>
+                </CustomList>
             </div>
         </ErrorBoundary>
     );

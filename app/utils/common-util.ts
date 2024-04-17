@@ -1,5 +1,3 @@
-
-
 export const extraPromptPlaceHolders = (input: string) => {
     const regex = /{([^}]+)}/g;
     const matches = [];

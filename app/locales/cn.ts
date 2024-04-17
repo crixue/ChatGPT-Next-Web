@@ -610,7 +610,23 @@ const cn = {
         },
         GoToViewBtn: "查看插件",
     },
-
+    ShownAlertMsg: {
+        UserNameOrPwdIncorrect: "用户名或密码错误",
+        UserValidateFailed: "用户验证失败，请重新登录",
+        AccountHasBeenRegistered: "账号已被注册",
+        SmsCodeNotCorrected: "短信验证码不正确",
+        PicVerifyCodeNotCorrected: "图片验证码不正确",
+        UsernameLengthExceed: "用户名长度超过16位限制",
+        UserNotExists: "用户不存在",
+        UserPasswordShouldNotBeEmpty: "密码不能为空",
+        NotValidRegisterType: "无效的注册/登录类型",
+    },
+    Logout: {
+        Title: "退出",
+        LogoutBtn: "退出登录",
+    },
+    LoginFailed: "登录失败",
+    RegisterFailed: "注册失败",
 };
 
 type DeepPartial<T> = T extends object

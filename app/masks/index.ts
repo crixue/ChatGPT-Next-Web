@@ -1,7 +1,7 @@
 import { Mask } from "../store/mask";
 
 import { type BuiltinMask } from "./typing";
-import {maskApi} from "@/app/client/mask/mask-api";
+import {maskApi} from "@/app/client/mask-api";
 export { type BuiltinMask } from "./typing";
 
 export const BUILTIN_MASK_STORE = {

@@ -1,7 +1,7 @@
 import {create} from "zustand";
 import {persist} from "zustand/middleware";
 import { DEFAULT_MODELS, StoreKey} from "../constant";
-import {getHeaders} from "../client/api";
+import {getBackendApiHeaders,} from "../client/api";
 import {getClientConfig} from "../config/client";
 
 export interface AccessControlStore {
@@ -69,7 +69,7 @@ export const useAccessStore = create<AccessControlStore>()(
                     method: "post",
                     body: null,
                     headers: {
-                        ...getHeaders(),
+                        ...getBackendApiHeaders(),
                     },
                 })
                     .then((res) => res.json())

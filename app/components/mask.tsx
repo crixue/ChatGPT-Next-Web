@@ -53,7 +53,7 @@ import {
 } from "antd";
 import {CheckOutlined, CloseOutlined, PlusOutlined} from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask/mask-api";
+import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask-api";
 import {nanoid} from "nanoid";
 import {validateMask} from "@/app/utils/mask";
 import {MaskItemResponseVO} from "@/app/types/mask-vo";

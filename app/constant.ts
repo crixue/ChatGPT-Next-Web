@@ -7,16 +7,12 @@ import Locales from "./locales";
 import {PluginsPage} from "@/app/components/plugins";
 import {SupportedModelVO} from "@/app/types/model-vo";
 
-export const OWNER = "Yidadaa";
+export const OWNER = "RawJayXx";
 export const REPO = "ChatGPT-Next-Web";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
 export const ISSUE_URL = `https://github.com/${OWNER}/${REPO}/issues`;
 export const UPDATE_URL = `${REPO_URL}#keep-updated`;
 export const RELEASE_URL = `${REPO_URL}/releases`;
-export const FETCH_COMMIT_URL = `https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=1`;
-export const FETCH_TAG_URL = `https://api.github.com/repos/${OWNER}/${REPO}/tags?per_page=1`;
-export const RUNTIME_CONFIG_DOM = "danger-runtime-config";
-export const DEFAULT_API_HOST = "https://chatgpt1.nextweb.fun/api/proxy";
 
 export enum Path {
     Home = "/",
@@ -47,6 +43,7 @@ export enum StoreKey {
     Prompt = "prompt-store",
     Update = "chat-update",
     Sync = "sync",
+    Auth = "auth-storage",
 }
 
 export const MAX_SIDEBAR_WIDTH = 500;
@@ -67,36 +64,7 @@ export const LangchainBackendPath = {
     SubsPath: "dashboard/billing/subscription",
 }
 
-export const OpenaiPath = {
-    UsagePath: "dashboard/billing/usage",
-    SubsPath: "dashboard/billing/subscription",
-    ListModelPath: "v1/models",
-};
-
-export const DEFAULT_INPUT_TEMPLATE = `{{input}}`; // input / time / model / lang
-export const DEFAULT_SYSTEM_TEMPLATE = `
-You are a helpful assistant.`;
-
-export const SUMMARIZE_MODEL = "gpt-3.5-turbo";
-
 export const DEFAULT_MODELS = [];
-// export const DEFAULT_MODELS = useAppConfig.getState().supportedModels as LLMModel[];
-
-export const DEFAULT_MEMORY_TYPES = [
-    {
-        name: "ConversationBufferWindowMemory",
-        available: true,
-    },
-    {
-        name: "ConversationBufferMemory",
-        available: true,
-    },
-    {
-        name: "ConversationSummaryBufferMemory",
-        available: true,
-    }
-] as const;
-
 
 export const CHAT_PAGE_SIZE = 15;
 export const MAX_RENDER_MSG_COUNT = 45;
@@ -116,12 +84,19 @@ export enum Theme {
     Light = "light",
 }
 
+export enum RequestStatusEnum {
+    isLoading = "loading",
+    isDone = "done",
+    isError = "error",
+    isSuccess = "success",
+}
+
 export const DEFAULT_CONFIG = {
     submitKey: SubmitKey.CtrlEnter as SubmitKey,
     avatar: "1f603",
     fontSize: 14,
     theme: Theme.Auto as Theme,
-    tightBorder: !!getClientConfig()?.isApp,
+    tightBorder: true,
     sendPreviewBubble: true,
     enableAutoGenerateTitle: true,
     sidebarWidth: 300,
@@ -133,7 +108,6 @@ export const DEFAULT_CONFIG = {
 
     customModels: "",
     models: DEFAULT_MODELS as any as SupportedModelVO[],
-    memoryTypes: DEFAULT_MEMORY_TYPES as any as ConversationMemoryType[],
 
     modelConfig: {
         model: "" ,
@@ -210,6 +184,3 @@ export type ChatConfigStore = ChatConfig & {
 };
 
 export type ModelConfig = ChatConfig["modelConfig"];
-
-export class ApiPath {
-}
