@@ -11,7 +11,7 @@ import {getBackendApiHeaders, MemoryTypeName} from "@/app/client/api";
 import {handleServerResponse, ServerResponse} from "@/app/common-api";
 import {Mask} from "@/app/store/mask";
 import {DEFAULT_CONFIG} from "@/app/constant";
-import {init} from "es-module-lexer";
+import {BaseApiClient} from "@/app/client/base-client";
 
 export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     if(!mask.context || mask.context.length == 0){
@@ -68,8 +68,7 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     return maskCreationRequestVO;
 }
 
-
-class ClientApi {
+class MaskClientApi extends BaseApiClient {
 
     path(path: string): string {
         let backendApiUrl = useAccessStore.getState().backendCoreApiUrl;
@@ -78,7 +77,7 @@ class ClientApi {
     }
 
     async createMask(request: MaskCreationRequestVO) : Promise<MaskItemResponseVO> {
-        const res = await fetch(this.path("/api/mask/create"), {
+        const res = await this.fetchWithRedirect(this.path("/api/mask/create"), {
             method: "POST",
             body: JSON.stringify(request),
             headers: getBackendApiHeaders(),
@@ -91,7 +90,7 @@ class ClientApi {
     }
 
     async updateMask(request: MaskCreationRequestVO) : Promise<void> {
-        const res = await fetch(this.path("/api/mask/update"), {
+        const res = await this.fetchWithRedirect(this.path("/api/mask/update"), {
             method: "PUT",
             body: JSON.stringify(request),
             headers: getBackendApiHeaders(),
@@ -104,7 +103,7 @@ class ClientApi {
     }
 
     async deleteMask(maskId: string) : Promise<void> {
-        const res = await fetch(this.path("/api/mask/delete?maskId=" + maskId), {
+        const res = await this.fetchWithRedirect(this.path("/api/mask/delete?maskId=" + maskId), {
             method: "DELETE",
             headers: getBackendApiHeaders(),
         });
@@ -116,7 +115,7 @@ class ClientApi {
     }
 
     async getAllMasks(): Promise<Mask[]> {
-        const res = await fetch(this.path("/api/mask/list-all-masks"), {
+        const res = await this.fetchWithRedirect(this.path("/api/mask/list-all-masks"), {
             method: "GET",
             headers: getBackendApiHeaders(),
         });
@@ -128,7 +127,7 @@ class ClientApi {
     }
 
     async getMask(maskId: string): Promise<Mask> {
-        const res = await fetch(this.path("/api/mask/get?maskId=" + maskId), {
+        const res = await this.fetchWithRedirect(this.path("/api/mask/get?maskId=" + maskId), {
             method: "GET",
             headers: getBackendApiHeaders(),
         });
@@ -142,6 +141,6 @@ class ClientApi {
 
 }
 
-export const maskApi = new ClientApi();
+export const maskApi = new MaskClientApi();
 
 

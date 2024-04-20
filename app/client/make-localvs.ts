@@ -3,9 +3,10 @@ import {MakeFolderLocalVSTaskRecordsVO, MakeLocalVSRequestVO} from "@/app/types/
 import qs from "qs";
 import {getBackendApiHeaders} from "@/app/client/api";
 import {handleServerResponse} from "@/app/common-api";
+import {BaseApiClient} from "@/app/client/base-client";
 
 
-export class MakeLocalVectorStoreApi {
+export class MakeLocalVectorStoreApi extends BaseApiClient{
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().backendCoreApiUrl;
 
@@ -13,7 +14,7 @@ export class MakeLocalVectorStoreApi {
     }
 
     async doMakeLocalVS(data: MakeLocalVSRequestVO[]) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
                 `/api/local-vector-store/do-make`),
             {
                 method: "POST",
@@ -30,7 +31,7 @@ export class MakeLocalVectorStoreApi {
     }
 
     async getMakeRecordsByFolderId(data: {folderId: string, pageNum?: number, pageSize?: number}) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
                 `/api/local-vector-store/get-make-records?${qs.stringify(data)}`),
             {
                 method: "GET",
@@ -46,7 +47,7 @@ export class MakeLocalVectorStoreApi {
     }
 
     async deleteIndexInLocalVS(taskId: string) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
                 `/api/local-vector-store/delete-index-in-local-vs?makeLocalVsTaskId=${taskId}`),
             {
                 method: "DELETE",
@@ -62,7 +63,7 @@ export class MakeLocalVectorStoreApi {
     }
 
     async executeSpeechRecognize(data: {speechRecognizeTaskIds: string[]}) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
                 `/api/model-call-task/execute-speech-recognize-task`),
             {
                 method: "PUT",

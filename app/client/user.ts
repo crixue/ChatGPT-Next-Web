@@ -3,9 +3,11 @@ import {handleServerResponse} from "@/app/common-api";
 import {getBackendApiHeaders} from "@/app/client/api";
 import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
 import qs from "qs";
+import {useNavigate} from "react-router-dom";
+import {BaseApiClient} from "@/app/client/base-client";
 
 
-export class UserApi {
+export class UserApiClient extends BaseApiClient {
 
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().backendUserApiUrl;
@@ -14,7 +16,7 @@ export class UserApi {
     }
 
     async getUserCreatedFolders(folderType: 'LOCAL_VECTOR_STORE_FOLDER' | 'PROMPT_FOLDER', userId?: string) {
-        const res = await fetch(this.path("/api/user-folder/list-user-created-folders?folderTypeEnum="+folderType), {
+        const res = await super.fetchWithRedirect(this.path("/api/user-folder/list-user-created-folders?folderTypeEnum="+folderType), {
             method: "GET",
             headers: getBackendApiHeaders(),
         });
@@ -26,7 +28,7 @@ export class UserApi {
     }
 
     async createFolder(request: UserFolderCreateReqVO) {
-        const res = await fetch(this.path("/api/user-folder/create-user-folder"), {
+        const res = await super.fetchWithRedirect(this.path("/api/user-folder/create-user-folder"), {
             method: "PUT",
             body: JSON.stringify(request),
             headers: getBackendApiHeaders(),
@@ -39,7 +41,7 @@ export class UserApi {
     }
 
     async updateFolder(request: UserFolderUpdateReqVO) {
-        const res = await fetch(this.path("/api/user-folder/update-user-folder"), {
+        const res = await super.fetchWithRedirect(this.path("/api/user-folder/update-user-folder"), {
             method: "POST",
             body: JSON.stringify(request),
             headers: getBackendApiHeaders(),
@@ -52,7 +54,7 @@ export class UserApi {
     }
 
     async deleteUserFolder(data: {userFolderId: string}) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
                 `/api/user-folder/delete-user-folder?${qs.stringify(data)}`),
             {
                 method: "DELETE",

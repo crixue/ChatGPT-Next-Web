@@ -1,9 +1,9 @@
 import {UserFolderVO} from "@/app/types/user-folder.vo";
-import {UserApi} from "@/app/client/user";
+import {UserApiClient} from "@/app/client/user";
 import {create} from "zustand";
 
 
-const userService = new UserApi();
+const userService = new UserApiClient();
 
 
 type UserFolderStore = {

@@ -11,7 +11,7 @@ import {IconButton} from "@/app/components/button";
 import CloseIcon from "@/app/icons/close.svg";
 import styles from "@/app/components/make-local-vector-store.module.scss";
 import {useNavigate} from "react-router-dom";
-import {UserApi} from "@/app/client/user";
+import {UserApiClient} from "@/app/client/user";
 import {Path} from "@/app/constant";
 import {DeleteOutlined, EditOutlined, FileSearchOutlined} from "@ant-design/icons";
 import {MakeLocalVectorTaskRecordsView} from "@/app/components/make-local-vector-store";
@@ -20,7 +20,7 @@ import LeftIcon from "@/app/icons/left.svg";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 
 
-const userService = new UserApi();
+const userService = new UserApiClient();
 
 export const useInitUserFolders = (reload: Boolean | undefined) => {
     useEffect(() => {

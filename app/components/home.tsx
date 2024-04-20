@@ -162,12 +162,14 @@ function Screen() {
         >
             {isAuth ? (
                 <>
-                    <UnauthenticatedApp/>
+                    <Routes>
+                        <Route path={Path.Auth} element={<UnauthenticatedApp/>}/>
+                    </Routes>
                     {/*<AuthPage/>*/}
                 </>
             ) : (
                 <>
-                    <SideBar className={isHome ? styles["sidebar-show"] : ""}/>
+                    {authStore.user === null || !authStore.token ? null: <SideBar className={isHome ? styles["sidebar-show"] : ""}/>}
 
                     <div className={styles["window-content"]} id={SlotID.AppBody}>
                         <Routes>
@@ -204,6 +206,7 @@ export function useRefreshToken() {
                 return;
             }
             await useAuthStore.getState().refreshToken(token);
+            console.log("Refresh user token...");
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -227,9 +230,6 @@ export function Home() {
     useRefreshToken();
     useHtmlLang();
 
-    useEffect(() => {
-        useAccessStore.getState().fetch();
-    }, []);
     if (!useHasHydrated()) {
         return <Loading/>;
     }

@@ -12,8 +12,9 @@ import Locale from "../locales";
 import {StartUpModelRequestVO, SupportedModelVO} from "@/app/types/model-vo";
 import {handleServerResponse} from "../common-api";
 import {getClientConfig} from "@/app/config/client";
+import {BaseApiClient} from "@/app/client/base-client";
 
-export class LangchainBackendApi {
+export class LangchainBackendApi extends BaseApiClient{
 
     private disableListModels = true;
 
@@ -24,7 +25,7 @@ export class LangchainBackendApi {
     }
 
     async listAllModels() {
-        const res = await fetch(this.path("llm-backend/v1/llm-list"), {
+        const res = await super.fetchWithRedirect(this.path("llm-backend/v1/llm-list"), {
             method: "GET",
             headers: getBackendApiHeaders(),
         });
@@ -49,7 +50,7 @@ export class LangchainBackendApi {
         const endDate = formatDate(new Date(Date.now() + ONE_DAY));
 
         const [used, subs] = await Promise.all([
-            fetch(
+            super.fetchWithRedirect(
                 this.path(
                     `${LangchainBackendPath.UsagePath}?start_date=${startDate}&end_date=${endDate}`,
                 ),
@@ -58,7 +59,7 @@ export class LangchainBackendApi {
                     headers: getBackendApiHeaders(),
                 },
             ),
-            fetch(this.path(LangchainBackendPath.SubsPath), {
+            super.fetchWithRedirect(this.path(LangchainBackendPath.SubsPath), {
                 method: "GET",
                 headers: getBackendApiHeaders(),
             }),
@@ -123,7 +124,7 @@ export class LangchainBackendApi {
         const proxyUrl = "/sharegpt";
         const rawUrl = "https://sharegpt.com/api/conversations";
         const shareUrl = clientConfig?.isApp ? rawUrl : proxyUrl;
-        const res = await fetch(shareUrl, {
+        const res = await super.fetchWithRedirect(shareUrl, {
             body: JSON.stringify({
                 avatarUrl,
                 items: msgs,

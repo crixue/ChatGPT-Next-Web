@@ -2,9 +2,10 @@ import {useAccessStore} from "@/app/store";
 import {getBackendApiHeaders} from "@/app/client/api";
 import {handleServerResponse} from "@/app/common-api";
 import qs from "qs";
+import {BaseApiClient} from "@/app/client/base-client";
 
 
-export class UploadApi {
+export class UploadApi extends BaseApiClient{
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().backendCoreApiUrl;
 
@@ -23,7 +24,7 @@ export class UploadApi {
 
         const formData = new FormData();
         formData.append('file', file);
-        const res = await fetch(this.path("/api/files/upload?folderId="+folderId), {
+        const res = await super.fetchWithRedirect(this.path("/api/files/upload?folderId="+folderId), {
             method: "POST",
             body: formData,
             headers: {
@@ -49,7 +50,7 @@ export class UploadApi {
 
         const formData = new FormData();
         formData.append('file', file);
-        const res = await fetch(this.path(`/api/model-call-task/upload-av-file-to-recognize?${qs.stringify(data)}`), {
+        const res = await super.fetchWithRedirect(this.path(`/api/model-call-task/upload-av-file-to-recognize?${qs.stringify(data)}`), {
             method: "POST",
             body: formData,
             headers: {
@@ -64,7 +65,7 @@ export class UploadApi {
     }
 
     async removeUploadFile(data: {folderId: string, fileName: string, uploadType?: string, taskId?: string}) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
             `/api/files/delete?${qs.stringify(data)}`),
             {
                 method: "DELETE",
@@ -80,7 +81,7 @@ export class UploadApi {
     }
 
     async uploadPlainTextFile(data: {folderId: string, plainTextList: string[]}) {
-        const res = await fetch(this.path(
+        const res = await super.fetchWithRedirect(this.path(
             `/api/files/create-plain-text-file`),
             {
                 method: "PUT",

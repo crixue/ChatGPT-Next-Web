@@ -77,55 +77,18 @@ export interface LangchainRelevantDocsSearchOptions {
     en_chunk_overlap?: number;
 }
 
-export function getHeaders() {
-    const accessStore = useAccessStore.getState();
-    let headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "x-requested-with": "XMLHttpRequest",
-    };
-
-    const makeBearer = (token: string) => `Bearer ${token.trim()}`;
-    const validString = (x: string) => x && x.length > 0;
-
-    // use user's api key first
-    if (validString(accessStore.token)) {
-        headers.Authorization = makeBearer(accessStore.token);
-    } else if (
-        accessStore.enabledAccessControl() &&
-        validString(accessStore.accessCode)
-    ) {
-        headers.Authorization = makeBearer(
-            ACCESS_CODE_PREFIX + accessStore.accessCode,
-        );
-    }
-
-    return headers;
-}
-
 export function getBackendApiHeaders() {
     const authStore = useAuthStore.getState();
     let headers: Record<string, string> = {
         "Content-Type": "application/json",
         "x-requested-with": "XMLHttpRequest",
     };
-    //
-    // const makeBearer = (token: string) => `Bearer ${token.trim()}`;
-    // const validString = (x: string) => x && x.length > 0;
-    //
-    // // use user's api key first
-    // if (validString(accessStore.token)) {
-    //   headers.Authorization = makeBearer(accessStore.token);
-    // } else if (
-    //     accessStore.enabledAccessControl() &&
-    //     validString(accessStore.accessCode)
-    // ) {
-    //   headers.Authorization = makeBearer(
-    //       ACCESS_CODE_PREFIX + accessStore.accessCode,
-    //   );
-    // }
+    const token = authStore.token;
+    if(token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
 
-    // //TODO mock a user id
-    // headers["GATEWAY-REQUEST-USER-ID"] = "VFdbGwV0";
+    // headers["userid"] = "VFdbGwV0"; //TODO mock a user id
 
     return headers;
 }

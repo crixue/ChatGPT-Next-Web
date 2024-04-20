@@ -245,20 +245,10 @@ export function Settings() {
     const config = useAppConfig();
     const updateConfig = config.update;
 
-    const accessStore = useAccessStore();
     const authStore = useAuthStore();
-    const enabledAccessControl = useMemo(
-        () => accessStore.enabledAccessControl(),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
 
-    const promptStore = usePromptStore();
-    const builtinCount = SearchService.count.builtin;
-    const customCount = promptStore.getUserPrompts().length ?? 0;
     const [shouldShowPromptModal, setShowPromptModal] = useState(false);
 
-    const showUsage = accessStore.isAuthorized();
     useEffect(() => {
         // checks per minutes
         // checkUpdate();
@@ -280,7 +270,6 @@ export function Settings() {
     }, []);
 
     const clientConfig = useMemo(() => getClientConfig(), []);
-    const showAccessCode = enabledAccessControl && !clientConfig?.isApp;
 
     return (
         <ErrorBoundary>

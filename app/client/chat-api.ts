@@ -22,8 +22,9 @@ import {
 } from "@fortaine/fetch-event-source";
 import {filterHistoryMessages} from "@/app/utils/chat";
 import {usePluginsStore} from "@/app/store/plugins";
+import {BaseApiClient} from "@/app/client/base-client";
 
-export class ChatApi {
+export class ChatApi extends BaseApiClient{
     path(path: string): string {
         let openaiUrl = useAccessStore.getState().openaiUrl;
         // console.log("openaiUrl:" + openaiUrl)
@@ -199,7 +200,7 @@ export class ChatApi {
             } else {  // Not Streaming mode!
                 const chatPath = this.path("llm-backend/v1/chat/completions");
 
-                const res = await fetch(chatPath, chatPayload);
+                const res = await super.fetchWithRedirect(chatPath, chatPayload);
                 if (!res.ok) {
                     throw new Error("Request failed, Please contact admin to check the backend service.");
                 }

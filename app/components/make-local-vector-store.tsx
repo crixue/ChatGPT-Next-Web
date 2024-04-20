@@ -12,7 +12,7 @@ import {
     UploadFile
 } from "antd";
 import React, {useEffect, useMemo, useState} from "react";
-import {UserApi} from "@/app/client/user";
+import {UserApiClient} from "@/app/client/user";
 import {useMaskStore, useUserFolderStore} from "@/app/store";
 import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
 import Locale from "@/app/locales";
@@ -36,7 +36,7 @@ import {useGlobalSettingStore} from "@/app/store/global-setting";
 import Meta from "antd/es/card/Meta";
 import TextArea from "antd/es/input/TextArea";
 
-const userService = new UserApi();
+const userService = new UserApiClient();
 const uploadService = new UploadApi();
 const makeLocalVSService = new MakeLocalVectorStoreApi();
 
