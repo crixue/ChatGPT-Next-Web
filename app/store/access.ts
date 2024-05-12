@@ -16,10 +16,7 @@ export interface AccessControlStore {
     openaiUrl: string;
     backendCoreApiUrl: string;
     backendUserApiUrl: string;
-
-    updateToken: (_: string) => void;
-    updateCode: (_: string) => void;
-    updateOpenAiUrl: (_: string) => void;
+    backendPaymentOrderApiUrl: string;
 }
 
 
@@ -35,14 +32,6 @@ export const useAccessStore = create<AccessControlStore>()(
             openaiUrl: getClientConfig()?.defaultOpenAiUrl ?? "http://localhost:3000",
             backendCoreApiUrl:  getClientConfig()?.backendCoreApiUrl ?? "http://localhost:3000",
             backendUserApiUrl:  getClientConfig()?.backendUserApiUrl ?? "http://localhost:3000",
-            updateCode(code: string) {
-                set(() => ({accessCode: code?.trim()}));
-            },
-            updateToken(token: string) {
-                set(() => ({token: token?.trim()}));
-            },
-            updateOpenAiUrl(url: string) {
-                set(() => ({openaiUrl: url?.trim()}));
-            },
+            backendPaymentOrderApiUrl:  getClientConfig()?.backendPaymentOrderApiUrl ?? "http://localhost:3000",
         }),
 );

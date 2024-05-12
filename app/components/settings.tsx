@@ -250,13 +250,6 @@ export function Settings() {
     const [shouldShowPromptModal, setShowPromptModal] = useState(false);
 
     useEffect(() => {
-        // checks per minutes
-        // checkUpdate();
-        // showUsage && checkUsage();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    useEffect(() => {
         const keydownEvent = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 navigate(Path.Home);

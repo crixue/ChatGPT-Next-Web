@@ -1,12 +1,11 @@
-import {List, notification, Popconfirm, Space, Table} from "antd";
+import {List, notification, Space} from "antd";
 import {useUserFolderStore} from "@/app/store";
-import {ColumnsType} from "antd/es/table";
-import {UserFolderVO} from "@/app/types/user-folder.vo";
+import {UserFolderVo} from "@/app/types/user-folder-vo";
 import Locales from "@/app/locales";
+import Locale from "@/app/locales";
 import dayjs from "dayjs";
 import React, {ReactElement, useEffect, useState} from "react";
 import {TablePagination} from "@/app/types/common-type";
-import Locale from "@/app/locales";
 import {IconButton} from "@/app/components/button";
 import CloseIcon from "@/app/icons/close.svg";
 import styles from "@/app/components/make-local-vector-store.module.scss";
@@ -15,7 +14,6 @@ import {UserApiClient} from "@/app/client/user";
 import {Path} from "@/app/constant";
 import {DeleteOutlined, EditOutlined, FileSearchOutlined} from "@ant-design/icons";
 import {MakeLocalVectorTaskRecordsView} from "@/app/components/make-local-vector-store";
-import {it} from "node:test";
 import LeftIcon from "@/app/icons/left.svg";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 
@@ -40,16 +38,16 @@ export const ManageLocalVectorStorePage = () => {
     const navigate = useNavigate();
     const [notify, contextHolder] = notification.useNotification();
     const [showWhichPage, setShowWhichPage] = useState<"mainPage" | "viewPage" | undefined>("mainPage");
-    const [viewFolder, setViewFolder] = useState<UserFolderVO | undefined>(undefined);
+    const [viewFolder, setViewFolder] = useState<UserFolderVo | undefined>(undefined);
 
     const [tablePagination, setTablePagination] = useState<TablePagination>({
         current: 1,
         defaultCurrent: 1,
-        defaultPageSize: 8,
+        defaultPageSize: 6,
     });
 
-    const DeleteItem = ({record}: {record: UserFolderVO}) => {
-        const handleDelete = (record: UserFolderVO) => {
+    const DeleteItem = ({record}: {record: UserFolderVo}) => {
+        const handleDelete = (record: UserFolderVo) => {
             globalSettingStore.switchShowGlobalLoading("Deleting...");
             userService.deleteUserFolder({userFolderId: record.id})
                 .then((res) => {
@@ -71,8 +69,8 @@ export const ManageLocalVectorStorePage = () => {
         );
     }
 
-    const ViewItem = ({record}: {record: UserFolderVO}) => {
-        const handleView = (record: UserFolderVO) => {
+    const ViewItem = ({record}: {record: UserFolderVo}) => {
+        const handleView = (record: UserFolderVo) => {
             setViewFolder(record);
             setShowWhichPage("viewPage");
         }
@@ -83,8 +81,8 @@ export const ManageLocalVectorStorePage = () => {
     }
 
 
-    const BuildItem = ({record}: {record: UserFolderVO}) => {
-        const handleBuild = (record: UserFolderVO) => {
+    const BuildItem = ({record}: {record: UserFolderVo}) => {
+        const handleBuild = (record: UserFolderVo) => {
             userFolderStore.setCurrentSelectedFolder(record);
             navigate(Path.MakeLocalVSStore);
         }
@@ -102,7 +100,7 @@ export const ManageLocalVectorStorePage = () => {
         return {
             ...item,
             folderDesc: folderDesc,
-        } as UserFolderVO;
+        } as UserFolderVo;
     });
 
     const fstItem = {
@@ -169,17 +167,6 @@ export const ManageLocalVectorStorePage = () => {
                     </div>
                     <div className="window-header-sub-title">
                         {Locale.ManageLocalVectorStore.SubTitle}
-                    </div>
-                </div>
-                <div className="window-actions">
-                    <div className="window-action-button"></div>
-                    <div className="window-action-button"></div>
-                    <div className="window-action-button">
-                        <IconButton
-                            icon={<CloseIcon/>}
-                            onClick={() => navigate(-1)}
-                            bordered
-                        />
                     </div>
                 </div>
             </div>

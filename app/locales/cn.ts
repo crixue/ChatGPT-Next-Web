@@ -146,6 +146,7 @@ const cn = {
         ResetConfirm: "确认清空历史摘要？",
     },
     Home: {
+        Title: "主页",
         NewChat: "新的聊天",
         DeleteChat: "确认删除选中的对话？",
         DeleteToast: "已删除会话",
@@ -627,6 +628,18 @@ const cn = {
     },
     LoginFailed: "登录失败",
     RegisterFailed: "注册失败",
+    Wallet: {
+        Title: "钱包",
+        SubTitle: "查看余额、充值、消费记录",
+        CurrentBalance: "当前可用余额(元)",
+        MyWallet: "我的钱包",
+    },
+    Usage: {
+        Title: "用量统计",
+        SubTitle: "查看token使用量、耗费金额等",
+        MonthlyStatistics: "月度统计",
+    }
+
 };
 
 type DeepPartial<T> = T extends object

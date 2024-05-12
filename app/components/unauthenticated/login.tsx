@@ -119,7 +119,10 @@ const UserNameLoginScreen = ({onError} : {
             <Input placeholder={'密码: 包含字母和数字'} type="password" id={'password'} allowClear/>
         </Form.Item>
         <Form.Item className={styles["login-btn"]}>
-            <Button style={{width: "100%"}} loading={requestStatus == RequestStatusEnum.isLoading} htmlType="submit" type={"primary"}>登录</Button>
+            <Button style={{width: "100%"}}
+                    disabled={!authStore.acceptTerms}
+                    loading={requestStatus == RequestStatusEnum.isLoading}
+                    htmlType="submit" type={"primary"}>登录</Button>
         </Form.Item>
     </Form>
 }

@@ -2,10 +2,12 @@ import {
     Button,
     Card,
     Form,
-    FormInstance, Input,
+    FormInstance,
+    Input,
     notification,
     Popconfirm,
-    Select, Space,
+    Select,
+    Space,
     Steps,
     Table,
     Tag,
@@ -13,15 +15,13 @@ import {
 } from "antd";
 import React, {useEffect, useMemo, useState} from "react";
 import {UserApiClient} from "@/app/client/user";
-import {useMaskStore, useUserFolderStore} from "@/app/store";
-import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
+import {useUserFolderStore} from "@/app/store";
+import {UserFolderCreateReqVO, UserFolderUpdateReqVO} from "@/app/types/user-folder-vo";
 import Locale from "@/app/locales";
 import {IconButton} from "@/app/components/button";
 import CloseIcon from "@/app/icons/close.svg";
-import {Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
 import styles from "./make-local-vector-store.module.scss";
-import {CustomList} from "@/app/components/ui-lib";
 import {UploadPage} from "@/app/components/upload";
 import {useUploadFileStore} from "@/app/store/upload-file";
 import {UploadApi} from "@/app/client/upload";
@@ -33,7 +33,6 @@ import {useMakeLocalVSStore} from "@/app/store/make-localvs";
 import {TablePagination} from "@/app/types/common-type";
 import {CheckCircleOutlined, CloseCircleOutlined, SyncOutlined} from "@ant-design/icons";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
-import Meta from "antd/es/card/Meta";
 import TextArea from "antd/es/input/TextArea";
 
 const userService = new UserApiClient();

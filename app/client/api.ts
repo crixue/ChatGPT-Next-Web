@@ -1,7 +1,5 @@
-import {ACCESS_CODE_PREFIX} from "../constant";
-import {ChatMessage, ModelType, useAccessStore} from "../store";
-import {ChatResponseVO, ChatStreamResponseVO, ContextDoc} from "@/app/types/chat";
-import {FunctionPlugin} from "@/app/types/plugins";
+import {ChatMessage} from "../store";
+import {ChatResponseVO, ChatStreamResponseVO} from "@/app/types/chat";
 import {useAuthStore} from "@/app/store/auth";
 
 export const ROLES = ["system", "user", "assistant"] as const;
@@ -88,7 +86,7 @@ export function getBackendApiHeaders() {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // headers["userid"] = "VFdbGwV0"; //TODO mock a user id
+    headers["userid"] = "VFdbGwV0"; //TODO mock a user id
 
     return headers;
 }

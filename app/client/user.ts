@@ -1,7 +1,7 @@
 import {useAccessStore} from "@/app/store";
 import {handleServerResponse} from "@/app/common-api";
 import {getBackendApiHeaders} from "@/app/client/api";
-import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVO} from "@/app/types/user-folder.vo";
+import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVo} from "@/app/types/user-folder-vo";
 import qs from "qs";
 import {useNavigate} from "react-router-dom";
 import {BaseApiClient} from "@/app/client/base-client";
@@ -24,7 +24,7 @@ export class UserApiClient extends BaseApiClient {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return handleServerResponse<UserFolderVO[]>(await res.json());
+        return handleServerResponse<UserFolderVo[]>(await res.json());
     }
 
     async createFolder(request: UserFolderCreateReqVO) {
@@ -37,7 +37,7 @@ export class UserApiClient extends BaseApiClient {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return handleServerResponse<UserFolderVO>(await res.json());
+        return handleServerResponse<UserFolderVo>(await res.json());
     }
 
     async updateFolder(request: UserFolderUpdateReqVO) {
@@ -50,7 +50,7 @@ export class UserApiClient extends BaseApiClient {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return handleServerResponse<UserFolderVO>(await res.json());
+        return handleServerResponse<UserFolderVo>(await res.json());
     }
 
     async deleteUserFolder(data: {userFolderId: string}) {

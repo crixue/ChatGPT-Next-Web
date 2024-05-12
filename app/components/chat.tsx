@@ -1,21 +1,11 @@
 import {useDebouncedCallback} from "use-debounce";
-import React, {
-    useState,
-    useRef,
-    useEffect,
-    useMemo,
-    useCallback,
-    Fragment,
-} from "react";
-
-import SendWhiteIcon from "../icons/send-white.svg";
+import React, {Fragment, useEffect, useMemo, useRef, useState,} from "react";
 import BrainIcon from "../icons/brain.svg";
-import RenameIcon from "../icons/rename.svg";
+import EditIcon from "../icons/rename.svg";
 import ExportIcon from "../icons/share.svg";
 import ReturnIcon from "../icons/return.svg";
 import CopyIcon from "../icons/copy.svg";
 import LoadingIcon from "../icons/three-dots.svg";
-import PromptIcon from "../icons/prompt.svg";
 import MaskIcon from "../icons/mask.svg";
 import MaxIcon from "../icons/max.svg";
 import MinIcon from "../icons/min.svg";
@@ -24,34 +14,25 @@ import BreakIcon from "../icons/break.svg";
 import SettingsIcon from "../icons/chat-settings.svg";
 import DeleteIcon from "../icons/clear.svg";
 import PinIcon from "../icons/pin.svg";
-import EditIcon from "../icons/rename.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
-
-import LightIcon from "../icons/light.svg";
-import DarkIcon from "../icons/dark.svg";
-import AutoIcon from "../icons/auto.svg";
 import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
-import RobotIcon from "../icons/robot.svg";
 
 import {
-    ChatMessage,
-    useChatStore,
     BOT_HELLO,
+    ChatMessage,
     createMessage,
+    DEFAULT_TOPIC,
+    Mask,
+    ModelType,
     useAccessStore,
     useAppConfig,
-    DEFAULT_TOPIC,
-    ModelType, Mask, useMaskStore, createEmptyMask,
+    useChatStore,
+    useMaskStore,
 } from "../store";
 
-import {
-    copyToClipboard,
-    selectOrCopy,
-    autoGrowTextArea,
-    useMobileScreen,
-} from "../utils";
+import {autoGrowTextArea, copyToClipboard, selectOrCopy, useMobileScreen,} from "../utils";
 
 import dynamic from "next/dynamic";
 
@@ -62,31 +43,24 @@ import Locale from "../locales";
 import {IconButton} from "./button";
 import styles from "./chat.module.scss";
 
-import {
-    CustomListItem,
-    CustomModal,
-    Selector,
-    showConfirm,
-    showPrompt,
-    showToast,
-} from "./ui-lib";
-import {useLocation, useNavigate} from "react-router-dom";
+import {CustomListItem, CustomModal, Selector, showConfirm, showPrompt, showToast,} from "./ui-lib";
+import {useNavigate} from "react-router-dom";
 import {
     CHAT_PAGE_SIZE,
     LAST_INPUT_KEY,
-    MAX_RENDER_MSG_COUNT,
     Path,
-    REQUEST_TIMEOUT_MS, SubmitKey, Theme,
+    REQUEST_TIMEOUT_MS,
+    SubmitKey,
+    Theme,
     UNFINISHED_INPUT,
 } from "../constant";
 import {Avatar} from "./emoji";
 import {ContextPrompts, MaskAvatar, MaskConfig} from "./mask";
 import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
-import {ExportMessageModal} from "./exporter";
 import {getClientConfig} from "../config/client";
 import {Button, Drawer, List, Modal, notification} from "antd";
-import {ContextDoc, RelevantDocMetadata} from "@/app/types/chat";
+import {ContextDoc} from "@/app/types/chat";
 import {validateMask} from "@/app/utils/mask";
 import {SendOutlined} from "@ant-design/icons";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
@@ -1016,41 +990,6 @@ function _Chat() {
         submit: (text) => {
             doSubmit(text);
         },
-        code: (text) => {
-            console.log("[Command] got code from url: ", text);
-            showConfirm(Locale.URLCommand.Code + `code = ${text}`).then((res) => {
-                if (res) {
-                    accessStore.updateCode(text);
-                }
-            });
-        },
-        settings: (text) => {
-            try {
-                const payload = JSON.parse(text) as {
-                    key?: string;
-                    url?: string;
-                };
-
-                console.log("[Command] got settings from url: ", payload);
-
-                if (payload.key || payload.url) {
-                    showConfirm(
-                        Locale.URLCommand.Settings +
-                        `\n${JSON.stringify(payload, null, 4)}`,
-                    ).then((res) => {
-                        if (!res) return;
-                        if (payload.key) {
-                            accessStore.updateToken(payload.key);
-                        }
-                        if (payload.url) {
-                            accessStore.updateOpenAiUrl(payload.url);
-                        }
-                    });
-                }
-            } catch {
-                console.error("[Command] failed to get settings from url: ", text);
-            }
-        },
     });
 
     // edit / insert message modal
@@ -1107,7 +1046,7 @@ function _Chat() {
                         {Locale.Chat.SubTitle(session.messages.length)}
                     </div>
                 </div>
-                <div className="window-actions">
+                {/*<div className="window-actions">*/}
                     {/*{!isMobileScreen && (*/}
                     {/*    <div className="window-action-button">*/}
                     {/*        <IconButton*/}
@@ -1117,30 +1056,30 @@ function _Chat() {
                     {/*        />*/}
                     {/*    </div>*/}
                     {/*)}*/}
-                    <div className="window-action-button">
-                        <IconButton
-                            icon={<ExportIcon/>}
-                            bordered
-                            title={Locale.Chat.Actions.Export}
-                            onClick={() => {
-                                setShowExport(true);
-                            }}
-                        />
-                    </div>
-                    {showMaxIcon && (
-                        <div className="window-action-button">
-                            <IconButton
-                                icon={config.tightBorder ? <MinIcon/> : <MaxIcon/>}
-                                bordered
-                                onClick={() => {
-                                    config.update(
-                                        (config) => (config.tightBorder = !config.tightBorder),
-                                    );
-                                }}
-                            />
-                        </div>
-                    )}
-                </div>
+                    {/*<div className="window-action-button">*/}
+                    {/*    <IconButton*/}
+                    {/*        icon={<ExportIcon/>}*/}
+                    {/*        bordered*/}
+                    {/*        title={Locale.Chat.Actions.Export}*/}
+                    {/*        onClick={() => {*/}
+                    {/*            setShowExport(true);*/}
+                    {/*        }}*/}
+                    {/*    />*/}
+                    {/*</div>*/}
+                    {/*{showMaxIcon && (*/}
+                    {/*    <div className="window-action-button">*/}
+                    {/*        <IconButton*/}
+                    {/*            icon={config.tightBorder ? <MinIcon/> : <MaxIcon/>}*/}
+                    {/*            bordered*/}
+                    {/*            onClick={() => {*/}
+                    {/*                config.update(*/}
+                    {/*                    (config) => (config.tightBorder = !config.tightBorder),*/}
+                    {/*                );*/}
+                    {/*            }}*/}
+                    {/*        />*/}
+                    {/*    </div>*/}
+                    {/*)}*/}
+                {/*</div>*/}
 
                 <PromptToast
                     showToast={!hitBottom}
@@ -1429,9 +1368,9 @@ function _Chat() {
                 </div>
             </div>
 
-            {showExport && (
-                <ExportMessageModal onClose={() => setShowExport(false)}/>
-            )}
+            {/*{showExport && (*/}
+            {/*    <ExportMessageModal onClose={() => setShowExport(false)}/>*/}
+            {/*)}*/}
 
             {isEditingMessage && (
                 <EditMessageModal

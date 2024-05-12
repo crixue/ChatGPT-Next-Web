@@ -12,7 +12,9 @@ export const getBuildConfig = () => {
   const version = "v" + tauriConfig.package.version;
   const backendCoreApiUrl = process.env.BACKEND_CORE_API_URL ?? "http://localhost:3000";
   const backendUserApiUrl = process.env.BACKEND_USER_API_URL ?? "http://localhost:3000";
-  const defaultOpenAiUrl = process.env.DEFAULT_LANGCHAIN_API_HOST ?? "http://localhost:3000";
+  const backendPaymentOrderApiUrl =  process.env.BACKEND_PAYMENT_ORDER_API_URL ?? "http://localhost:3000";
+  const langchaingPyApiUrl = process.env.DEFAULT_LANGCHAIN_API_HOST ?? "http://localhost:3000";
+
   const emojiPrefixUrl = process.env.EMOJI_PREFIX_URL ?? "https://cdnjs.cloudflare.com/ajax/libs/emoji-datasource-apple/14.0.0";
 
   const commitInfo = (() => {
@@ -44,7 +46,8 @@ export const getBuildConfig = () => {
     isApp,
     backendCoreApiUrl: backendCoreApiUrl,
     backendUserApiUrl,
-    defaultOpenAiUrl,
+    backendPaymentOrderApiUrl,
+    defaultOpenAiUrl: langchaingPyApiUrl,
     emojiPrefixUrl,
   };
 };

@@ -149,7 +149,10 @@ const UserNameRegisterScreen = ({onError} : {
             <Input placeholder={'再次确认密码'} type="password" id={'cpassword'} allowClear/>
         </Form.Item>
         <Form.Item className={styles["register-btn"]}>
-            <Button style={{width: "100%"}} loading={requestStatus == RequestStatusEnum.isLoading} htmlType="submit" type={"primary"}>注册</Button>
+            <Button style={{width: "100%"}}
+                    disabled={!authStore.acceptTerms}
+                    loading={requestStatus == RequestStatusEnum.isLoading}
+                    htmlType="submit" type={"primary"}>注册</Button>
         </Form.Item>
     </Form>
 }

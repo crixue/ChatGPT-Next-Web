@@ -1,4 +1,4 @@
-export interface UserFolderVO {
+export interface UserFolderVo {
     id: string;
     createdUserId: string;
     folderName: string;

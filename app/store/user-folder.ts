@@ -1,4 +1,4 @@
-import {UserFolderVO} from "@/app/types/user-folder.vo";
+import {UserFolderVo} from "@/app/types/user-folder-vo";
 import {UserApiClient} from "@/app/client/user";
 import {create} from "zustand";
 
@@ -7,11 +7,11 @@ const userService = new UserApiClient();
 
 
 type UserFolderStore = {
-    currentSelectedFolder: UserFolderVO | null;
-    userFolders: UserFolderVO[];
+    currentSelectedFolder: UserFolderVo | null;
+    userFolders: UserFolderVo[];
     initUserLocalVSFolders: () => Promise<void>;
-    setCurrentSelectedFolder: (folder: UserFolderVO | null) => void;
-    setUserFolders: (userFolders: UserFolderVO[]) => void;
+    setCurrentSelectedFolder: (folder: UserFolderVo | null) => void;
+    setUserFolders: (userFolders: UserFolderVo[]) => void;
 }
 
 export const useUserFolderStore = create<UserFolderStore>((set, get) => ({
@@ -23,12 +23,12 @@ export const useUserFolderStore = create<UserFolderStore>((set, get) => ({
             userFolders: folders,
         }));
     },
-    setCurrentSelectedFolder(folder: UserFolderVO | null) {
+    setCurrentSelectedFolder(folder: UserFolderVo | null) {
         set(() => ({
             currentSelectedFolder: folder,
         }));
     },
-    setUserFolders: (userFolders: UserFolderVO[]) => {
+    setUserFolders: (userFolders: UserFolderVo[]) => {
         set(() => ({
             userFolders: userFolders,
         }));

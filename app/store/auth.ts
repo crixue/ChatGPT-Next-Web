@@ -6,7 +6,7 @@ import {AuthApi} from "@/app/client/auth";
 
 
 interface AuthStore {
-    user: UserShownVO | null;
+    user?: UserShownVO | null;
     setUser: (user: UserShownVO) => void;
     token?: string | null;
     login: (userLoginParamVO: UserLoginParamVO) => Promise<UserShownVO>;
@@ -14,6 +14,8 @@ interface AuthStore {
     register: (userRegisterParamVO: UserRegisterParamVO) => Promise<UserShownVO>;
     validateTokenIsExpired: (token: string) => Promise<boolean>;
     refreshToken: (oldToken: string) => Promise<string | null>;
+    acceptTerms: boolean;
+    setAcceptTerms: (accept: boolean) => void;
 }
 
 const authApi = new AuthApi();
@@ -50,14 +52,23 @@ export const useAuthStore = create<AuthStore>()(
                 return await authApi.validateTokenIsExpired(token);
             },
             refreshToken: async (oldToken: string) => {
-                const userShowVO = await authApi.refreshToken(oldToken);
-                if(userShowVO === null || userShowVO.token === null) {
+                try{
+                    const userShowVO = await authApi.refreshToken(oldToken);
+                    if(userShowVO === null || userShowVO.token === null) {
+                        set({user: null, token: null});
+                        return null;
+                    }
+                    set({user: userShowVO, token: userShowVO?.token});
+                    return userShowVO.token;
+                } catch (e) {
                     set({user: null, token: null});
                     return null;
                 }
-                set({user: userShowVO, token: userShowVO?.token});
-                return userShowVO.token;
             },
+            acceptTerms: true,
+            setAcceptTerms: (accept: boolean) => {
+                set({acceptTerms: accept});
+            }
         }),
         {
             name: StoreKey.Auth,

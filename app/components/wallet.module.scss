@@ -1,0 +1,67 @@
+.main-content-container {
+    max-width: 900px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 12px auto 0 auto;
+}
+
+.refund-content-box {
+    $padding: 80px;
+    height: calc(100vh - 240px);
+    overflow: auto;
+}
+
+.balance-statistic-title {
+    display: flex;
+    align-items: center;
+}
+
+.balance-action {
+    padding-top: 24px;
+
+    .balance-action-button {
+        width: 120px;
+        margin-right: 16px;
+    }
+}
+
+.payment-tool-container {
+    padding-bottom: 24px;
+    .payment-tool-radio-group-wrapper {
+        display: flex;
+        flex-direction: column;
+
+        .charge-pay-tool-box {
+            display: flex;
+            align-items: center;
+            padding-left: 16px;
+        }
+    }
+
+}
+
+.user-charge-term-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.refund-list-box{
+    width: 800px;
+    height: 600px;
+    overflow-y: auto;
+    border-block-end: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+.wallet-txn-order-amount-charge-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #FDD835FF;
+}
+
+.wallet-txn-order-amount-refund-text {
+    font-size: 16px;
+    font-weight: 600;
+}

@@ -67,7 +67,7 @@ export class ChatApi extends BaseApiClient{
         // // console.log("context:"+JSON.stringify(context))
         // promptTemplate = context.filter(msg => msg.role === "user")[0].content;
 
-        let modelName = maskModelConfig.model;
+        let modelName = maskModelConfig.model ?? 'default';
         if(!modelName || modelName === ""){
             modelName = "default";  //TODO 暂时没有可以选择的类型，所以先写死
         }

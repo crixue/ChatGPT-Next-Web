@@ -2,10 +2,7 @@
 
 
 import {GlobalLoading} from "@/app/components/global";
-
-require("../polyfill");
-
-import React, {useState, useEffect} from "react";
+import React, {useEffect, useState} from "react";
 
 import styles from "./home.module.scss";
 
@@ -18,21 +15,20 @@ import dynamic from "next/dynamic";
 import {Path, SlotID} from "../constant";
 import {ErrorBoundary} from "./error";
 
-import {getISOLang, getLang} from "../locales";
+import {getISOLang} from "../locales";
 
-import {
-    HashRouter as Router,
-    Routes,
-    Route,
-    useLocation,
-} from "react-router-dom";
-import {SideBar} from "./sidebar";
+import {HashRouter as Router, Route, Routes, useLocation,} from "react-router-dom";
+import {HistorySidebar} from "./history-sidebar";
 import {useAppConfig} from "../store/config";
-import {AuthPage} from "./auth";
 import {getClientConfig} from "../config/client";
-import {useAccessStore, useMaskStore} from "../store";
-import {UnauthenticatedApp} from "@/app/components/unauthenticated";
+import {useMaskStore} from "../store";
 import {useAuthStore} from "@/app/store/auth";
+import {MenuSideBar} from "@/app/components/menu-sidebar";
+import {Wallet} from "@/app/components/wallet";
+import {UserUsage} from "@/app/components/user_usage";
+
+
+require("../polyfill");
 
 export function Loading(props: { noLogo?: boolean }) {
     return (
@@ -42,6 +38,10 @@ export function Loading(props: { noLogo?: boolean }) {
         </div>
     );
 }
+
+const Auth = dynamic(async () => (await import("./unauthenticated/index")).UnauthenticatedApp, {
+    loading: () => <Loading noLogo/>,
+});
 
 const Settings = dynamic(async () => (await import("./settings")).Settings, {
     loading: () => <Loading noLogo/>,
@@ -71,6 +71,13 @@ const PluginsPage = dynamic(async () => (await import("./plugins")).PluginsPage,
     loading: () => <Loading noLogo/>,
 });
 
+const WalletPage = dynamic(async () => (await import("./wallet")).Wallet, {
+    loading: () => <Loading noLogo/>,
+});
+
+const UsagePage = dynamic(async () => (await import("./user_usage")).UserUsage, {
+    loading: () => <Loading noLogo/>,
+});
 
 
 export function useSwitchTheme() {
@@ -142,35 +149,46 @@ function Screen() {
     const location = useLocation();
     const authStore = useAuthStore();
     const isHome = location.pathname === Path.Home;
-    // const isAuth = location.pathname === Path.Auth;
-    const isAuth = authStore.user === null || !authStore.token;
+    const showHistoryMenuBar =
+        location.pathname === Path.Home
+        || location.pathname === Path.NewChat
+        || location.pathname === Path.Chat
+    ;
+
+    // const needAuth = location.pathname === Path.Auth;
+    const needAuth = authStore.user === null || !authStore.token;
     const isMobileScreen = useMobileScreen();
 
     useEffect(() => {
         loadAsyncGoogleFont();
     }, []);
 
+    useEffect(() => {
+        if(needAuth) {
+            window.location.href = "/#"+Path.Auth;
+        }
+    }, [needAuth]);
+
     return (
         <div
             className={
                 ` ${
-                    (config.tightBorder && !isMobileScreen) || isAuth
+                    (config.tightBorder && !isMobileScreen) || needAuth
                         ? styles["tight-container"]
                         : styles.container
                 }`
             }
         >
-            {isAuth ? (
+            {needAuth ? (
                 <>
                     <Routes>
-                        <Route path={Path.Auth} element={<UnauthenticatedApp/>}/>
+                        <Route path={Path.Auth} element={<Auth/>}/>
                     </Routes>
-                    {/*<AuthPage/>*/}
                 </>
             ) : (
                 <>
-                    {authStore.user === null || !authStore.token ? null: <SideBar className={isHome ? styles["sidebar-show"] : ""}/>}
-
+                     <MenuSideBar className={isHome ? styles["sidebar-show"] : ""}/>
+                    {showHistoryMenuBar ? <HistorySidebar className={isHome ? styles["sidebar-show"] : ""}/> : null}
                     <div className={styles["window-content"]} id={SlotID.AppBody}>
                         <Routes>
                             <Route path={Path.Home} element={<Chat/>}/>
@@ -181,6 +199,8 @@ function Screen() {
                             <Route path={Path.MakeLocalVSStore} element={<MakeLocalVectorStorePage/>}/>
                             <Route path={Path.ManageLocalVectorStore} element={<ManageLocalVectorStorePage/>}/>
                             <Route path={Path.Plugins} element={<PluginsPage/>}/>
+                            <Route path={Path.Wallet} element={<WalletPage/>}/>
+                            <Route path={Path.Usage} element={<UsagePage/>}/>
                         </Routes>
                     </div>
                 </>
