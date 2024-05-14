@@ -1,5 +1,5 @@
 import {UserFolderVo} from "@/app/types/user-folder-vo";
-import {UserApiClient} from "@/app/client/user";
+import {UserApiClient} from "@/app/client/user-api";
 import {create} from "zustand";
 
 

@@ -22,6 +22,7 @@ export enum Path {
     Plugins= "/plugins",
     Wallet = "/wallet",
     Usage = "/usage",
+    Personal = "/personal",
 }
 
 export enum SlotID {

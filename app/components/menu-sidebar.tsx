@@ -3,6 +3,7 @@ import {useEffect, useRef, useState} from "react";
 import styles from "./menu-sidebar.module.scss";
 
 import {IconButton} from "./button";
+import PersonalIcon from "../icons/personal.svg";
 import SettingsIcon from "../icons/settings.svg";
 import WalletIcon from "../icons/wallet.svg";
 import UsageIcon from "../icons/usage.svg";
@@ -117,7 +118,7 @@ export function MenuSideBar(props: { className?: string }) {
         </div>
 
         <div className={styles["sidebar-divider"]}/>
-        <div>
+        <div className={styles["sidebar-body"]}>
           <a
               className={`${(location.pathname != Path.Home) ?
                   styles["sidebar-bar-primary-box"] :
@@ -198,16 +199,18 @@ export function MenuSideBar(props: { className?: string }) {
           {/*    shadow*/}
           {/*/>*/}
         </div>
-        {/*<div*/}
-        {/*    className={styles["sidebar-body"]}*/}
-        {/*    onClick={(e) => {*/}
-        {/*      if (e.target === e.currentTarget) {*/}
-        {/*        navigate(Path.Home);*/}
-        {/*      }*/}
-        {/*    }}*/}
-        {/*>*/}
-        {/*</div>*/}
-
+        <div className={styles["sidebar-tail"]}>
+          <a
+              className={`${(location.pathname != Path.Personal) ?
+                  styles["sidebar-bar-primary-box"] :
+                  styles["sidebar-bar-primary-box-active-menu-item"]}`}
+              onClick={() => handleClick(Path.Personal)}
+          >
+            <PersonalIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+            {shouldNarrow ? null :
+                <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Profile.SideBarTitle}</span>}
+          </a>
+        </div>
         <div
             className={styles["sidebar-drag"]}
             // onMouseDown={(e) => onDragMouseDown(e as any)}
@@ -215,8 +218,7 @@ export function MenuSideBar(props: { className?: string }) {
               setShouldNarrow(!shouldNarrow);
             }}
         >
-          {!shouldNarrow ? <LeftArrowIcon/>: <RightArrowIcon/>}
-
+          {!shouldNarrow ? <LeftArrowIcon/> : <RightArrowIcon/>}
         </div>
       </div>
   );

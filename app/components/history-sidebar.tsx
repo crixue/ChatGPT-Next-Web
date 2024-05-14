@@ -55,40 +55,16 @@ export function HistorySidebar(props: { className?: string }) {
       className={styles["history-sidebar"]}
     >
       <div className={styles["sidebar-header"]}>
-        <div className={styles["sidebar-title"]}>
-          Lingro
-        </div>
-        {/*<div className={styles["sidebar-sub-title"]}>*/}
-        {/*  Build your own AI assistant.*/}
-        {/*</div>*/}
-        <div className={styles["sidebar-logo"] + " no-dark"}>
-          <ChatGptIcon />
-        </div>
+        <span className={styles["sidebar-sub-title"]}>历史消息记录</span>
       </div>
-
       <div
         className={styles["sidebar-body"]}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) {
-            navigate(Path.Home);
-          }
-        }}
       >
         <ChatList narrow={false} />
       </div>
 
       <div className={styles["sidebar-tail"]}>
         <div className={styles["sidebar-actions"]}>
-          <div className={styles["sidebar-action"] + " " + styles.mobile}>
-            <IconButton
-              icon={<CloseIcon />}
-              onClick={async () => {
-                if (await showConfirm(Locale.Home.DeleteChat)) {
-                  chatStore.deleteSession(chatStore.currentSessionIndex);
-                }
-              }}
-            />
-          </div>
         </div>
         <div>
           <IconButton

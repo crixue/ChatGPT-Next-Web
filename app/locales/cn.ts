@@ -638,8 +638,22 @@ const cn = {
         Title: "用量统计",
         SubTitle: "查看token使用量、耗费金额等",
         MonthlyStatistics: "月度统计",
+    },
+    Profile: {
+        SideBarTitle: "我",
+        Title: "个人资料",
+        SubTitle: "查看/修改个人资料",
+        RetrieveNewAvatar: "换一个",
+        Avatar: "头像",
+        UserName: "用户名",
+        UserNameTip: "与此帐户关联的名称",
+        Email: "邮箱",
+        EmailTip: "与此帐户关联的邮箱",
+        Phone: "电话",
+        PhoneTip: "与此帐户关联的电话",
+        SaveBtn: "保存",
+        UserDesc: "用户简介",
     }
-
 };
 
 type DeepPartial<T> = T extends object

@@ -1,9 +1,8 @@
-import React, {FormEvent, FormEventHandler, useEffect, useState} from "react";
-import {Avatar, Button, Divider, Form, Input, message, notification, Tabs} from "antd";
+import React, {useState} from "react";
+import {Avatar, Button, Divider, Form, Input, notification} from "antd";
 import WechatRegisterIcon from "../../icons/wechat-register.svg";
 import styles from "./index.module.scss";
 import {Link} from "react-router-dom";
-import TabPane from "antd/es/tabs/TabPane";
 import {RequestStatusEnum} from "@/app/constant";
 import {LoginTypeEnum} from "@/app/types/user-vo";
 import {AuthException} from "@/app/exceptions/auth-exception";
@@ -108,12 +107,15 @@ const UserNameLoginScreen = ({onError} : {
     return <Form onFinish={handleSubmit} form={form}>
         <Form.Item name={'username'}
                    rules={[
-                       {required: true, message: "请输入用户名"}]}
+                       {required: true, message: "请输入用户名"},
+                       {max: 16, message: "请限制在16个字符以内"},
+                   ]}
         >
             <Input placeholder={'用户名'} type="text" id={'username'} allowClear/>
         </Form.Item>
         <Form.Item name={'password'} rules={[
             {required: true, message: "请输入密码"},
+            {max: 16, message: "请限制在16个字符以内"},
         ]}
         >
             <Input placeholder={'密码: 包含字母和数字'} type="password" id={'password'} allowClear/>

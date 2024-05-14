@@ -25,7 +25,8 @@ import {useMaskStore} from "../store";
 import {useAuthStore} from "@/app/store/auth";
 import {MenuSideBar} from "@/app/components/menu-sidebar";
 import {Wallet} from "@/app/components/wallet";
-import {UserUsage} from "@/app/components/user_usage";
+import {UserUsage} from "@/app/components/user-usage";
+import {PersonalProfile} from "@/app/components/personal-profile";
 
 
 require("../polyfill");
@@ -75,7 +76,11 @@ const WalletPage = dynamic(async () => (await import("./wallet")).Wallet, {
     loading: () => <Loading noLogo/>,
 });
 
-const UsagePage = dynamic(async () => (await import("./user_usage")).UserUsage, {
+const UsagePage = dynamic(async () => (await import("./user-usage")).UserUsage, {
+    loading: () => <Loading noLogo/>,
+});
+
+const PersonalProfilePage = dynamic(async () => (await import("./personal-profile")).PersonalProfile, {
     loading: () => <Loading noLogo/>,
 });
 
@@ -201,6 +206,7 @@ function Screen() {
                             <Route path={Path.Plugins} element={<PluginsPage/>}/>
                             <Route path={Path.Wallet} element={<WalletPage/>}/>
                             <Route path={Path.Usage} element={<UsagePage/>}/>
+                            <Route path={Path.Personal} element={<PersonalProfilePage/>}/>
                         </Routes>
                     </div>
                 </>

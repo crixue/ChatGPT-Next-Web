@@ -14,7 +14,7 @@ import {
     UploadFile
 } from "antd";
 import React, {useEffect, useMemo, useState} from "react";
-import {UserApiClient} from "@/app/client/user";
+import {UserApiClient} from "@/app/client/user-api";
 import {useUserFolderStore} from "@/app/store";
 import {UserFolderCreateReqVO, UserFolderUpdateReqVO} from "@/app/types/user-folder-vo";
 import Locale from "@/app/locales";

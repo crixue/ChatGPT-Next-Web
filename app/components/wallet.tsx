@@ -51,7 +51,7 @@ const Balance = () => {
     const [refundInfo, setRefundInfo] = useState<RefundableTxnResponseVO | undefined>(undefined);
     const [paymentSelected, setPaymentSelected] =
         useState<PaymentToolDescEnum>(PaymentToolDescEnum.ALI_PAY);
-    const [chargeAmount, setChargeAmount] = useState<number>(0);
+    const [chargeAmount, setChargeAmount] = useState<number | null>(null);
     const [openConfirmToRefundModal, setOpenConfirmToRefundModal] = useState(false);
     const [confirmApplyToRefundLoading, setConfirmApplyToRefundLoading] = useState(false);
 
@@ -67,6 +67,11 @@ const Balance = () => {
     const handlePaymentSelectedOnChange = (e: RadioChangeEvent) => {
         const paymentTool = e.target.value;
         setPaymentSelected(paymentTool);
+    }
+
+    function closeChargeModal() {
+        setOpen(false);
+        setChargeAmount(null);
     }
 
     async function chargeNow() {
@@ -91,7 +96,7 @@ const Balance = () => {
         }).finally(
             () => {
                 setConfirmLoading(false);
-                setOpen(false);
+                closeChargeModal();
                 setOpenNotifyToPayModal(true);
             }
         );
@@ -187,9 +192,7 @@ const Balance = () => {
                     onOk={chargeNow}
                     confirmLoading={confirmLoading}
                     cancelText={"取消"}
-                    onCancel={() => {
-                        setOpen(false);
-                    }}
+                    onCancel={closeChargeModal}
                 >
                     <div>
                         <h2>充值金额</h2>
@@ -210,6 +213,7 @@ const Balance = () => {
                             max={1000}
                             precision={2}
                             controls={false}
+                            value={chargeAmount}
                             onChange={chargeInputChange}/>
                     </div>
                     <Divider/>

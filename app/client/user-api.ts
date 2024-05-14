@@ -5,6 +5,7 @@ import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVo} from "@/app/
 import qs from "qs";
 import {useNavigate} from "react-router-dom";
 import {BaseApiClient} from "@/app/client/base-client";
+import {UserProfileVO} from "@/app/types/user-vo";
 
 
 export class UserApiClient extends BaseApiClient {
@@ -69,4 +70,40 @@ export class UserApiClient extends BaseApiClient {
         return handleServerResponse<void>(await res.json());
     }
 
+    async getUserProfile() {
+        const res = await super.fetchWithRedirect(this.path("/api/user-profile/get"), {
+            method: "GET",
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<UserProfileVO>(await res.json());
+    }
+
+    async saveUserProfile(userProfileVO: UserProfileVO) {
+        const res = await super.fetchWithRedirect(this.path("/api/user-profile/save"), {
+            method: "PUT",
+            body: JSON.stringify(userProfileVO),
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<void>(await res.json());
+    }
+
+    async randomUserAvatarCdnUrl() {
+        const res = await super.fetchWithRedirect(this.path("/api/user-profile/random-user-avatar-url"), {
+            method: "GET",
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<string>(await res.json());
+    }
 }

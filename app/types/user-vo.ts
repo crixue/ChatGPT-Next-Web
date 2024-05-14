@@ -50,3 +50,12 @@ export interface UserRegisterFiledCheckParamVO {
     registerType: LoginTypeEnum;
     fieldValue: string;
 }
+
+export interface UserProfileVO {
+    username?: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+    userDesc?: string;
+}
+

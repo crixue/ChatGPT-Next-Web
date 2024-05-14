@@ -127,22 +127,27 @@ const UserNameRegisterScreen = ({onError} : {
 
     return <Form onFinish={handleSubmit} form={form}>
         <Form.Item name={'username'}
+                   hasFeedback
                    validateTrigger={'onBlur'}
                    rules={[
                     {required: true, message: "请输入用户名"},
-                    {max: 16, message: "请限制在16个字符以内"},
+                    {max: 24, message: "请限制在24个字符以内"},
                     {validator: userNameExistsValidator}]}
         >
             <Input placeholder={'用户名'} type="text" id={'username'} allowClear/>
         </Form.Item>
-        <Form.Item name={'password'} rules={[
+        <Form.Item name={'password'}
+                   hasFeedback
+                   rules={[
             {required: true, message: "请输入密码"},
             {validator: rawPwdValidator}
         ]}
         >
             <Input placeholder={'密码: 须包含字母和数字，长度为8-30'} type="password" id={'password'} allowClear/>
         </Form.Item>
-        <Form.Item name={'cpassword'} rules={[
+        <Form.Item name={'cpassword'}
+                   hasFeedback
+                   rules={[
             {required: true, message: "请确认密码"},
             {validator: confirmPwdValidator}
         ]}>
@@ -261,6 +266,7 @@ const PhoneRegisterScreen = ({onError} : {
 
     return <Form onFinish={handleSubmit} form={form}>
         <Form.Item name={'phone'}
+                   hasFeedback
                    validateTrigger={'onBlur'}
                    rules={[
                        {required: true, message: "请输入手机号码"},
@@ -269,14 +275,20 @@ const PhoneRegisterScreen = ({onError} : {
         >
             <Input placeholder={'手机号码'} type="text" id={'phone'} allowClear/>
         </Form.Item>
-        <Form.Item name={'password'} rules={[
+        <Form.Item
+            name={'password'}
+            hasFeedback
+            rules={[
             {required: true, message: "请输入密码"},
             {validator: rawPwdValidator}
         ]}
         >
             <Input placeholder={'密码: 须包含字母和数字，长度为8-30'} type="password" id={'password'} allowClear/>
         </Form.Item>
-        <Form.Item name={'cpassword'} rules={[
+        <Form.Item
+            name={'cpassword'}
+            hasFeedback
+            rules={[
             {required: true, message: "请确认密码"},
             {validator: confirmPwdValidator}
         ]}>
