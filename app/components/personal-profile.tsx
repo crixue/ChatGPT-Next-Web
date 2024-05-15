@@ -7,6 +7,7 @@ import {UserApiClient} from "@/app/client/user-api";
 import {userNameExistsValidator} from "@/app/components/unauthenticated/util";
 import {LoginTypeEnum} from "@/app/types/user-vo";
 import TextArea from "antd/es/input/TextArea";
+import {useAuthStore} from "@/app/store/auth";
 
 const userApi = new UserApiClient();
 
@@ -19,6 +20,7 @@ export const PersonalProfile = () => {
     const [saveBtnDisabled, setSaveBtnDisabled] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
     const [refresh, setRefresh] = useState(false);
+    const authStore = useAuthStore();
 
     useEffect(() => {
         // fetch balance
@@ -48,6 +50,7 @@ export const PersonalProfile = () => {
         setSaveLoading(true);
         userApi.saveUserProfile(values)
             .then(() => {
+                authStore.refreshToken(authStore.token!);
                 notify.success({message: Locale.Common.UpdateSuccess});
                 setRefresh(!refresh);
             }).catch((e) => {

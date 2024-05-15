@@ -278,39 +278,10 @@ export function Settings() {
                 <div className="window-actions">
                     <div className="window-action-button"></div>
                     <div className="window-action-button"></div>
-                    <div className="window-action-button">
-                        <IconButton
-                            icon={<CloseIcon/>}
-                            onClick={() => navigate(Path.Home)}
-                            bordered
-                        />
-                    </div>
                 </div>
             </div>
             <div className={styles["settings"]}>
                 <CustomList>
-                    <CustomListItem title={Locale.Settings.Avatar}>
-                        <Popover
-                            onClose={() => setShowEmojiPicker(false)}
-                            content={
-                                <AvatarPicker
-                                    onEmojiClick={(avatar: string) => {
-                                        updateConfig((config) => (config.avatar = avatar));
-                                        setShowEmojiPicker(false);
-                                    }}
-                                />
-                            }
-                            open={showEmojiPicker}
-                        >
-                            <div
-                                className={styles.avatar}
-                                onClick={() => setShowEmojiPicker(true)}
-                            >
-                                <Avatar avatar={config.avatar}/>
-                            </div>
-                        </Popover>
-                    </CustomListItem>
-
                     <CustomListItem title={Locale.Settings.SendKey}>
                         <CustomSelect
                             value={config.submitKey}
@@ -380,56 +351,56 @@ export function Settings() {
                         ></InputRange>
                     </CustomListItem>
 
-                    <CustomListItem
-                        title={Locale.Settings.AutoGenerateTitle.Title}
-                        subTitle={Locale.Settings.AutoGenerateTitle.SubTitle}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={config.enableAutoGenerateTitle}
-                            onChange={(e) =>
-                                updateConfig(
-                                    (config) =>
-                                        (config.enableAutoGenerateTitle = e.currentTarget.checked),
-                                )
-                            }
-                        ></input>
-                    </CustomListItem>
+                    {/*<CustomListItem*/}
+                    {/*    title={Locale.Settings.AutoGenerateTitle.Title}*/}
+                    {/*    subTitle={Locale.Settings.AutoGenerateTitle.SubTitle}*/}
+                    {/*>*/}
+                    {/*    <input*/}
+                    {/*        type="checkbox"*/}
+                    {/*        checked={config.enableAutoGenerateTitle}*/}
+                    {/*        onChange={(e) =>*/}
+                    {/*            updateConfig(*/}
+                    {/*                (config) =>*/}
+                    {/*                    (config.enableAutoGenerateTitle = e.currentTarget.checked),*/}
+                    {/*            )*/}
+                    {/*        }*/}
+                    {/*    ></input>*/}
+                    {/*</CustomListItem>*/}
 
-                    <CustomListItem
-                        title={Locale.Settings.SendPreviewBubble.Title}
-                        subTitle={Locale.Settings.SendPreviewBubble.SubTitle}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={config.sendPreviewBubble}
-                            onChange={(e) =>
-                                updateConfig(
-                                    (config) =>
-                                        (config.sendPreviewBubble = e.currentTarget.checked),
-                                )
-                            }
-                        ></input>
-                    </CustomListItem>
+                    {/*<CustomListItem*/}
+                    {/*    title={Locale.Settings.SendPreviewBubble.Title}*/}
+                    {/*    subTitle={Locale.Settings.SendPreviewBubble.SubTitle}*/}
+                    {/*>*/}
+                    {/*    <input*/}
+                    {/*        type="checkbox"*/}
+                    {/*        checked={config.sendPreviewBubble}*/}
+                    {/*        onChange={(e) =>*/}
+                    {/*            updateConfig(*/}
+                    {/*                (config) =>*/}
+                    {/*                    (config.sendPreviewBubble = e.currentTarget.checked),*/}
+                    {/*            )*/}
+                    {/*        }*/}
+                    {/*    ></input>*/}
+                    {/*</CustomListItem>*/}
                 </CustomList>
 
                 <CustomList>
-                    <CustomListItem
-                        title={Locale.Settings.Mask.Splash.Title}
-                        subTitle={Locale.Settings.Mask.Splash.SubTitle}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={!config.dontShowMaskSplashScreen}
-                            onChange={(e) =>
-                                updateConfig(
-                                    (config) =>
-                                        (config.dontShowMaskSplashScreen =
-                                            !e.currentTarget.checked),
-                                )
-                            }
-                        ></input>
-                    </CustomListItem>
+                    {/*<CustomListItem*/}
+                    {/*    title={Locale.Settings.Mask.Splash.Title}*/}
+                    {/*    subTitle={Locale.Settings.Mask.Splash.SubTitle}*/}
+                    {/*>*/}
+                    {/*    <input*/}
+                    {/*        type="checkbox"*/}
+                    {/*        checked={!config.dontShowMaskSplashScreen}*/}
+                    {/*        onChange={(e) =>*/}
+                    {/*            updateConfig(*/}
+                    {/*                (config) =>*/}
+                    {/*                    (config.dontShowMaskSplashScreen =*/}
+                    {/*                        !e.currentTarget.checked),*/}
+                    {/*            )*/}
+                    {/*        }*/}
+                    {/*    ></input>*/}
+                    {/*</CustomListItem>*/}
 
                     <CustomListItem
                         title={Locale.Settings.Mask.Builtin.Title}
@@ -449,33 +420,6 @@ export function Settings() {
                 </CustomList>
 
                 {/*<SyncItems/>*/}
-
-                <CustomList>
-                    <CustomListItem
-                        title={Locale.ManageLocalVectorStore.Title}
-                        subTitle={Locale.ManageLocalVectorStore.SubTitle}
-                    >
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                navigate(Path.ManageLocalVectorStore);
-                            }}
-                        >
-                            {Locale.ManageLocalVectorStore.ButtonContent}
-                        </Button>
-                    </CustomListItem>
-                </CustomList>
-
-                {/*<List>*/}
-                {/*    <ModelConfigList*/}
-                {/*        modelConfig={config.modelConfig}*/}
-                {/*        updateConfig={(updater) => {*/}
-                {/*            const modelConfig = {...config.modelConfig};*/}
-                {/*            updater(modelConfig);*/}
-                {/*            config.update((config) => (config.modelConfig = modelConfig));*/}
-                {/*        }}*/}
-                {/*    />*/}
-                {/*</List>*/}
 
                 {shouldShowPromptModal && (
                     <UserPromptModal onClose={() => setShowPromptModal(false)}/>

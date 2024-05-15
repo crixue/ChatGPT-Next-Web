@@ -28,11 +28,6 @@ export interface ChatOptions {
     onController?: (controller: AbortController) => void;
 }
 
-export interface LLMUsage {
-    used: number;
-    total: number;
-}
-
 export interface LangchainBackendBaseLLMConfig {
     model?: string;
     temperature: number;
@@ -48,13 +43,6 @@ export type MemoryTypeName =
     "ConversationBufferMemory"
     | "ConversationBufferWindowMemory"
     | "ConversationSummaryBufferMemory"
-
-export interface ConversationMemoryType {
-    name: MemoryTypeName;
-    label?: string;
-    available: boolean;
-}
-
 
 type RetrieverType = "local_vector_stores" | "web_search" | "fixed"
 

@@ -612,6 +612,7 @@ const cn = {
         GoToViewBtn: "查看插件",
     },
     ShownAlertMsg: {
+        Alert: "提示",
         UserNameOrPwdIncorrect: "用户名或密码错误",
         UserValidateFailed: "用户验证失败，请重新登录",
         AccountHasBeenRegistered: "账号已被注册",
@@ -621,6 +622,7 @@ const cn = {
         UserNotExists: "用户不存在",
         UserPasswordShouldNotBeEmpty: "密码不能为空",
         NotValidRegisterType: "无效的注册/登录类型",
+        NotEnoughMoneyAlertMsg: '您的零钱不足了，快先去充值吧！',
     },
     Logout: {
         Title: "退出",
@@ -653,7 +655,8 @@ const cn = {
         PhoneTip: "与此帐户关联的电话",
         SaveBtn: "保存",
         UserDesc: "用户简介",
-    }
+    },
+    GoToCharge: "去充值",
 };
 
 type DeepPartial<T> = T extends object

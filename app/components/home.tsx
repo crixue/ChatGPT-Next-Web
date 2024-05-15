@@ -232,7 +232,7 @@ export function useRefreshToken() {
                 return;
             }
             await useAuthStore.getState().refreshToken(token);
-            console.log("Refresh user token...");
+            // console.log("Refresh user token...");
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);

@@ -7,6 +7,7 @@ import EmojiPicker, {
 import BotIcon from "../icons/bot.svg";
 import BlackBotIcon from "../icons/black-bot.svg";
 import {getClientConfig} from "@/app/config/client";
+import {Image} from "antd";
 
 
 export function getEmojiUrl(unified: string, style: EmojiStyle) {
