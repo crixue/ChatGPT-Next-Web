@@ -1,5 +1,6 @@
 import {PageInfo} from "@/app/types/common-type";
 import {MakeLocalVSConfig} from "@/app/types/mask-vo";
+import {Product} from "@/app/types/product-vo";
 
 
 export interface MakeLocalVSRequestVO {
@@ -36,3 +37,15 @@ export interface MakeFolderLocalVSTaskRecordsVO {
     folderName: string;
     records?: PageInfo<MakeLocalVectorstoreTaskRecords>;
 }
+
+export interface PreCheckVectorestoreLimitRequestVO {
+    fileSizeInBytes: number;
+    fileType: 'AUDIO_OR_VIDEO' | 'DEFAULT';
+}
+
+export interface PreCheckVectorestoreLimitResponseVO {
+    haveExceededLimit: boolean;
+    upgradeProducts: Product[];
+}
+
+

@@ -445,7 +445,6 @@ const WalletTransactionList = () => {
 
 export const Wallet = () => {
     const onChange = (key: string) => {
-        console.log(key);
     };
 
     const items: TabsProps['items'] = [

@@ -263,7 +263,6 @@ export function Home() {
     return (
         <ErrorBoundary>
             <Router>
-                <GlobalLoading/>
                 <Screen/>
             </Router>
         </ErrorBoundary>

@@ -618,7 +618,7 @@ const cn = {
         AccountHasBeenRegistered: "账号已被注册",
         SmsCodeNotCorrected: "短信验证码不正确",
         PicVerifyCodeNotCorrected: "图片验证码不正确",
-        UsernameLengthExceed: "用户名长度超过16位限制",
+        UsernameLengthExceed: "用户名长度超过24位",
         UserNotExists: "用户不存在",
         UserPasswordShouldNotBeEmpty: "密码不能为空",
         NotValidRegisterType: "无效的注册/登录类型",

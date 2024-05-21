@@ -74,7 +74,7 @@ export function getBackendApiHeaders() {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    headers["userid"] = "VFdbGwV0"; //TODO mock a user id
+    headers["userid"] = "yr8zsNIV"; //TODO mock a user id
 
     return headers;
 }

@@ -22,7 +22,7 @@ import {IconButton} from "@/app/components/button";
 import CloseIcon from "@/app/icons/close.svg";
 import {useNavigate} from "react-router-dom";
 import styles from "./make-local-vector-store.module.scss";
-import {UploadPage} from "@/app/components/upload";
+import {UploadVectorStoreOriFilesPage} from "@/app/components/upload-vector-store-ori-files";
 import {useUploadFileStore} from "@/app/store/upload-file";
 import {UploadApi} from "@/app/client/upload";
 import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
@@ -34,11 +34,13 @@ import {TablePagination} from "@/app/types/common-type";
 import {CheckCircleOutlined, CloseCircleOutlined, SyncOutlined} from "@ant-design/icons";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 import TextArea from "antd/es/input/TextArea";
+import {VectorstorePaymentTransactionApi} from "@/app/client/vectorestore-payment-transaction-api";
+import {GlobalLoading} from "@/app/components/global";
 
 const userService = new UserApiClient();
 const uploadService = new UploadApi();
 const makeLocalVSService = new MakeLocalVectorStoreApi();
-
+const vectorstorePaymentTransactionApi = new VectorstorePaymentTransactionApi();
 
 export const useInitUserFolders = (reload: Boolean | undefined) => {
     useEffect(() => {
@@ -78,6 +80,8 @@ export const MakeLocalVectorStorePage = () => {
     const haveAddedPlainTextItemsLength = haveAddedPlainTextItems.length;
     const selectedLang = uploadFileStore.selectedLang;
 
+    const [showLoading, setShowLoading] = useState<boolean>(false);
+
     useEffect(() => {
         if (current == 0 && (!fstFormFolderName || fstFormFolderName === "")) {
             setNextBtnDisabled(true);
@@ -109,7 +113,7 @@ export const MakeLocalVectorStorePage = () => {
         {
             title: Locale.MakeLocalVSStore.Steps.SecondStep.Title,
             description: Locale.MakeLocalVSStore.Steps.SecondStep.Descriptions,
-            content: <UploadPage
+            content: <UploadVectorStoreOriFilesPage
                         uploadFolderId={currentSelectedFolderId ?? ""}/>,
         },
         {
@@ -125,6 +129,11 @@ export const MakeLocalVectorStorePage = () => {
         // create or Update?
         const isUpdate = currentSelectedFolder !== null;
 
+        try {
+            await vectorstorePaymentTransactionApi.createAnDefaultFreeVectorstoreOrder();
+        } catch (e: any) {
+            console.log("[handleSubmitFstForm] create default free vs order failed:",e);
+        }
 
         const values:{folderName: string, folderDesc?: string} = fstStepForm.getFieldsValue();
         if (isUpdate) {
@@ -208,7 +217,7 @@ export const MakeLocalVectorStorePage = () => {
     }
 
     const start2Make = async () => {
-        globalSettingStore.switchShowGlobalLoading();
+        setShowLoading(true);
         const makeLocalVSConfig = uploadFileStore.makeLocalVSConfig;
 
         let makeLocalVSRequests: MakeLocalVSRequestVO[] = [];
@@ -259,17 +268,20 @@ export const MakeLocalVectorStorePage = () => {
             }
         }
 
-        makeLocalVSService.doMakeLocalVS(makeLocalVSRequests).then((resp) => {
-            makeLocalVSService.executeSpeechRecognize({speechRecognizeTaskIds});
+        try {
+            await makeLocalVSService.doMakeLocalVS(makeLocalVSRequests);
+            if(speechRecognizeTaskIds.length > 0) {
+                await makeLocalVSService.executeSpeechRecognize({speechRecognizeTaskIds});
+            }
             next();
-        }).catch((error) => {
-            console.log(error);
+        } catch (e) {
+            console.log(e);
             notify['error']({
                 message: Locale.Common.OperateFailed,
             });
-        }).finally(() => {
-            globalSettingStore.switchShowGlobalLoading();
-        });
+        } finally {
+            setShowLoading(false);
+        }
     }
 
     const reset = () => {
@@ -280,6 +292,7 @@ export const MakeLocalVectorStorePage = () => {
     return (
         <>
             {contextHolder}
+            <GlobalLoading showLoading={showLoading}/>
             <div className="window-header" data-tauri-drag-region>
                 <div className="window-header-title">
                     <div className="window-header-main-title">
@@ -449,6 +462,7 @@ const UserFolderSelection = (props: {
                         <Form.Item
                             label={Locale.MakeLocalVSStore.LocalVSName}
                             name="folderName"
+                            tooltip={Locale.MakeLocalVSStore.Rules.Rule1}
                             rules={[
                                 {
                                     required: true,
@@ -482,7 +496,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
 
     const [reload, setReload] = useState(false);  // 用于刷新页面
     const makeLocalVSStore = useMakeLocalVSStore();
-    const globalSettingStore = useGlobalSettingStore();
+    // const globalSettingStore = useGlobalSettingStore();
 
     const [tablePagination, setTablePagination] = useState<TablePagination>({
         current: 1,
@@ -490,12 +504,13 @@ export const MakeLocalVectorTaskRecordsView = (props: {
         defaultPageSize: 10,
     });
     const [notify, contextHolder] = notification.useNotification();
+    const [showLoading, setShowLoading] = useState<boolean>(false);
 
     useEffect(() => {
         (async () => {
-            globalSettingStore.switchShowGlobalLoading();
+            // globalSettingStore.switchShowGlobalLoading();
             await makeLocalVSStore.initMakeFolderLocalVSTaskRecordsView(props.uploadFolderId);
-            globalSettingStore.switchShowGlobalLoading();
+            // globalSettingStore.switchShowGlobalLoading();
         })();
     },[reload]);
 
@@ -511,7 +526,8 @@ export const MakeLocalVectorTaskRecordsView = (props: {
 
     const DeleteItem = ({record}: {record: MakeLocalVectorstoreTaskRecords}) => {
         const handleDelete = (record: MakeLocalVectorstoreTaskRecords) => {
-            globalSettingStore.switchShowGlobalLoading("Deleting...");
+            // globalSettingStore.switchShowGlobalLoading("Deleting...");
+            setShowLoading(true);
             makeLocalVSService.deleteIndexInLocalVS(record.id).then((resp) => {
                 notify['success']({
                     message: Locale.Common.OperateSuccess,
@@ -523,7 +539,8 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                 });
             }).finally(() => {
                 setReload(!reload);
-                globalSettingStore.switchShowGlobalLoading();
+                setShowLoading(false);
+                // globalSettingStore.switchShowGlobalLoading();
             });
         }
 
@@ -660,26 +677,29 @@ export const MakeLocalVectorTaskRecordsView = (props: {
     return (
         <>
             {contextHolder}
-            <Card
-                title={props.showCardTitle}
-                extra={<RefreshItemBtn/>}
-            >
-                <Table
-                    columns={columns}
-                    scroll={{x: 800}}
-                    pagination={{
-                        ...tablePagination,
-                        total: totalRecordSize,
-                        onChange: (page, pageSize) => {
-                            setTablePagination({
-                                ...tablePagination,
-                                current: page,
-                            });
-                        }
-                    }}
-                    dataSource={resultView?.records?.list}
-                />
-            </Card>
+            <div>
+                <GlobalLoading showLoading={showLoading}/>
+                <Card
+                    title={props.showCardTitle}
+                    extra={<RefreshItemBtn/>}
+                >
+                    <Table
+                        columns={columns}
+                        scroll={{x: 800}}
+                        pagination={{
+                            ...tablePagination,
+                            total: totalRecordSize,
+                            onChange: (page, pageSize) => {
+                                setTablePagination({
+                                    ...tablePagination,
+                                    current: page,
+                                });
+                            }
+                        }}
+                        dataSource={resultView?.records?.list}
+                    />
+                </Card>
+            </div>
         </>
     )
 }

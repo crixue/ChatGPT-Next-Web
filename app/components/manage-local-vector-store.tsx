@@ -16,6 +16,7 @@ import {DeleteOutlined, EditOutlined, FileSearchOutlined} from "@ant-design/icon
 import {MakeLocalVectorTaskRecordsView} from "@/app/components/make-local-vector-store";
 import LeftIcon from "@/app/icons/left.svg";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
+import {GlobalLoading} from "@/app/components/global";
 
 
 const userService = new UserApiClient();
@@ -25,14 +26,14 @@ export const useInitUserFolders = (reload: Boolean | undefined) => {
         (async () => {
             await useUserFolderStore.getState().initUserLocalVSFolders();
         })();
-    },[reload]);
+    }, [reload]);
 }
 
 export const ManageLocalVectorStorePage = () => {
     const [reload, setReload] = useState(false);  // 用于刷新页面
     useInitUserFolders(reload)
 
-    const globalSettingStore = useGlobalSettingStore();
+    const [showLoading, setShowLoading] = useState<boolean>(false);
     const userFolderStore = useUserFolderStore();
     const userFolders = userFolderStore.userFolders;
     const navigate = useNavigate();
@@ -46,9 +47,9 @@ export const ManageLocalVectorStorePage = () => {
         defaultPageSize: 6,
     });
 
-    const DeleteItem = ({record}: {record: UserFolderVo}) => {
+    const DeleteItem = ({record}: { record: UserFolderVo }) => {
         const handleDelete = (record: UserFolderVo) => {
-            globalSettingStore.switchShowGlobalLoading("Deleting...");
+            setShowLoading(true);
             userService.deleteUserFolder({userFolderId: record.id})
                 .then((res) => {
                     notify.success({
@@ -56,12 +57,12 @@ export const ManageLocalVectorStorePage = () => {
                     });
                     setReload(!reload);
                 }).catch((err) => {
-                    notify.error({
-                        message: Locale.Common.OperateFailed,
-                    });
-                }).finally(() => {
-                    globalSettingStore.switchShowGlobalLoading();
+                notify.error({
+                    message: Locale.Common.OperateFailed,
                 });
+            }).finally(() => {
+                setShowLoading(false);
+            });
         }
 
         return (
@@ -69,7 +70,7 @@ export const ManageLocalVectorStorePage = () => {
         );
     }
 
-    const ViewItem = ({record}: {record: UserFolderVo}) => {
+    const ViewItem = ({record}: { record: UserFolderVo }) => {
         const handleView = (record: UserFolderVo) => {
             setViewFolder(record);
             setShowWhichPage("viewPage");
@@ -81,14 +82,15 @@ export const ManageLocalVectorStorePage = () => {
     }
 
 
-    const BuildItem = ({record}: {record: UserFolderVo}) => {
+    const BuildItem = ({record}: { record: UserFolderVo }) => {
         const handleBuild = (record: UserFolderVo) => {
             userFolderStore.setCurrentSelectedFolder(record);
             navigate(Path.MakeLocalVSStore);
         }
 
         return (
-            <a className={styles["action-item"]} onClick={() => handleBuild(record)}>{Locales.MakeLocalVSStore.StartToBuild}</a>
+            <a className={styles["action-item"]}
+               onClick={() => handleBuild(record)}>{Locales.MakeLocalVSStore.StartToBuild}</a>
         );
     }
 
@@ -116,7 +118,7 @@ export const ManageLocalVectorStorePage = () => {
 
     dataSource = [fstItem, ...dataSource];
 
-    const IconText = ({ icon, text }: { icon: ReactElement | null ; text: string | ReactElement | null  }) => (
+    const IconText = ({icon, text}: { icon: ReactElement | null; text: string | ReactElement | null }) => (
         <Space>
             <>
                 {icon}
@@ -129,29 +131,32 @@ export const ManageLocalVectorStorePage = () => {
         return (
             <>
                 {contextHolder}
-                <div className="window-header" data-tauri-drag-region>
-                    <IconButton
-                        icon={<LeftIcon />}
-                        text={Locale.NewChat.Return}
-                        onClick={() => setShowWhichPage("mainPage")}
-                    />
-                    <div className="window-actions">
-                        <div className="window-action-button"></div>
-                        <div className="window-action-button"></div>
-                        <div className="window-action-button">
-                            <IconButton
-                                icon={<CloseIcon/>}
-                                onClick={() => navigate(-1)}
-                                bordered
-                            />
+                <div>
+                    <GlobalLoading showLoading={showLoading}/>
+                    <div className="window-header" data-tauri-drag-region>
+                        <IconButton
+                            icon={<LeftIcon/>}
+                            text={Locale.NewChat.Return}
+                            onClick={() => setShowWhichPage("mainPage")}
+                        />
+                        <div className="window-actions">
+                            <div className="window-action-button"></div>
+                            <div className="window-action-button"></div>
+                            <div className="window-action-button">
+                                <IconButton
+                                    icon={<CloseIcon/>}
+                                    onClick={() => navigate(-1)}
+                                    bordered
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div className={styles["local-vs-container"]}>
-                    <MakeLocalVectorTaskRecordsView
-                        uploadFolderId={viewFolder?.id ?? ""}
-                        showCardTitle={viewFolder?.folderName ?? ""}
-                    />
+                    <div className={styles["local-vs-container"]}>
+                        <MakeLocalVectorTaskRecordsView
+                            uploadFolderId={viewFolder?.id ?? ""}
+                            showCardTitle={viewFolder?.folderName ?? ""}
+                        />
+                    </div>
                 </div>
             </>
         );
@@ -176,7 +181,7 @@ export const ManageLocalVectorStorePage = () => {
                     size="large"
                     pagination={{
                         ...tablePagination,
-                        total: userFolders? userFolders.length : 0,
+                        total: userFolders ? userFolders.length : 0,
                         onChange: (page, pageSize) => {
                             setTablePagination({
                                 ...tablePagination,
@@ -196,7 +201,7 @@ export const ManageLocalVectorStorePage = () => {
                                 <IconText
                                     key={"action-check"}
                                     icon={<FileSearchOutlined/>}
-                                    text={<ViewItem record={item}/> }/>,
+                                    text={<ViewItem record={item}/>}/>,
                                 <IconText
                                     key={"action-delete"}
                                     icon={<DeleteOutlined/>}
@@ -204,11 +209,11 @@ export const ManageLocalVectorStorePage = () => {
                                 <IconText
                                     key={"action-updateAt"}
                                     icon={null}
-                                    text={item.updateAt? dayjs(item.updateAt).format("YYYY-MM-DD HH:mm:ss"): null}/>,
+                                    text={item.updateAt ? dayjs(item.updateAt).format("YYYY-MM-DD HH:mm:ss") : null}/>,
                             ]}
                         >
                             <List.Item.Meta
-                                title={item.folderNameElement ? item.folderNameElement: item.folderName}
+                                title={item.folderNameElement ? item.folderNameElement : item.folderName}
                                 description={item.folderDesc}
                             />
                         </List.Item>

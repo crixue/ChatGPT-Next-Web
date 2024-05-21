@@ -12,3 +12,45 @@
   padding: 10px;
 }
 
+.upgrade-vs-service-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+
+  .upgrade-item-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .upgrade-item-card {
+      width: 300px;
+    }
+  }
+
+  .upgrade-radio-group-box {
+    margin-left: 80px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+  }
+
+}
+
+.payment-tool-container {
+  padding-bottom: 24px;
+  .payment-tool-radio-group-wrapper {
+    display: flex;
+    flex-direction: column;
+
+    .charge-pay-tool-box {
+      display: flex;
+      align-items: center;
+      padding-left: 16px;
+    }
+  }
+
+}

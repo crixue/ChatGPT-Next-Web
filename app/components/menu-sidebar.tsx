@@ -150,7 +150,7 @@ export function MenuSideBar(props: { className?: string }) {
                 <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Mask.Name}</span>}
           </a>
           <a
-              className={`${(location.pathname != Path.ManageLocalVectorStore) ?
+              className={`${(location.pathname != Path.ManageLocalVectorStore && location.pathname != Path.MakeLocalVSStore) ?
                   styles["sidebar-bar-primary-box"] :
                   styles["sidebar-bar-primary-box-active-menu-item"]}`}
               onClick={() => handleClick(Path.ManageLocalVectorStore)}

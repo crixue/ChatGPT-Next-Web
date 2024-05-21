@@ -1,25 +1,18 @@
-import LoadingIcon from "../icons/three-dots.svg";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 import React from "react";
-import {Modal, Space, Spin} from "antd";
-import styles from "@/app/components/home.module.scss";
+import styles from "@/app/components/global.module.scss";
+import BotIcon from "@/app/icons/bot.svg";
+import LoadingIcon from "@/app/icons/three-dots.svg";
 
-
-export const GlobalLoading = () => {
-    const globalSettingStore = useGlobalSettingStore();
-    const isLoading = globalSettingStore.showGlobalLoading;
-    const loadingText = globalSettingStore.showGlobalLoadingText;
-    if (isLoading) {
+export const GlobalLoading = (props: { showLoading: boolean, noLogo?: boolean }) => {
+    if (props.showLoading) {
         return (
             <div style={{display: "flex"}}>
                 <div className={styles["overlay"]}>
-                    <Space>
-                        <div className={styles["loading"]}>
-                            <Spin tip={loadingText} size="large">
-                                <div className="content" />
-                            </Spin>
-                        </div>
-                    </Space>
+                    <div className={styles["loading-content"] + " no-dark"}>
+                        {!props.noLogo && <BotIcon/>}
+                        <LoadingIcon/>
+                    </div>
                 </div>
             </div>
         )
