@@ -156,7 +156,6 @@ function Screen() {
     const isHome = location.pathname === Path.Home;
     const showHistoryMenuBar =
         location.pathname === Path.Home
-        || location.pathname === Path.NewChat
         || location.pathname === Path.Chat
     ;
 
