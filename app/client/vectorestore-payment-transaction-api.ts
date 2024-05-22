@@ -3,10 +3,12 @@ import {useAccessStore} from "@/app/store";
 import {handleServerResponse} from "@/app/common-api";
 import {getBackendApiHeaders} from "@/app/client/api";
 import {
+    UserCurrentVectorstoreProductVO,
     VectorestoreUpgradeRequestVO,
     VectorestoreUpgradeResponseVO,
     VectorstoreUpgradeProductVO
 } from "@/app/types/vectorestore-payment-txn-vo";
+import {Product} from "@/app/types/product-vo";
 
 
 export class VectorstorePaymentTransactionApi extends BaseApiClient {
@@ -28,15 +30,14 @@ export class VectorstorePaymentTransactionApi extends BaseApiClient {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return handleServerResponse<void>(await res.json());
+        return handleServerResponse<UserCurrentVectorstoreProductVO>(await res.json());
     }
 
-    async showVectorestoreUpgradePlan(data: VectorestoreUpgradeRequestVO) {
+    async showVectorestoreUpgradePlan() {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/vectorstore-payment-txn/show-vectorestore-upgrade-plan`),
+                `/api/vectorstore-payment-txn/show-vectorestore-upgrade-plan-for-user`),
             {
-                method: "POST",
-                body: JSON.stringify(data),
+                method: "GET",
                 headers: {
                     ...getBackendApiHeaders()
                 },
@@ -45,7 +46,7 @@ export class VectorstorePaymentTransactionApi extends BaseApiClient {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return handleServerResponse<VectorstoreUpgradeProductVO[]>(await res.json());
+        return handleServerResponse<Product[]>(await res.json());
     }
 
 

@@ -25,3 +25,16 @@ export interface VectorstoreUpgradeProductVO {
     monthlyUnitPrice: number;
 }
 
+export interface UserCurrentVectorstoreProductVO {
+    expireDate: Date;
+    productId: string;
+    productName?: string;
+    limitSize: number;
+    isAutomaticRenewel: boolean;
+}
+
+export enum VectorestorePlanProductEnum {
+    Free= "VECTORESTORE-01",
+    Exp= "VECTORESTORE-02",
+    Plus= "VECTORESTORE-03",
+}

@@ -1,4 +1,6 @@
 import {
+    Alert,
+    Badge,
     Button,
     Card,
     Form,
@@ -47,7 +49,7 @@ export const useInitUserFolders = (reload: Boolean | undefined) => {
         (async () => {
             await useUserFolderStore.getState().initUserLocalVSFolders();
         })();
-    },[reload]);
+    }, [reload]);
 }
 
 
@@ -81,15 +83,16 @@ export const MakeLocalVectorStorePage = () => {
     const selectedLang = uploadFileStore.selectedLang;
 
     const [showLoading, setShowLoading] = useState<boolean>(false);
+    const [currentProductId, setCurrentProductId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (current == 0 && (!fstFormFolderName || fstFormFolderName === "")) {
             setNextBtnDisabled(true);
-        } else if(current == 0) {
+        } else if (current == 0) {
             setNextBtnDisabled(false);
-        } else if(current == 1 && (haveUploadFileListLength == 0 && haveAddedPlainTextItemsLength == 0)) {
+        } else if (current == 1 && (haveUploadFileListLength == 0 && haveAddedPlainTextItemsLength == 0)) {
             setNextBtnDisabled(true);
-        } else if(current == 1) {
+        } else if (current == 1) {
             setNextBtnDisabled(false);
         }
     }, [current, currentSelectedFolderId, haveUploadFileListLength, haveAddedPlainTextItemsLength, fstFormFolderName])
@@ -107,35 +110,38 @@ export const MakeLocalVectorStorePage = () => {
             title: Locale.MakeLocalVSStore.Steps.FirstStep.Title,
             description: Locale.MakeLocalVSStore.Steps.FirstStep.Descriptions,
             content: <UserFolderSelection
-                        form={fstStepForm}
-                        uploadFolderId={currentSelectedFolderId ?? ""}/>,
+                form={fstStepForm}
+                uploadFolderId={currentSelectedFolderId ?? ""}/>,
         },
         {
             title: Locale.MakeLocalVSStore.Steps.SecondStep.Title,
             description: Locale.MakeLocalVSStore.Steps.SecondStep.Descriptions,
             content: <UploadVectorStoreOriFilesPage
-                        uploadFolderId={currentSelectedFolderId ?? ""}/>,
+                uploadFolderId={currentSelectedFolderId ?? ""}
+                currentUserProductId={currentProductId}
+            />,
         },
         {
             title: Locale.MakeLocalVSStore.Steps.ThirdStep.Title,
             description: Locale.MakeLocalVSStore.Steps.ThirdStep.Descriptions,
             content: <MakeLocalVectorTaskRecordsView
-                        showCardTitle={Locale.MakeLocalVSStore.Steps.ThirdStep.CardTitle}
-                        uploadFolderId={currentSelectedFolderId ?? ""}/>,
+                showCardTitle={Locale.MakeLocalVSStore.Steps.ThirdStep.CardTitle}
+                uploadFolderId={currentSelectedFolderId ?? ""}/>,
         },
     ];
 
-    const handleSubmitFstForm = async() => {
+    const handleSubmitFstForm = async () => {
         // create or Update?
         const isUpdate = currentSelectedFolder !== null;
 
         try {
-            await vectorstorePaymentTransactionApi.createAnDefaultFreeVectorstoreOrder();
+            const currentUserVSOrder = await vectorstorePaymentTransactionApi.createAnDefaultFreeVectorstoreOrder();
+            setCurrentProductId(currentUserVSOrder.productId);
         } catch (e: any) {
-            console.log("[handleSubmitFstForm] create default free vs order failed:",e);
+            console.log("[handleSubmitFstForm] create default free vs order failed:", e);
         }
 
-        const values:{folderName: string, folderDesc?: string} = fstStepForm.getFieldsValue();
+        const values: { folderName: string, folderDesc?: string } = fstStepForm.getFieldsValue();
         if (isUpdate) {
             // check if need update first
             const needUpdate = currentSelectedFolder?.folderName !== values.folderName || currentSelectedFolder?.folderDesc !== values?.folderDesc;
@@ -222,7 +228,7 @@ export const MakeLocalVectorStorePage = () => {
 
         let makeLocalVSRequests: MakeLocalVSRequestVO[] = [];
         const speechRecognizeTaskIds: string[] = [];
-        if(haveAddedPlainTextItems.length > 0) {
+        if (haveAddedPlainTextItems.length > 0) {
             const savedServerPaths = await uploadService.uploadPlainTextFile({
                 folderId: currentSelectedFolderId ?? "",
                 plainTextList: haveAddedPlainTextItems
@@ -239,7 +245,7 @@ export const MakeLocalVectorStorePage = () => {
                 makeLocalVSRequests.push(item);
             }
         }
-        for(const haveUploadFile of haveUploadFileList) {
+        for (const haveUploadFile of haveUploadFileList) {
             const resp = haveUploadFile.response;
             if (resp === undefined) {
                 continue;
@@ -270,7 +276,7 @@ export const MakeLocalVectorStorePage = () => {
 
         try {
             await makeLocalVSService.doMakeLocalVS(makeLocalVSRequests);
-            if(speechRecognizeTaskIds.length > 0) {
+            if (speechRecognizeTaskIds.length > 0) {
                 await makeLocalVSService.executeSpeechRecognize({speechRecognizeTaskIds});
             }
             next();
@@ -316,7 +322,7 @@ export const MakeLocalVectorStorePage = () => {
             </div>
             <div className={styles["local-vs-container"]}>
                 <Steps
-                    style={{paddingBottom: '24px'}}
+                    style={{marginBottom: '40px'}}
                     current={current}
                     items={steps}
                 />
@@ -337,12 +343,12 @@ export const MakeLocalVectorStorePage = () => {
                         </Button>
                     )}
                     {current === 1 && (
-                            <Button
-                                disabled={nextBtnDisabled}
-                                onClick={start2Make}
-                                type="primary">
-                                {Locale.MakeLocalVSStore.Steps.NextStep}
-                            </Button>
+                        <Button
+                            disabled={nextBtnDisabled}
+                            onClick={start2Make}
+                            type="primary">
+                            {Locale.MakeLocalVSStore.Steps.NextStep}
+                        </Button>
                     )}
                     {current === steps.length - 1 && (
                         <>
@@ -350,13 +356,14 @@ export const MakeLocalVectorStorePage = () => {
                                 type="primary"
                                 onClick={() => {
                                     reset();
-                                    navigate(-1);}
+                                    navigate(-1);
+                                }
                                 }
                             >
                                 {Locale.Common.Complete}
                             </Button>
                             <Button
-                                style={{ margin: '0 8px' }}
+                                style={{margin: '0 8px'}}
                                 onClick={() => {
                                     reset();
                                 }}>
@@ -365,7 +372,7 @@ export const MakeLocalVectorStorePage = () => {
                         </>
                     )}
                     {current > 0 && current <= 1 && (
-                        <Button style={{ margin: '0 8px' }} onClick={() => prev()}>
+                        <Button style={{margin: '0 8px'}} onClick={() => prev()}>
                             {Locale.MakeLocalVSStore.Steps.PreviousStep}
                         </Button>
                     )}
@@ -385,7 +392,7 @@ const UserFolderSelection = (props: {
     const currentSelectedFolder = userFolderStore.currentSelectedFolder;
     const setCurrentSelectedFolder = userFolderStore.setCurrentSelectedFolder;
 
-    const [formData, setFormData] = useState<any|undefined>(undefined);
+    const [formData, setFormData] = useState<any | undefined>(undefined);
     const [notify, contextHolder] = notification.useNotification();
 
 
@@ -437,12 +444,12 @@ const UserFolderSelection = (props: {
     return (
         <>
             {contextHolder}
-            <Space direction="vertical" size="middle" style={{ display: 'flex' }}>
+            <Space direction="vertical" size="middle" style={{display: 'flex'}}>
                 <Card
                     title={Locale.MakeLocalVSStore.Steps.FirstStep.CardTitle}
                     size={"small"}>
                     <Form
-                        labelCol={{ span: 6 }}
+                        labelCol={{span: 6}}
                         // wrapperCol={{span: 18 }}
                         layout="vertical"
                         form={form}
@@ -474,13 +481,15 @@ const UserFolderSelection = (props: {
                                 },
                             ]}
                         >
-                            <Input id={"folderName"} allowClear placeholder={Locale.MakeLocalVSStore.Rules.PleaseInputLocalVSName}/>
+                            <Input id={"folderName"} allowClear
+                                   placeholder={Locale.MakeLocalVSStore.Rules.PleaseInputLocalVSName}/>
                         </Form.Item>
                         <Form.Item
                             label={Locale.MakeLocalVSStore.LocalVSDesc}
                             name="folderDesc"
                         >
-                            <TextArea id={"folderDesc"} allowClear placeholder={Locale.MakeLocalVSStore.Rules.PleaseInputLocalVSDesc}/>
+                            <TextArea id={"folderDesc"} allowClear
+                                      placeholder={Locale.MakeLocalVSStore.Rules.PleaseInputLocalVSDesc}/>
                         </Form.Item>
                     </Form>
                 </Card>
@@ -512,7 +521,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
             await makeLocalVSStore.initMakeFolderLocalVSTaskRecordsView(props.uploadFolderId);
             // globalSettingStore.switchShowGlobalLoading();
         })();
-    },[reload]);
+    }, [reload]);
 
     useMemo(() => {
         (async () => {
@@ -524,7 +533,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
     const resultView = makeLocalVSStore.makeFolderLocalVSTaskRecordsView;
     const totalRecordSize = resultView?.records?.total ?? 0;
 
-    const DeleteItem = ({record}: {record: MakeLocalVectorstoreTaskRecords}) => {
+    const DeleteItem = ({record}: { record: MakeLocalVectorstoreTaskRecords }) => {
         const handleDelete = (record: MakeLocalVectorstoreTaskRecords) => {
             // globalSettingStore.switchShowGlobalLoading("Deleting...");
             setShowLoading(true);
@@ -546,7 +555,8 @@ export const MakeLocalVectorTaskRecordsView = (props: {
 
         return (
             <div>
-                <Popconfirm title={Locale.Common.Confirm} okText={Locale.Common.Confirm} cancelText={Locale.Common.Cancel} onConfirm={() => handleDelete(record)}>
+                <Popconfirm title={Locale.Common.Confirm} okText={Locale.Common.Confirm}
+                            cancelText={Locale.Common.Cancel} onConfirm={() => handleDelete(record)}>
                     <a>{Locale.Common.Delete}</a>
                 </Popconfirm>
             </div>
@@ -578,7 +588,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                     case 0:
                         return (
                             <span>
-                                <Tag icon={<SyncOutlined spin />} color="processing">
+                                <Tag icon={<SyncOutlined spin/>} color="processing">
                                     {Locale.Common.InProgress}
                                 </Tag>
                             </span>
@@ -586,7 +596,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                     case 1:
                         return (
                             <span>
-                                <Tag icon={<SyncOutlined spin />} color="processing">
+                                <Tag icon={<SyncOutlined spin/>} color="processing">
                                     {Locale.Common.InProgress}
                                 </Tag>
                             </span>
@@ -594,7 +604,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                     case 100:
                         return (
                             <span>
-                                <Tag icon={<CheckCircleOutlined />} color="success">
+                                <Tag icon={<CheckCircleOutlined/>} color="success">
                                     {Locale.Common.Success}
                                 </Tag>
                             </span>
@@ -603,7 +613,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                 if (text < 0) {
                     return (
                         <span>
-                            <Tag icon={<CloseCircleOutlined />} color="error">
+                            <Tag icon={<CloseCircleOutlined/>} color="error">
                                 {Locale.Common.Failed}
                             </Tag>
                         </span>
@@ -683,6 +693,13 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                     title={props.showCardTitle}
                     extra={<RefreshItemBtn/>}
                 >
+                    <Alert
+                        style={{marginBottom: '24px'}}
+                        message={
+                            <span>知识库中任务状态为<b>成功</b>的文件的内容才可以被模型被使用到，请您耐心等待知识库制作完成
+                        </span>}
+                        type="warning"
+                        showIcon/>
                     <Table
                         columns={columns}
                         scroll={{x: 800}}
@@ -698,6 +715,7 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                         }}
                         dataSource={resultView?.records?.list}
                     />
+
                 </Card>
             </div>
         </>

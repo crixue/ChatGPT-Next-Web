@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Alert,
     Badge,
@@ -28,7 +28,7 @@ import {Product} from "@/app/types/product-vo";
 import {GlobalLoading} from "@/app/components/global";
 import {RadioChangeEvent} from "antd/es/radio/interface";
 import type {InputStatus} from "antd/es/_util/statusUtils";
-import {VectorestoreUpgradeRequestVO} from "@/app/types/vectorestore-payment-txn-vo";
+import {VectorestorePlanProductEnum, VectorestoreUpgradeRequestVO} from "@/app/types/vectorestore-payment-txn-vo";
 import {VectorstorePaymentTransactionApi} from "@/app/client/vectorestore-payment-transaction-api";
 import {useNavigate} from "react-router-dom";
 import {PaymentToolDescEnum, WalletChargeTxnRequestVO} from "@/app/types/payment-order-vo";
@@ -50,6 +50,7 @@ const paymentOrderApi = new PaymentOderApi();
 
 export const UploadVectorStoreOriFilesPage = (props: {
     uploadFolderId: string;
+    currentUserProductId?: string;
 }) => {
     const uploadFileStore = useUploadFileStore();
     const fileList = uploadFileStore.uploadFileList;
@@ -62,6 +63,21 @@ export const UploadVectorStoreOriFilesPage = (props: {
 
     const [notify, contextHolder] = notification.useNotification();
     const [showLoading, setShowLoading] = useState<boolean>(false);
+    const [upgradedProductId, setUpgradedProductId] = useState<string | undefined>(props.currentUserProductId);
+    const [productBadge, setProductBadge] = useState<string>('Free');
+    const [productBadgeColor, setProductBadgeColor] = useState<string>('grey');
+
+    useEffect(() => {
+        if (upgradedProductId) {
+            if (upgradedProductId === VectorestorePlanProductEnum.Exp) {
+                setProductBadge('Exp');
+                setProductBadgeColor('cyan');
+            } else if (upgradedProductId === VectorestorePlanProductEnum.Plus) {
+                setProductBadge('Plus');
+                setProductBadgeColor('red');
+            }
+        }
+    }, [upgradedProductId]);
 
     const handleUploadChange: UploadProps['onChange'] = ((info) => {
         // console.log('handleUploadChange:', info.file);
@@ -247,74 +263,21 @@ export const UploadVectorStoreOriFilesPage = (props: {
         }
     }
 
-    const UpgradeVectorStoreServiceModal = (props: { products: Product[]}) => {
-        const navigate = useNavigate();
+    const [balance, setBalance] = useState('查询中');
+    const [minimumCharge, setMinimumCharge] = useState<number>(100);
+    const [openChargeModal, setOpenChargeModal] = useState<boolean>(false);
+    const [chargeAmount, setChargeAmount] = useState<number | null>(null);
+    const [expireTime, setExpireTime] = useState<string | undefined>(undefined);
+    const [openNotifyToPayModal, setOpenNotifyToPayModal] = useState(false);
 
-        const [vectorStoreProductId, setVectorStoreProductId] = useState<string>('VECTORESTORE-03');
-        const [chargeMonthsOption, setChargeMonthsOption] = useState<number>(3);
-        const [agreeAutoRewel, setAgreeAutoRewel] = useState<boolean>(true);
-        const [otherMonthOptionDisabled, setOtherMonthOptionDisabled] = useState<boolean>(true);
+    const ChargeModal = () => {
         const [otherMonthOptionStatus, setOtherMonthOptionStatus] = useState<InputStatus | undefined>();
         const [otherMonthOptionValue, setOtherMonthOptionValue] = useState<number | null>(null);
-
-        // for charge modal
-        const [balance, setBalance] = useState('查询中');
-        const [minimumCharge, setMinimumCharge] = useState<number>(100);
-        const [openChargeModal, setOpenChargeModal] = useState<boolean>(false);
-        const [confirmChargeLoading, setConfirmChargeLoading] = useState<boolean>(false);
-        const [chargeAmount, setChargeAmount] = useState<number | null>(null);
+        const [chargeMonthsOption, setChargeMonthsOption] = useState<number>(3);
+        const [otherMonthOptionDisabled, setOtherMonthOptionDisabled] = useState<boolean>(true);
         const [paymentSelected, setPaymentSelected] =
             useState<PaymentToolDescEnum>(PaymentToolDescEnum.ALI_PAY);
-        const [openNotifyToPayModal, setOpenNotifyToPayModal] = useState(false);
-        const [expireTime, setExpireTime] = useState<string | undefined>(undefined);
-
-        async function handleUpgrade() {
-            let chargeMonths = 1;  // 暂时不支持选择月份，固定为1个月
-            // if (chargeMonthsOption == -1) {
-            //     if (otherMonthOptionValue == null) {
-            //         setOtherMonthOptionStatus('error');
-            //         return;
-            //     }
-            //     chargeMonths = otherMonthOptionValue;
-            // } else {
-            //     chargeMonths = chargeMonthsOption;
-            // }
-
-            const requestData = {
-                upgradeProductId: vectorStoreProductId,
-                chargeMonths,
-                isAutoRenew: agreeAutoRewel,
-            } as VectorestoreUpgradeRequestVO;
-            try {
-                const vectorestoreUpgradeResponseVO = await vectorstorePaymentTransactionApi.createOrder(requestData);
-                if (!vectorestoreUpgradeResponseVO.ifHaveEnoughMoney || !vectorestoreUpgradeResponseVO.haveActiveOrder) {  //余额不足
-                    setBalance(vectorestoreUpgradeResponseVO.userRestBalance?.toFixed(2) ?? '查询失败');
-                    setMinimumCharge(vectorestoreUpgradeResponseVO.atLeastCharge);
-                    setChargeAmount(vectorestoreUpgradeResponseVO.recommendCharge);
-                    setOpenUpgradeModelVisible(false);
-                    setOpenChargeModal(true);
-                } else {
-                    setOpenUpgradeModelVisible(false);
-                    setOpenChargeModal(false);
-                    navigate(Path.MakeLocalVSStore);
-                    notify.success({
-                        message: '升级成功',
-                        duration: 3
-                    });
-                }
-            } catch (e) {
-                console.error('createOrder:', e);
-                setOpenUpgradeModelVisible(false);
-            }
-        }
-
-        function onSelectVectorStoreChange(e: RadioChangeEvent | string) {
-            if (typeof e === 'string') {
-                setVectorStoreProductId(e);
-                return;
-            }
-            setVectorStoreProductId(e.target.value);
-        }
+        const [confirmChargeLoading, setConfirmChargeLoading] = useState<boolean>(false);
 
         function onSelectedChargeMonths(e: RadioChangeEvent) {
             const value = e.target.value;
@@ -356,7 +319,7 @@ export const UploadVectorStoreOriFilesPage = (props: {
 
         function closeChargeModal() {
             setOpenChargeModal(false);
-            setOpenUpgradeModelVisible(true);
+            setOpenUpgradeModelVisible(false);
         }
 
         const chargeInputChange = (value: number | null) => {
@@ -367,11 +330,6 @@ export const UploadVectorStoreOriFilesPage = (props: {
         const handlePaymentSelectedOnChange = (e: RadioChangeEvent) => {
             const paymentTool = e.target.value;
             setPaymentSelected(paymentTool);
-        }
-
-        function closeNotifyToPayModal() {
-            setOpenNotifyToPayModal(false);
-            navigate(Path.Wallet);
         }
 
         return (
@@ -432,6 +390,20 @@ export const UploadVectorStoreOriFilesPage = (props: {
                         <Button type={"link"}>用户充值协议</Button>
                     </div>
                 </Modal>
+            </>
+        )
+    }
+
+    const NotifyToPayModal = () => {
+        const navigate = useNavigate();
+
+        function closeNotifyToPayModal() {
+            setOpenNotifyToPayModal(false);
+            navigate(Path.Wallet);
+        }
+
+        return (
+            <>
                 <Modal
                     title={"请完成支付"}
                     open={openNotifyToPayModal}
@@ -444,6 +416,65 @@ export const UploadVectorStoreOriFilesPage = (props: {
                         <p>正在请求支付中，请您在 {expireTime} 前完成支付,如您已支付完成请点击 <b>知道了</b> 按钮</p>
                     </div>
                 </Modal>
+            </>
+        );
+    }
+
+    const UpgradeVectorStoreServiceModal = (props: { products: Product[] }) => {
+        const [vectorStoreProductId, setVectorStoreProductId] = useState<string>(VectorestorePlanProductEnum.Plus);
+        const [agreeAutoRewel, setAgreeAutoRewel] = useState<boolean>(true);
+
+        async function handleUpgrade() {
+            let chargeMonths = 1;  // 暂时不支持选择月份，固定为1个月
+            // if (chargeMonthsOption == -1) {
+            //     if (otherMonthOptionValue == null) {
+            //         setOtherMonthOptionStatus('error');
+            //         return;
+            //     }
+            //     chargeMonths = otherMonthOptionValue;
+            // } else {
+            //     chargeMonths = chargeMonthsOption;
+            // }
+
+            const requestData = {
+                upgradeProductId: vectorStoreProductId,
+                chargeMonths,
+                isAutoRenew: agreeAutoRewel,
+            } as VectorestoreUpgradeRequestVO;
+            try {
+                const vectorestoreUpgradeResponseVO = await vectorstorePaymentTransactionApi.createOrder(requestData);
+                if (!vectorestoreUpgradeResponseVO.ifHaveEnoughMoney || !vectorestoreUpgradeResponseVO.haveActiveOrder) {  //余额不足
+                    setBalance(vectorestoreUpgradeResponseVO.userRestBalance?.toFixed(2) ?? '查询失败');
+                    setMinimumCharge(vectorestoreUpgradeResponseVO.atLeastCharge);
+                    setChargeAmount(vectorestoreUpgradeResponseVO.recommendCharge);
+                    setOpenUpgradeModelVisible(false);
+                    setOpenChargeModal(true);
+                } else {
+                    setOpenUpgradeModelVisible(false);
+                    setOpenChargeModal(false);
+                    // navigate(Path.MakeLocalVSStore);
+                    setUpgradedProductId(vectorestoreUpgradeResponseVO.activeProductId);
+                    notify.success({
+                        message: '升级成功',
+                        duration: 3
+                    });
+                }
+            } catch (e) {
+                console.error('createOrder:', e);
+                setOpenUpgradeModelVisible(false);
+            }
+        }
+
+        function onSelectVectorStoreChange(e: RadioChangeEvent | string) {
+            if (typeof e === 'string') {
+                setVectorStoreProductId(e);
+                return;
+            }
+            setVectorStoreProductId(e.target.value);
+        }
+
+        return (
+            <>
                 <Modal
                     width={750}
                     title={"升级服务"}
@@ -462,11 +493,11 @@ export const UploadVectorStoreOriFilesPage = (props: {
                             <Space size={"middle"} direction={"horizontal"}>
                                 {props.products.map((product) => {
                                     let ribbonColor = 'grey';
-                                    let ribbonText = 'free';
-                                    if (product.id === 'VECTORESTORE-02') {
+                                    let ribbonText = 'Free';
+                                    if (product.id === VectorestorePlanProductEnum.Exp) {
                                         ribbonColor = 'cyan';  //experience
                                         ribbonText = 'Exp';
-                                    } else if (product.id === 'VECTORESTORE-03') {
+                                    } else if (product.id === VectorestorePlanProductEnum.Plus) {
                                         ribbonColor = 'red';  //plus
                                         ribbonText = 'Plus';
                                     }
@@ -543,12 +574,20 @@ export const UploadVectorStoreOriFilesPage = (props: {
         );
     }
 
+    const handleOnUpgrade = async () => {
+        const products = await vectorstorePaymentTransactionApi.showVectorestoreUpgradePlan();
+        setUpgradeProducts(products);
+        setOpenUpgradeModelVisible(true);
+    }
+
     return (
         <>
             {contextHolder}
             <div>
                 <GlobalLoading showLoading={showLoading}/>
                 <UpgradeVectorStoreServiceModal products={upgradeProducts}/>
+                <ChargeModal/>
+                <NotifyToPayModal/>
                 <Space direction="vertical" size="middle" style={{display: 'flex'}}>
                     <Card
                         title={Locale.MakeLocalVSStore.Upload.Config}
@@ -603,27 +642,35 @@ export const UploadVectorStoreOriFilesPage = (props: {
                             </>)
                         }
                     </Card>
-                    <Card
-                        title={Locale.MakeLocalVSStore.Upload.UploadFileCardTitle}
-                        size={"small"}>
-                        <Dragger
-                            name="upload-file"
-                            multiple={true}
-                            fileList={fileList}
-                            onChange={handleUploadChange}
-                            onRemove={handleOnUploadRemove}
-                            customRequest={handleUpload}
-                        >
-                            <p className="ant-upload-drag-icon">
-                                <InboxOutlined/>
-                            </p>
-                            <p className="ant-upload-text">
-                                <p style={{fontSize: "13px"}}>{Locale.MakeLocalVSStore.Upload.SupportedFileTypeTip}</p>
-                                <p>请注意上传相同文件名或相同内容，会影响最终生成的知识库文件</p>
-                                <p>{Locale.MakeLocalVSStore.Upload.UploadFileTip}</p>
-                            </p>
-                        </Dragger>
-                    </Card>
+                    <Badge.Ribbon text={productBadge} color={productBadgeColor}>
+                        <Card
+                            extra={<Button type="link"
+                                           disabled={upgradedProductId === VectorestorePlanProductEnum.Plus}
+                                           style={{marginRight: "28px"}}
+                                           onClick={handleOnUpgrade}>
+                                服务升级
+                            </Button>}
+                            title={Locale.MakeLocalVSStore.Upload.UploadFileCardTitle}
+                            size={"small"}>
+                            <Dragger
+                                name="upload-file"
+                                multiple={true}
+                                fileList={fileList}
+                                onChange={handleUploadChange}
+                                onRemove={handleOnUploadRemove}
+                                customRequest={handleUpload}
+                            >
+                                <p className="ant-upload-drag-icon">
+                                    <InboxOutlined/>
+                                </p>
+                                <p className="ant-upload-text">
+                                    <p style={{fontSize: "13px"}}>{Locale.MakeLocalVSStore.Upload.SupportedFileTypeTip}</p>
+                                    <p>请注意上传相同文件名或相同内容，会影响最终生成的知识库文件</p>
+                                    <p>{Locale.MakeLocalVSStore.Upload.UploadFileTip}</p>
+                                </p>
+                            </Dragger>
+                        </Card>
+                    </Badge.Ribbon>
                     {/*<Card title={"上传文本内容"} size={"small"}>*/}
                     {/*    <Form*/}
                     {/*        name={"dynamic_form_plain_text_items"}*/}
