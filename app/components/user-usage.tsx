@@ -10,8 +10,12 @@ const userUsageApi = new UserUsageApi();
 
 export const UserUsage = () => {
 
-    const [currentMonthTotalUsageInt, setCurrentMonthTotalUsageInt] = useState(0);
-    const [currentMonthTotalCost, setCurrentMonthTotalCost] = useState(0);
+    const [currentMonthTotalUsageInt, setCurrentMonthTotalUsageInt] =
+        useState(0);
+    const [currentMonthTotalCost, setCurrentMonthTotalCost] =
+        useState(0);
+    const [currentMonthTotalDuration, setCurrentMonthTotalDuration] =
+        useState<string>("0秒");
 
     useEffect(() => {
         // fetch balance
@@ -19,6 +23,7 @@ export const UserUsage = () => {
             const usageInfo = await userUsageApi.simpleShowTokenUsage();
             setCurrentMonthTotalUsageInt(usageInfo.currentMonthTotalUsageInt);
             setCurrentMonthTotalCost(usageInfo.currentMonthTotalCost);
+            setCurrentMonthTotalDuration(usageInfo.currentMonthTotalDuration);
         })();
     }, []);
 
@@ -41,10 +46,13 @@ export const UserUsage = () => {
                     </div>
                     <Divider style={{margin: "12px 0"}}/>
                     <Row gutter={16}>
-                        <Col span={12}>
+                        <Col span={12} className={styles["statistic-item"]}>
                             <Statistic title="当月token总用量" value={currentMonthTotalUsageInt} />
                         </Col>
-                        <Col span={12}>
+                        <Col span={12} className={styles["statistic-item"]}>
+                            <Statistic title="当月语音识别总时长" value={currentMonthTotalDuration} />
+                        </Col>
+                        <Col span={24} className={styles["statistic-item"]}>
                             <Statistic title="当月总消费(元)" value={currentMonthTotalCost} precision={2} />
                         </Col>
                     </Row>

@@ -10,6 +10,8 @@ export interface SimpleModelUsageShownVO {
     currentMonthTotalCost: number;
     currentMonthTotalUsage: string;
     currentMonthTotalUsageInt: number;
+    currentMonthTotalDuration: string;
+    currentMonthTotalDurationSecondsInt: number;
     currentMonthlyModelUsageList: MonthlyModelUsage[];
     lastNMonthsModelUsageInfo: Map<string, SimpleModelUsageShownVO>;
 }
