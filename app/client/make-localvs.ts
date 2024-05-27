@@ -1,6 +1,6 @@
 import {useAccessStore} from "@/app/store";
 import {
-    MakeFolderLocalVSTaskRecordsVO,
+    MakeFolderLocalVSTaskRecordsVO, MakeLocalVectorstoreTaskRecords,
     MakeLocalVSRequestVO,
     PreCheckVectorestoreLimitRequestVO, PreCheckVectorestoreLimitResponseVO
 } from "@/app/types/make-localvs-vo";
@@ -10,7 +10,7 @@ import {handleServerResponse} from "@/app/common-api";
 import {BaseApiClient} from "@/app/client/base-client";
 
 
-export class MakeLocalVectorStoreApi extends BaseApiClient{
+export class MakeLocalVectorStoreApi extends BaseApiClient {
     path(path: string): string {
         let baseUrl = useAccessStore.getState().backendCoreApiUrl;
 
@@ -34,7 +34,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient{
         return handleServerResponse<void>(await res.json());
     }
 
-    async getMakeRecordsByFolderId(data: {folderId: string, pageNum?: number, pageSize?: number}) {
+    async getMakeRecordsByFolderId(data: { folderId: string, pageNum?: number, pageSize?: number }) {
         const res = await super.fetchWithRedirect(this.path(
                 `/api/local-vector-store/get-make-records?${qs.stringify(data)}`),
             {
@@ -66,7 +66,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient{
         return handleServerResponse<void>(await res.json());
     }
 
-    async executeSpeechRecognize(data: {speechRecognizeTaskIds: string[]}) {
+    async executeSpeechRecognize(data: { speechRecognizeTaskIds: string[] }) {
         const res = await super.fetchWithRedirect(this.path(
                 `/api/model-call-task/execute-speech-recognize-task`),
             {
@@ -98,6 +98,46 @@ export class MakeLocalVectorStoreApi extends BaseApiClient{
             throw new Error(await res.text());
         }
         return handleServerResponse<PreCheckVectorestoreLimitResponseVO>(await res.json());
+    }
+
+    async getSpeechRecognizeResult(data: { makeLocalVSId: string }) {
+        const res = await super.fetchWithRedirect(this.path(
+                `/api/local-vector-store/get-speech-recognize-result?${qs.stringify(data)}`),
+            {
+                method: "GET",
+                headers: {
+                    ...getBackendApiHeaders()
+                },
+            });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        let respData = await res.arrayBuffer();
+        if (!respData) {
+            return "";
+        }
+        // 创建一个Blob对象
+        let blob = new Blob([respData], {type: "application/octet-stream"});
+        // 创建一个指向Blob的URL
+        let url = URL.createObjectURL(blob);
+        return url;
+    }
+
+    async getSomeRecordDetail(data: { makeLocalVsTaskId: string }) {
+        const res = await super.fetchWithRedirect(this.path(
+                `/api/local-vector-store/get-some-record-detail?${qs.stringify(data)}`),
+            {
+                method: "GET",
+                headers: {
+                    ...getBackendApiHeaders()
+                },
+            });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<MakeLocalVectorstoreTaskRecords>(await res.json());
     }
 
 }

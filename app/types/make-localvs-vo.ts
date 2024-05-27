@@ -21,14 +21,11 @@ export interface MakeLocalVectorstoreTaskRecords {
     confirmToMake: boolean;
     userFolderNameId: string;
     localVSFolderName: string;
-    // makeVsConfig: string;
     referId?: string;
     status: number;
-    createdUserId: string;
-    errInfo?: string;
-    // docsIndexCount: number;
     createdAt: Date;
     updateAt: Date;
+    failedReason?: string;
 }
 
 export interface MakeFolderLocalVSTaskRecordsVO {

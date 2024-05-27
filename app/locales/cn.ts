@@ -555,7 +555,8 @@ const cn = {
             status: "任务状态",
             makeType: "制作类型",
             fileName: "文件名称",
-            action: "操作"
+            action: "操作",
+            TranscriptResult: "识别结果",
         },
         ListMakeLocalVSFolders: {
             Title: "本地知识库列表",

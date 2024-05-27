@@ -2,10 +2,10 @@ import {
     Alert,
     Badge,
     Button,
-    Card,
+    Card, Descriptions,
     Form,
     FormInstance,
-    Input,
+    Input, Modal,
     notification,
     Popconfirm,
     Select,
@@ -15,7 +15,7 @@ import {
     Tag,
     UploadFile
 } from "antd";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useMemo, useRef, useState} from "react";
 import {UserApiClient} from "@/app/client/user-api";
 import {useUserFolderStore} from "@/app/store";
 import {UserFolderCreateReqVO, UserFolderUpdateReqVO} from "@/app/types/user-folder-vo";
@@ -554,13 +554,65 @@ export const MakeLocalVectorTaskRecordsView = (props: {
         }
 
         return (
-            <div>
+            <>
                 <Popconfirm title={Locale.Common.Confirm} okText={Locale.Common.Confirm}
                             cancelText={Locale.Common.Cancel} onConfirm={() => handleDelete(record)}>
-                    <a>{Locale.Common.Delete}</a>
+                    <Button type={"link"}>{Locale.Common.Delete}</Button>
                 </Popconfirm>
-            </div>
+            </>
         );
+    }
+
+    const DownloadSpeechRecognizeTranscript = ({record}: { record: MakeLocalVectorstoreTaskRecords }) => {
+        if (record.makeType === 'SPEECH_RECOGNIZE_TRANSCRIPT' && record.status === 100) {
+            return <Button
+                type={"link"}
+                onClick={async () => {
+                    setShowLoading(true);
+                    try {
+                        const fileUrl = await makeLocalVSService.getSpeechRecognizeResult({makeLocalVSId: record.id});
+                        if (fileUrl === undefined || fileUrl === "") {
+                            console.log("fileUrl is empty");
+                            return;
+                        }
+                        const fileName = record.id + '.txt';  //暂时设置为txt文件
+                        const link = document.createElement('a');
+                        link.href = fileUrl;
+                        link.download = fileName; // 你可以设置为你想要的文件名
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } catch (e) {
+                        console.log(e);
+                    } finally {
+                        setShowLoading(false);
+                    }
+                }}
+            >
+                {Locale.MakeLocalVSStore.TaskRecordsColumn.TranscriptResult}
+            </Button>
+        }
+        return null;
+    }
+
+    const CheckSomeRecordDetail = ({record}: { record: MakeLocalVectorstoreTaskRecords }) => {
+        return (
+            <>
+                <Button type={"link"} onClick={async () => {
+                    try {
+                        const data = await makeLocalVSService.getSomeRecordDetail({makeLocalVsTaskId: record.id});
+                        if (data) {
+                            currentRecordDetail.current = data;
+                        }
+                    } catch (e) {
+                        console.log(e);
+                    } finally {
+                        setShowDetailModal(true);
+                    }
+                }}>详情</Button>
+            </>
+        )
     }
 
     const columns: ColumnsType<MakeLocalVectorstoreTaskRecords> = [
@@ -572,12 +624,12 @@ export const MakeLocalVectorTaskRecordsView = (props: {
                 return dayjs(text).format("YYYY-MM-DD HH:mm:ss")
             }
         },
-        {
-            title: Locale.MakeLocalVSStore.TaskRecordsColumn.id,
-            dataIndex: 'id',
-            key: 'id',
-            ellipsis: true,
-        },
+        // {
+        //     title: Locale.MakeLocalVSStore.TaskRecordsColumn.id,
+        //     dataIndex: 'id',
+        //     key: 'id',
+        //     ellipsis: true,
+        // },
         {
             title: Locale.MakeLocalVSStore.TaskRecordsColumn.status,
             dataIndex: 'status',
@@ -653,22 +705,15 @@ export const MakeLocalVectorTaskRecordsView = (props: {
             dataIndex: 'action',
             key: 'action',
             render: (_, record) => {
-                return <DeleteItem record={record}/>
+                return (
+                    <>
+                        <CheckSomeRecordDetail record={record}/>
+                        <DeleteItem record={record}/>
+                        <DownloadSpeechRecognizeTranscript record={record}/>
+                    </>
+                )
             }
         },
-        // {
-        //     title: '错误信息',
-        //     dataIndex: 'errInfo',
-        //     key: 'errInfo'
-        // },
-        // {
-        //     title: '更新时间',
-        //     dataIndex: 'updateAt',
-        //     key: 'updateAt',
-        //     render: (text, record) => {
-        //         return dayjs(text).format("YYYY-MM-DD HH:mm:ss")
-        //     }
-        // },
     ];
 
     const RefreshItemBtn = () => {
@@ -684,11 +729,42 @@ export const MakeLocalVectorTaskRecordsView = (props: {
         )
     }
 
+    const [showDetailModal, setShowDetailModal] = useState<boolean>(false);
+    const currentRecordDetail = useRef<MakeLocalVectorstoreTaskRecords>();
+
+    const DetailModal = () => {
+        return (
+            <>
+                <Modal
+                    title={"详情"}
+                    open={showDetailModal}
+                    onCancel={() => setShowDetailModal(false)}
+                    footer={null}
+                >
+                    <Descriptions layout={"vertical"}>
+                        <Descriptions.Item label="任务id" span={3}>{currentRecordDetail.current?.id}</Descriptions.Item>
+                        {
+                            currentRecordDetail.current?.failedReason && (
+                                <Descriptions.Item label="失败原因" span={3}>
+                                    {currentRecordDetail.current?.failedReason}
+                                </Descriptions.Item>
+                            )
+                        }
+                        <Descriptions.Item label="更新时间" span={3}>{
+                            dayjs(currentRecordDetail.current?.updateAt).format("YYYY-MM-DD HH:mm:ss")
+                        }</Descriptions.Item>
+                    </Descriptions>
+                </Modal>
+            </>
+        );
+    }
+
     return (
         <>
             {contextHolder}
             <div>
                 <GlobalLoading showLoading={showLoading}/>
+                <DetailModal/>
                 <Card
                     title={props.showCardTitle}
                     extra={<RefreshItemBtn/>}

@@ -93,6 +93,10 @@ html {
     "PingFang SC", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
 
+* {
+  user-select: text;
+}
+
 body {
   background-color: var(--gray);
   color: var(--black);
