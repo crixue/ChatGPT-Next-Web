@@ -15,7 +15,8 @@ export interface StartupMaskRequestVO {
     prompt_id: string;
     is_chinese_text: boolean;
     have_context: boolean;
-    llm_type: string;
+    llm_type?: string;
+    llm_id?: string;
     model_config: LangchainBackendBaseLLMConfig;
 }
 

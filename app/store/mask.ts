@@ -32,6 +32,7 @@ export type Mask = {
     lang: Lang;
     builtin: boolean;
     isCreatedNew?: boolean;  // 是否是新创建的mask
+    llmId?: string;
 };
 
 export const DEFAULT_MASK_STATE = {

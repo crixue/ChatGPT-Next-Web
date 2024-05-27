@@ -1,6 +1,6 @@
 .local-vs-container {
   height: calc(100vh - 80px);
-  overflow: auto;
+  overflow-y: auto;
   max-width: 900px;
   width: 100%;
   display: flex;

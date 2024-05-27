@@ -40,7 +40,7 @@ export class ChatApi extends BaseApiClient{
         const pluginStore = usePluginsStore.getState();
         const mask: Mask = currentSession.mask;
         const maskModelConfig = mask.modelConfig;
-        const historyMsgCount = maskModelConfig.historyMessageCount ?? 0;
+        const historyMsgCount = maskModelConfig.historyMessageCount ?? 4;
         const fewShotContext = mask.fewShotContext ?? {};
         const messages = options.messages;
         let promptTemplate: string | undefined;
@@ -80,7 +80,7 @@ export class ChatApi extends BaseApiClient{
                 prompt_id: mask?.promptId ?? "",
                 have_context: mask?.haveContext ?? false,
                 prompt_serialized_type: "chat_prompt",
-                llm_type: modelName,
+                llm_id: mask?.llmId,
                 model_config: {
                     temperature: maskModelConfig.temperature,
                     top_p: maskModelConfig.top_p,

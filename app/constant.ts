@@ -86,6 +86,7 @@ export enum RequestStatusEnum {
     isSuccess = "success",
 }
 
+//默认的面具配置
 export const DEFAULT_CONFIG = {
     submitKey: SubmitKey.CtrlEnter as SubmitKey,
     avatar: "1f603",
@@ -112,7 +113,7 @@ export const DEFAULT_CONFIG = {
         // presence_penalty: 0,
         repetition_penalty: 1.2,
         streaming: true,
-        historyMessageCount: 0,
+        historyMessageCount: 4,
         checkedPluginIds: [] as string[],
     },
     chatMessages: [
