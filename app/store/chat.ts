@@ -192,7 +192,7 @@ export const useChatStore = create<ChatStore>()(
                     session.topic = mask.name;
                 }
 
-                console.log("newSession:"+JSON.stringify(session))
+                // console.log("newSession:"+JSON.stringify(session))
                 set((state) => ({
                     currentSessionIndex: 0,
                     sessions: [session].concat(state.sessions),

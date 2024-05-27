@@ -68,6 +68,10 @@ export const UploadVectorStoreOriFilesPage = (props: {
     const [productBadgeColor, setProductBadgeColor] = useState<string>('grey');
 
     useEffect(() => {
+        setFileList([]);
+    }, []);
+
+    useEffect(() => {
         if (upgradedProductId) {
             if (upgradedProductId === VectorestorePlanProductEnum.Exp) {
                 setProductBadge('Exp');
@@ -491,7 +495,7 @@ export const UploadVectorStoreOriFilesPage = (props: {
                     <div className={styles["upgrade-vs-service-container"]}>
                         <Radio.Group onChange={onSelectVectorStoreChange} value={vectorStoreProductId}>
                             <Space size={"middle"} direction={"horizontal"}>
-                                {props.products.map((product) => {
+                                {props.products && props.products.map((product) => {
                                     let ribbonColor = 'grey';
                                     let ribbonText = 'Free';
                                     if (product.id === VectorestorePlanProductEnum.Exp) {
