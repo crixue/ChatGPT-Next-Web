@@ -11,6 +11,7 @@ import {nanoid} from "nanoid";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask-api";
 import {MaskItemResponseVO} from "@/app/types/mask-vo";
 import {LangchainBackendBaseLLMConfig} from "@/app/client/api";
+import {persist} from "zustand/middleware";
 
 export type Mask = {
     id: string;
@@ -32,7 +33,6 @@ export type Mask = {
     lang: Lang;
     builtin: boolean;
     isCreatedNew?: boolean;  // 是否是新创建的mask
-    llmId?: string;
 };
 
 export const DEFAULT_MASK_STATE = {
@@ -60,7 +60,7 @@ export const createEmptyMask = () =>
         name: DEFAULT_TOPIC,
         hideContext: false,
         isChineseText: true,
-        haveContext: true,
+        haveContext: false,
         relevantSearchOptions: DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
         promptId: "",
         context: DEFAULT_CONFIG.chatMessages,
@@ -73,7 +73,9 @@ export const createEmptyMask = () =>
     } as Mask);
 
 
-export const useMaskStore = create<MaskStore>()((set, get) => ({
+export const useMaskStore = create<MaskStore>()(
+    persist(
+    (set, get) => ({
         // ...DEFAULT_MASK_STATE,
         masks: {} as Record<string, Mask>,
         async initMasks() {
@@ -101,8 +103,8 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
         },
         create(mask) {
             const masks = get().masks;
-            const newMask = {...createEmptyMask(), isCreatedNew: true};
-            console.log("newMask:" + JSON.stringify(newMask));
+            const newMask = {...createEmptyMask(), isCreatedNew: true, updateAt: Date.now(),};
+            // console.log("newMask:" + JSON.stringify(newMask));
             // const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(newMask);
             // const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
             // let createdMask = resp.mask;
@@ -118,6 +120,7 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
             if (!mask) return;
             let updateMask = {...mask};
             updater(updateMask);
+            updateMask.updateAt = Date.now();
             masks[id] = updateMask;
             set(() => ({masks}));
         },
@@ -139,5 +142,9 @@ export const useMaskStore = create<MaskStore>()((set, get) => ({
         setShowUserPromptError(show: boolean) {
             set(() => ({ifShowUserPromptError: show}));
         }
-    })
+    }),
+        {
+            name: StoreKey.Mask,
+        },
+    ),
 );

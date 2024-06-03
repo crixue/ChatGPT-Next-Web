@@ -39,7 +39,6 @@ import {Prompt, SearchService, usePromptStore} from "../store/prompt";
 import {ErrorBoundary} from "./error";
 import {InputRange} from "./input-range";
 import {useNavigate} from "react-router-dom";
-import {Avatar, AvatarPicker} from "./emoji";
 import {getClientConfig} from "../config/client";
 import {nanoid} from "nanoid";
 import {Button} from "antd";

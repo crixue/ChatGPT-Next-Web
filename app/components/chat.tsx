@@ -2,13 +2,10 @@ import {useDebouncedCallback} from "use-debounce";
 import React, {Fragment, useEffect, useMemo, useRef, useState,} from "react";
 import BrainIcon from "../icons/brain.svg";
 import EditIcon from "../icons/rename.svg";
-import ExportIcon from "../icons/share.svg";
 import ReturnIcon from "../icons/return.svg";
 import CopyIcon from "../icons/copy.svg";
 import LoadingIcon from "../icons/three-dots.svg";
 import MaskIcon from "../icons/mask.svg";
-import MaxIcon from "../icons/max.svg";
-import MinIcon from "../icons/min.svg";
 import ResetIcon from "../icons/reload.svg";
 import BreakIcon from "../icons/break.svg";
 import SettingsIcon from "../icons/chat-settings.svg";
@@ -22,7 +19,8 @@ import StopIcon from "../icons/pause.svg";
 import {
     BOT_HELLO,
     ChatMessage,
-    createMessage, DEFAULT_MASK_AVATAR,
+    createMessage,
+    DEFAULT_MASK_AVATAR,
     DEFAULT_TOPIC,
     Mask,
     ModelType,
@@ -43,7 +41,7 @@ import Locale from "../locales";
 import {IconButton} from "./button";
 import styles from "./chat.module.scss";
 
-import {CustomListItem, CustomModal, Selector, showConfirm, showPrompt, showToast,} from "./ui-lib";
+import {CustomListItem, CustomModal, Selector, showPrompt, showToast,} from "./ui-lib";
 import {useNavigate} from "react-router-dom";
 import {
     CHAT_PAGE_SIZE,
@@ -54,21 +52,19 @@ import {
     Theme,
     UNFINISHED_INPUT,
 } from "../constant";
-import {ContextPrompts, MaskAvatar, MaskConfig} from "./mask";
+import {ContextPrompts, MaskConfig} from "./mask";
 import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
 import {getClientConfig} from "../config/client";
 import {Button, Drawer, List, Modal, notification} from "antd";
 import {ContextDoc} from "@/app/types/chat";
 import {validateMask} from "@/app/utils/mask";
-import {SendOutlined} from "@ant-design/icons";
+import {RocketOutlined, SendOutlined} from "@ant-design/icons";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
 import {UserUsageApi} from "@/app/client/user-usage-api";
 import {NotHaveEnoughMoneyException} from "@/app/exceptions/not-have-enough-money-exception";
 import {useAuthStore} from "@/app/store/auth";
 import {AssistantAvatar, UserAvatar} from "@/app/components/avtars";
-import {Avatar} from "@/app/components/emoji";
-import {RequestMessage} from "@/app/client/api";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
@@ -108,26 +104,23 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                 title={Locale.Context.Edit}
                 onClose={() => props.onClose()}
                 actions={[
-                    <IconButton
-                        key="reset"
-                        icon={<ResetIcon/>}
-                        bordered
-                        text={Locale.Chat.Config.Reset}
-                        onClick={async () => {
-                            if (await showConfirm(Locale.Memory.ResetConfirm)) {
-                                chatStore.updateCurrentSession(
-                                    (session) => (session.memoryPrompt = ""),
-                                );
-                            }
-                        }}
-                    />,
-                    <IconButton
-                        key="applyMask"
-                        icon={<CopyIcon/>}
-                        bordered
-                        text={Locale.Mask.Config.ApplyMask}
+                    <Button
+                        type={"primary"}
+                        icon={<RocketOutlined/>}
                         onClick={() => handleOnApplyMask(session.mask)}
-                    />,
+                    >{Locale.Mask.Config.ApplyMask}</Button>,
+                    // <Button
+                    //     icon={<ResetIcon/>}
+                    //     onClick={async () => {
+                    //         if (await showConfirm(Locale.Memory.ResetConfirm)) {
+                    //             chatStore.updateCurrentSession(
+                    //                 (session) => (session.memoryPrompt = ""),
+                    //             );
+                    //         }
+                    //     }}
+                    // >
+                    //     {Locale.Chat.Config.Reset}
+                    // </Button>
                 ]}
             >
                 <MaskConfig
@@ -435,7 +428,7 @@ export function ChatActions(props: {
 
     // switch model
     const models = config.supportedModels;
-    const currentModel = chatStore.currentSession().mask.modelConfig.model;
+    const currentModel = chatStore.currentSession().mask.modelConfig.model_id;
     const [showModelSelector, setShowModelSelector] = useState(false);
 
     return (
@@ -524,7 +517,7 @@ export function ChatActions(props: {
                     onSelection={(s) => {
                         if (s.length === 0) return;
                         chatStore.updateCurrentSession((session) => {
-                            session.mask.modelConfig.model = s[0] as ModelType;
+                            session.mask.modelConfig.model_id = s[0] as ModelType;
                             session.mask.syncGlobalConfig = false;
                         });
                         showToast(s[0]);
@@ -614,12 +607,18 @@ const userUsageApi = new UserUsageApi();
 function _Chat() {
     type RenderMessage = ChatMessage & { preview?: boolean };
 
-    const letterLimit = 4000
-
     const chatStore = useChatStore();
     const session = chatStore.currentSession();
     const config = useAppConfig();
     const fontSize = config.fontSize;
+
+    let letterLimit = 4000;
+    for(const model of config.supportedModels) {
+        if(session.mask.modelConfig.model_id === model.id) {
+            letterLimit = model.context_tokens_limit;
+            break;
+        }
+    }
 
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const [userInput, setUserInput] = useState("");
@@ -1107,7 +1106,7 @@ function _Chat() {
                             i > 0 &&
                             !(message.preview || message.content.length === 0) &&
                             !isContext;
-                        const showTyping = message.preview || message.streaming;
+                        const showTyping = (message.preview || message.streaming) && isAssistant;
 
                         const shouldShowClearContextDivider = i === clearContextIndex - 1;
 
@@ -1268,7 +1267,8 @@ function _Chat() {
                                                 defaultShow={i >= messages.length - 6}
                                             />
                                         </div>
-                                        {isAssistant && !isContext && !message.isError && message.contextDocs && message.contextDocs.length > 0 && (
+                                        {isAssistant && !isContext && !message.isError
+                                            && message.contextDocs && message.contextDocs.length > 0 && (
                                             <a className={styles["chat-message-action-sources"]}
                                                onClick={() => handleOnCheckSource(messages[i])}>
                                                 {Locale.Chat.SourceDetail}

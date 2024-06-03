@@ -6,7 +6,6 @@ import {SupportedModelVO} from "@/app/types/model-vo";
 export const OWNER = "RawJayXx";
 export const REPO = "ChatGPT-Next-Web";
 export const REPO_URL = `https://github.com/${OWNER}/${REPO}`;
-export const ISSUE_URL = `https://github.com/${OWNER}/${REPO}/issues`;
 export const UPDATE_URL = `${REPO_URL}#keep-updated`;
 export const RELEASE_URL = `${REPO_URL}/releases`;
 
@@ -43,6 +42,7 @@ export enum StoreKey {
     Update = "chat-update",
     Sync = "sync",
     Auth = "auth-storage",
+    Plugin = "plugin-store",
 }
 
 export const MENU_MAX_SIDEBAR_WIDTH = 240;
@@ -53,8 +53,6 @@ export const LAST_INPUT_KEY = "last-input";
 export const UNFINISHED_INPUT = (id: string) => "unfinished-input-" + id;
 
 export const REQUEST_TIMEOUT_MS = 180000;
-
-export const EXPORT_MESSAGE_CLASS_NAME = "export-markdown";
 
 export const LangchainBackendPath = {
     UsagePath: "dashboard/billing/usage",
@@ -106,14 +104,14 @@ export const DEFAULT_CONFIG = {
     models: DEFAULT_MODELS as any as SupportedModelVO[],
 
     modelConfig: {
-        model: "default" ,
+        model_id: 'MODEL-0002' ,
         temperature: 0.5,
         top_p: 0.9,
         max_tokens: 2000,
         // presence_penalty: 0,
         repetition_penalty: 1.2,
         streaming: true,
-        historyMessageCount: 4,
+        historyMessageCount: 5,
         checkedPluginIds: [] as string[],
     },
     chatMessages: [
@@ -158,8 +156,8 @@ export const DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS = {
     retriever_type:"web_search",
     local_vs_folder_name:"web_search",
     search_type: "similarity",
-    search_top_k: 4,
-    web_search_results_count: 4,
+    search_top_k: 5,
+    web_search_results_count: 5,
     use_multi_query_assist:false,
     use_embedding_filter_assist: false,
     use_reorder_assist: true,

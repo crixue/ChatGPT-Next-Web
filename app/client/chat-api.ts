@@ -67,10 +67,6 @@ export class ChatApi extends BaseApiClient{
         // // console.log("context:"+JSON.stringify(context))
         // promptTemplate = context.filter(msg => msg.role === "user")[0].content;
 
-        let modelName = maskModelConfig.model ?? 'default';
-        if(!modelName || modelName === ""){
-            modelName = "default";  //TODO 暂时没有可以选择的类型，所以先写死
-        }
         const requestPayload = {
             query: userLastQuery,
             is_chinese_text: mask?.isChineseText ?? true,
@@ -80,7 +76,7 @@ export class ChatApi extends BaseApiClient{
                 prompt_id: mask?.promptId ?? "",
                 have_context: mask?.haveContext ?? false,
                 prompt_serialized_type: "chat_prompt",
-                llm_id: mask?.llmId,
+                llm_id: mask?.modelConfig.model_id,
                 model_config: {
                     temperature: maskModelConfig.temperature,
                     top_p: maskModelConfig.top_p,

@@ -54,7 +54,7 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     const modelName = useAppConfig.getState().defaultModel?.name ?? "";
     mask.modelConfig = {
         ...mask.modelConfig,
-        model: mask.modelConfig.model == "" ? modelName: mask.modelConfig.model,
+        model_id: mask.modelConfig.model_id == "" ? modelName: mask.modelConfig.model_id,
     }
     mask = {...mask,
         modelConfigJsonStr: JSON.stringify(mask.modelConfig),

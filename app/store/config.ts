@@ -36,7 +36,7 @@ export const ModalConfigValidator = {
         return limitNumber(x, -2, 2, 0);
     },
     frequencyPenalty(x: number) {
-        return limitNumber(x, -2, 2, 0);
+        return limitNumber(x, -2, 2, 1.1);
     },
     temperature(x: number) {
         return limitNumber(x, 0, 1, 0.5);
@@ -45,7 +45,7 @@ export const ModalConfigValidator = {
         return limitNumber(x, 0, 1, 0.9);
     },
     historyMessageCount(x: number) {
-        return limitNumber(x, 0, 10, 4);
+        return limitNumber(x, 0, 20, 5);
     },
 };
 
@@ -69,14 +69,14 @@ export const useAppConfig = create<ChatConfigStore>()(
 
             async allModels() {
                 const config = {...get()};
-                const customModels = await langChainBackendService.listAllModels();
-                const models = customModels.map((m) => {
-                    return {
-                        ...m, available: true
+                const models = await langChainBackendService.listAllModels();
+                for (const model of models) {
+                    if (model.default) {
+                        config.defaultModel = model;
+                        config.modelConfig.model_id = model.id;
+                        break;
                     }
-                }) as SupportedModelVO[];
-                config.modelConfig.model = models[0].name;
-                config.defaultModel = models[0];
+                }
                 config.supportedModels = models;
                 set(() => config);
                 return models;

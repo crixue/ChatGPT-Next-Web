@@ -29,7 +29,7 @@ export interface ChatOptions {
 }
 
 export interface LangchainBackendBaseLLMConfig {
-    model?: string;
+    model_id?: string;
     temperature: number;
     streaming: boolean;
     max_tokens: number;

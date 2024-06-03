@@ -35,7 +35,6 @@ import React, {useEffect, useRef, useState} from "react";
 import {copyToClipboard, downloadAs, readFromFile} from "../utils";
 import {ModelConfigList} from "./model-config";
 import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, FileName, ModelConfig, Path} from "../constant";
-import {BUILTIN_MASK_STORE} from "../masks";
 import {
     Button,
     Card,
@@ -51,7 +50,14 @@ import {
     TabsProps,
     Tag
 } from "antd";
-import {CheckOutlined, CloseOutlined, PlusOutlined} from "@ant-design/icons";
+import {
+    CheckOutlined,
+    CloseOutlined,
+    CopyOutlined,
+    DeleteOutlined,
+    PlusOutlined, RocketOutlined,
+    SaveOutlined
+} from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import {assembleSaveOrUpdateMaskRequest, maskApi} from "@/app/client/mask-api";
 import {nanoid} from "nanoid";
@@ -259,7 +265,7 @@ export function MaskConfig(props: {
                         mask.relevantSearchOptions.local_vs_folder_name = "web_search";
                     });
                     setContextSourcesOptions(value);
-                    if(props.onGoToMakeLocalVS != null) {
+                    if (props.onGoToMakeLocalVS != null) {
                         props.onGoToMakeLocalVS(true);
                     }
                     // setIsOpenMakingLocalVSModal(true);
@@ -323,16 +329,25 @@ export function MaskConfig(props: {
                                     <Select
                                         value={contextSourcesOptions ?? "web_search"}
                                         options={[
-                                            {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch, value: "web_search"},
-                                            {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores, value: "local_vector_stores"},
-                                            {label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed, value: "fixed"},
+                                            {
+                                                label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch,
+                                                value: "web_search"
+                                            },
+                                            {
+                                                label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores,
+                                                value: "local_vector_stores"
+                                            },
+                                            {
+                                                label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed,
+                                                value: "fixed"
+                                            },
                                         ]}
                                         onChange={(value) => onContextSourceChange(value)}
                                         style={{width: 130}}
                                     />
                                 </CustomListItem>
                                 {
-                                    (contextSourcesOptions === "web_search" ||  contextSourcesOptions === "fixed") && isAdvancedConfig && (
+                                    (contextSourcesOptions === "web_search" || contextSourcesOptions === "fixed") && isAdvancedConfig && (
                                         <CustomListItem
                                             title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
                                             subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
@@ -375,7 +390,7 @@ export function MaskConfig(props: {
                                 }
                                 {
                                     contextSourcesOptions === "local_vector_stores"
-                                    ||  contextSourcesOptions === "fixed"? (
+                                    || contextSourcesOptions === "fixed" ? (
                                         <>
                                             {
                                                 localVSFoldersOptions.length > 0 ? (
@@ -414,7 +429,7 @@ export function MaskConfig(props: {
                                                         mask.relevantSearchOptions.retriever_type = "web_search";
                                                         mask.relevantSearchOptions.local_vs_folder_name = "web_search";
                                                     });
-                                                    if(props.onGoToMakeLocalVS != null) {
+                                                    if (props.onGoToMakeLocalVS != null) {
                                                         props.onGoToMakeLocalVS(true);
                                                     }
                                                     // setIsOpenMakingLocalVSModal(true);
@@ -557,7 +572,7 @@ export function MaskConfig(props: {
     ];
 
     return (
-        <Tabs defaultActiveKey="0" items={items} />
+        <Tabs defaultActiveKey="0" items={items}/>
     );
 }
 
@@ -641,9 +656,9 @@ export function ContextPrompts(props: {
 
     return (
         <>
-            <div className={chatStyle["context-prompt"]} style={{ marginBottom: 20 }}>
+            <div className={chatStyle["context-prompt"]} style={{marginBottom: 20}}>
                 {context.map((c, i) => (
-                    <div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
+                    <div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-" + i}>
                         <ContextPromptItem
                             index={i}
                             prompt={c}
@@ -654,56 +669,63 @@ export function ContextPrompts(props: {
                 ))}
                 {
                     Object.entries(shownFewShotMessages).map(([id, value], i) => {
-                        return (<div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-"+i}>
-                            <Card size={"small"} title={Locale.Mask.ContextPrompt.CardTitle}
-                                  extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
-                                <div className={chatStyle["context-prompt-row"]}>
-                                    <div>
-                                        <Tag bordered={false} color={Locale.Mask.PromptItem.User.color}>
-                                            {Locale.Mask.PromptItem.User.name}
-                                        </Tag>
+                        return (<div className={chatStyle["context-prompt-item"]} key={"context-prompt-item-" + i}>
+                                <Card size={"small"} title={Locale.Mask.ContextPrompt.CardTitle}
+                                      extra={<a onClick={() => removeFewShotMsgs(id)}>{Locale.Common.Delete}</a>}>
+                                    <div className={chatStyle["context-prompt-row"]}>
+                                        <div>
+                                            <Tag bordered={false} color={Locale.Mask.PromptItem.User.color}>
+                                                {Locale.Mask.PromptItem.User.name}
+                                            </Tag>
+                                        </div>
+                                        <TextArea
+                                            defaultValue={value[0].content ?? ""}
+                                            minLength={1}
+                                            maxLength={400}
+                                            autoSize={true}
+                                            allowClear={true}
+                                            onBlur={(e) => {
+                                                const lastUserMsg: ChatMessage = value[0];
+                                                value[0].content = e.target.value;
+                                                updateFewShotMsgs(id, [{
+                                                    ...lastUserMsg,
+                                                    content: value[0].content ?? ""
+                                                }, value[1]])
+                                            }}
+                                        />
                                     </div>
-                                    <TextArea
-                                        defaultValue={value[0].content ?? ""}
-                                        minLength={1}
-                                        maxLength={400}
-                                        autoSize={true}
-                                        allowClear={true}
-                                        onBlur={(e) => {
-                                            const lastUserMsg: ChatMessage = value[0];
-                                            value[0].content = e.target.value;
-                                            updateFewShotMsgs(id, [{...lastUserMsg, content: value[0].content ?? ""}, value[1]])
-                                        }}
-                                    />
-                                </div>
-                                <div className={chatStyle["context-prompt-row"]}>
-                                    <div>
-                                        <Tag bordered={false} color={Locale.Mask.PromptItem.Assistant.color}>
-                                            {Locale.Mask.PromptItem.Assistant.name}
-                                        </Tag>
+                                    <div className={chatStyle["context-prompt-row"]}>
+                                        <div>
+                                            <Tag bordered={false} color={Locale.Mask.PromptItem.Assistant.color}>
+                                                {Locale.Mask.PromptItem.Assistant.name}
+                                            </Tag>
+                                        </div>
+                                        <TextArea
+                                            defaultValue={value[1].content ?? ""}
+                                            minLength={1}
+                                            maxLength={400}
+                                            autoSize={true}
+                                            allowClear={true}
+                                            onBlur={(e) => {
+                                                const lastAssistantMsg: ChatMessage = value[1];
+                                                value[1].content = e.target.value;
+                                                updateFewShotMsgs(id, [value[0], {
+                                                    ...lastAssistantMsg,
+                                                    content: value[1].content ?? ""
+                                                }])
+                                            }}
+                                        />
                                     </div>
-                                    <TextArea
-                                        defaultValue={value[1].content ?? ""}
-                                        minLength={1}
-                                        maxLength={400}
-                                        autoSize={true}
-                                        allowClear={true}
-                                        onBlur={(e) => {
-                                            const lastAssistantMsg: ChatMessage = value[1];
-                                            value[1].content = e.target.value;
-                                            updateFewShotMsgs(id, [value[0], {...lastAssistantMsg, content: value[1].content ?? ""}])
-                                        }}
-                                    />
-                                </div>
-                            </Card>
-                        </div>
-                    )})
+                                </Card>
+                            </div>
+                        )
+                    })
                 }
                 <div>
                     <Button
                         type={"dashed"}
                         className={chatStyle["add-few-examples-button"]}
-                        icon={<PlusOutlined />}
+                        icon={<PlusOutlined/>}
                         onClick={() => {
                             const count = shownFewShotMessages ? Object.keys(shownFewShotMessages).length : 0;
                             addFewShotMsgs([createMessage({
@@ -714,13 +736,14 @@ export function ContextPrompts(props: {
                                 role: "assistant",
                                 content: Locale.Mask.ContextPrompt.AssistantExampleContentPrefix + (count + 1),
                                 date: new Date().toISOString()
-                            })])}
-                    }>{Locale.Mask.ContextPrompt.AddNewFewShotExampleBtn}</Button>
+                            })])
+                        }
+                        }>{Locale.Mask.ContextPrompt.AddNewFewShotExampleBtn}</Button>
                 </div>
                 {props.context.length === 0 && (
                     <div className={chatStyle["context-prompt-row"]}>
                         <IconButton
-                            icon={<AddIcon />}
+                            icon={<AddIcon/>}
                             text={Locale.Context.Add}
                             bordered
                             className={chatStyle["context-prompt-button"]}
@@ -763,6 +786,11 @@ export function MaskPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingMaskId, setEditingMaskId] = useState<string | undefined>();
     const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
+    const [refresh, setRefresh] = useState(false);
+
+    useEffect(() => {
+
+    }, [refresh]);
 
     // simple search, will refactor later
     const onSearch = (text: string) => {
@@ -797,14 +825,15 @@ export function MaskPage() {
             });
         }).finally(() => {
             maskStore.delete(id);
+            setRefresh(!refresh);
         });
     }
 
     const createMaskOnDB = async (newMask: Mask) => {
         const updateMask = newMask;
         const maskCreationRequestVO = assembleSaveOrUpdateMaskRequest(updateMask);
-        try{
-            const resp:MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
+        try {
+            const resp: MaskItemResponseVO = await maskApi.createMask(maskCreationRequestVO);
             let createdMask = resp.mask;
             createdMask = {...updateMask, id: createdMask.id, promptId: createdMask.promptId, isCreatedNew: false};  // 因为返回的mask没有context和fewShotContext，手动添加
             maskStore.update(createdMask.id, (mask) => {
@@ -820,6 +849,7 @@ export function MaskPage() {
             maskStore.delete(updateMask.id);
         } finally {
             closeMaskModal();
+            setRefresh(!refresh);
         }
     }
 
@@ -846,18 +876,19 @@ export function MaskPage() {
                     message: Locale.Common.OperateSuccess,
                 });
             }).catch((err: Error) => {
-                console.log(err);
-                notify['error']({
-                    message: Locale.Common.OperateFailed,
-                });
-            }).finally(() => {
-                closeMaskModal();
+            console.log(err);
+            notify['error']({
+                message: Locale.Common.OperateFailed,
             });
+        }).finally(() => {
+            closeMaskModal();
+            setRefresh(!refresh);
+        });
     }
 
     const handleOnApplyMask = async (mask: Mask) => {
         // create or update mask setting
-        if(mask.isCreatedNew){
+        if (mask.isCreatedNew) {
             createMaskOnDB(mask);
         } else {
             updateMask(mask);
@@ -917,34 +948,33 @@ export function MaskPage() {
                 <div className={styles["mask-list-container"]}>
                     <div className={styles["mask-page-body"]}>
                         <div className={styles["mask-filter"]}>
-                            <input
-                                type="text"
-                                className={styles["search-bar"]}
+                            <Input.Search
                                 placeholder={Locale.Mask.Page.Search}
-                                autoFocus
-                                onInput={(e) => onSearch(e.currentTarget.value)}
+                                size="large"
+                                onSearch={onSearch}
+                                allowClear
                             />
-                            <CustomSelect
-                                className={styles["mask-filter-lang"]}
-                                value={filterLang ?? Locale.Settings.Lang.All}
-                                onChange={(e) => {
-                                    const value = e.currentTarget.value;
-                                    if (value === Locale.Settings.Lang.All) {
-                                        setFilterLang(undefined);
-                                    } else {
-                                        setFilterLang(value as Lang);
-                                    }
-                                }}
-                            >
-                                <option key="all" value={Locale.Settings.Lang.All}>
-                                    {Locale.Settings.Lang.All}
-                                </option>
-                                {AllLangs.map((lang) => (
-                                    <option value={lang} key={lang}>
-                                        {ALL_LANG_OPTIONS[lang]}
-                                    </option>
-                                ))}
-                            </CustomSelect>
+                            {/*<CustomSelect*/}
+                            {/*    className={styles["mask-filter-lang"]}*/}
+                            {/*    value={filterLang ?? Locale.Settings.Lang.All}*/}
+                            {/*    onChange={(e) => {*/}
+                            {/*        const value = e.currentTarget.value;*/}
+                            {/*        if (value === Locale.Settings.Lang.All) {*/}
+                            {/*            setFilterLang(undefined);*/}
+                            {/*        } else {*/}
+                            {/*            setFilterLang(value as Lang);*/}
+                            {/*        }*/}
+                            {/*    }}*/}
+                            {/*>*/}
+                            {/*    <option key="all" value={Locale.Settings.Lang.All}>*/}
+                            {/*        {Locale.Settings.Lang.All}*/}
+                            {/*    </option>*/}
+                            {/*    {AllLangs.map((lang) => (*/}
+                            {/*        <option value={lang} key={lang}>*/}
+                            {/*            {ALL_LANG_OPTIONS[lang]}*/}
+                            {/*        </option>*/}
+                            {/*    ))}*/}
+                            {/*</CustomSelect>*/}
 
                             <IconButton
                                 className={styles["mask-create"]}
@@ -969,11 +999,14 @@ export function MaskPage() {
                                             </div>
                                             <div className={styles["mask-title"]}>
                                                 <div className={styles["mask-name"]}>{m.name}</div>
-                                                {/*<div className={styles["mask-info"] + " one-line"}>*/}
-                                                {/*    {`${Locale.Mask.Item.Info(m.context ? m.context.length: 0)} / ${*/}
-                                                {/*        ALL_LANG_OPTIONS[m.lang]*/}
-                                                {/*    } / ${m.modelConfig.model}`}*/}
-                                                {/*</div>*/}
+                                                <div className={styles["mask-info"]}>
+                                                    {m.context?.map((item) => {
+                                                        if (item.role === 'system') {
+                                                            return item.content;
+                                                        }
+                                                        return '';
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className={styles["mask-actions"]}>
@@ -1032,39 +1065,44 @@ export function MaskPage() {
                         width={"75vw"}
                         footer={[
                             <Button
-                                icon={<DownloadIcon/>}
-                                key="updateMask"
-                                onClick={() => {
-                                    if (editingMask.isCreatedNew) {
-                                        createMaskOnDB(editingMask);
-                                    } else {
-                                        updateMask(editingMask);
-                                    }
-                                }}
-                            >{Locale.Mask.Config.SaveAs}</Button>,
-                            <Button
-                                icon={<DownloadIcon/>}
+                                type={"primary"}
+                                icon={<RocketOutlined/>}
                                 key="applyMask"
                                 onClick={() => {
                                     handleOnApplyMask(editingMask)
                                 }}
                             >{Locale.Mask.Config.ApplyMask}</Button>,
-                            <Button
-                                icon={<DeleteIcon/>}
-                                key="deleteMask"
-                                onClick={() => {
-                                    deleteMask(editingMask?.id)
-                                }}
-                            >{Locale.Mask.Config.DeleteMask}</Button>,
+                            !editingMask?.builtin && (
+                                <Button
+                                    icon={<SaveOutlined/>}
+                                    key="updateMask"
+                                    onClick={() => {
+                                        if (editingMask.isCreatedNew) {
+                                            createMaskOnDB(editingMask);
+                                        } else {
+                                            updateMask(editingMask);
+                                        }
+                                    }}
+                                >{Locale.Mask.Config.SaveAs}</Button>
+                            ),
                             <Button
                                 key="copy"
-                                icon={<CopyIcon/>}
+                                icon={<CopyOutlined/>}
                                 onClick={() => {
                                     navigate(Path.Masks);
                                     maskStore.create(editingMask);
                                     setEditingMaskId(undefined);
                                 }}
                             >{Locale.Mask.EditModal.Clone}</Button>,
+                            !editingMask?.builtin && (
+                                <Button
+                                    icon={<DeleteOutlined/>}
+                                    key="deleteMask"
+                                    onClick={() => {
+                                        deleteMask(editingMask?.id)
+                                    }}
+                                >{Locale.Mask.Config.DeleteMask}</Button>
+                            ),
                         ]}
                     >
                         <MaskConfig

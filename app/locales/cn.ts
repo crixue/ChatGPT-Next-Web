@@ -298,6 +298,12 @@ const cn = {
                 Unchecked: "非流式",
             }
         },
+        Models:{
+            Title: "模型选择",
+            SubTitle: "每个模型有各自特点，支持输入长度也不同，选择合适的模型能更好的满足您的需求",
+            KnowMore: "点击了解更多",
+            ChooseModel: "选择模型",
+        },
         Plugins: {
             Title: "插件",
             SubTitle: "在当前面具中使用插件，从而增强模型能力。 ",

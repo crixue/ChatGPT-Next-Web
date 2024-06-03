@@ -9,8 +9,8 @@ import {
     notification,
     Radio,
     RadioChangeEvent,
-    Select,
-    Switch
+    Select, Space,
+    Switch, Typography
 } from "antd";
 import React from "react";
 import {ModelConfig, Path} from "@/app/constant";
@@ -40,8 +40,17 @@ export function ModelConfigList(props: {
     const navigate = useNavigate();
 
     const [notify, contextHolder] = notification.useNotification();
-    const [temperature, setTemperature] = React.useState<number>(currentMask.modelConfig.temperature);
 
+    const [selectedModelId, setSelectedModelId] = React.useState<string>(currentMask.modelConfig.model_id ?? config.defaultModel!.id);
+    const onModelIdChange = (val: string) => {
+        setSelectedModelId(val);
+        props.updateConfig(
+            (config) =>
+                (config.model_id = val),
+        );
+    }
+
+    const [temperature, setTemperature] = React.useState<number>(currentMask.modelConfig.temperature);
     const onTemperatureChange = (value: string) => {
         const defaultVal = 0.5;
         const val = ModalConfigValidator.temperature(simpleParseFloat(value, defaultVal.toString()));
@@ -116,7 +125,6 @@ export function ModelConfigList(props: {
     const allSupportPlugins = pluginsStore.supportedFunctions;
     const [checkedPluginIds, setCheckedPluginIds] = React.useState<string[]>(currentMask.modelConfig.checkedPluginIds ?? pluginsStore.defaultShownPluginIds);
     // console.log("checkedPluginIds:" + checkedPluginIds);
-
     const onPluginsChange = (val: string[] | null) => {
         setCheckedPluginIds(val || pluginsStore.defaultShownPluginIds);
         props.updateConfig(
@@ -168,6 +176,39 @@ export function ModelConfigList(props: {
         return (
             <>
                 {contextHolder}
+                <CustomListItem
+                    style={{flexDirection: "column", alignItems: "flex-start"}}
+                    title={Locale.Settings.Models.Title}
+                    subTitle={<div>
+                        <span>{Locale.Settings.Models.SubTitle}</span>
+                        <Button
+                            style={{padding: 0, fontSize: "12px"}}
+                            onClick={() => {}}
+                            type="link"
+                        >
+                            {Locale.Settings.Models.KnowMore}
+                        </Button>
+                    </div>}
+                >
+                    <Select
+                        style={{ width: '100%' }}
+                        placeholder={Locale.Settings.Models.ChooseModel}
+                        defaultValue={config.defaultModel!.id}
+                        value={selectedModelId}
+                        onChange={onModelIdChange}
+                        options={config.supportedModels.map((v, i) => (
+                            {label: v.alias, value: v.id, desc: v.description ?? ''}
+                        ))}
+                        optionRender={(option) => {
+                            return (
+                                <Space>
+                                    <span>{option.label}</span>
+                                    <Typography.Text type="secondary">{option.data.desc}</Typography.Text>
+                                </Space>
+                            )
+                        }}
+                    />
+                </CustomListItem>
                 <CustomListItem
                     title={Locale.Settings.ChatMode.Title}
                     subTitle={
@@ -248,7 +289,7 @@ export function ModelConfigList(props: {
                             <Col span={4}>
                                 <InputNumber
                                     min={1}
-                                    max={10} // lets limit it to 0-1
+                                    max={20} // lets limit it to 0-1
                                     step={1}
                                     style={{margin: '0 4px'}}
                                     defaultValue={historyMessageCount}

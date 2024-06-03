@@ -1,4 +1,4 @@
-import {LangchainBackendBaseLLMConfig, MemoryTypeName} from "@/app/client/api";
+import {LangchainBackendBaseLLMConfig} from "@/app/client/api";
 
 
 export interface StartUpModelRequestVO {
@@ -22,9 +22,10 @@ export interface StartupMaskRequestVO {
 
 
 export interface SupportedModelVO {
+    id: string;
     name: string;
     alias: string;
-    sequence_length: number;
     context_tokens_limit: number;
-    available: boolean;
+    default: boolean;
+    description?: string;
 }
