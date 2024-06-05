@@ -161,20 +161,20 @@ function PromptToast(props: {
 
     return (
         <div className={styles["prompt-toast"]} key="prompt-toast">
-            {props.showToast && (
-                <div
-                    className={styles["prompt-toast-inner"] + " clickable"}
-                    role="button"
-                    onClick={() => {
-                        props.setShowModal(true);
-                    }}
-                >
-                    <BrainIcon/>
-                    <span className={styles["prompt-toast-content"]}>
-            {Locale.Context.Toast(context.length)}
-          </span>
-                </div>
-            )}
+          {/*  {props.showToast && (*/}
+          {/*      <div*/}
+          {/*          className={styles["prompt-toast-inner"] + " clickable"}*/}
+          {/*          role="button"*/}
+          {/*          onClick={() => {*/}
+          {/*              props.setShowModal(true);*/}
+          {/*          }}*/}
+          {/*      >*/}
+          {/*          <BrainIcon/>*/}
+          {/*          <span className={styles["prompt-toast-content"]}>*/}
+          {/*  {Locale.Context.Toast(context.length)}*/}
+          {/*</span>*/}
+          {/*      </div>*/}
+          {/*  )}*/}
             {props.showModal && (
                 <SessionConfigModel onClose={() => {
                     props.setShowModal(false);
@@ -1191,12 +1191,11 @@ function _Chat() {
                                                                     icon={<DeleteIcon/>}
                                                                     onClick={() => onDelete(message.id ?? i)}
                                                                 />
-
-                                                                <ChatAction
-                                                                    text={Locale.Chat.Actions.Pin}
-                                                                    icon={<PinIcon/>}
-                                                                    onClick={() => onPinMessage(message)}
-                                                                />
+                                                                {/*<ChatAction*/}
+                                                                {/*    text={Locale.Chat.Actions.Pin}*/}
+                                                                {/*    icon={<PinIcon/>}*/}
+                                                                {/*    onClick={() => onPinMessage(message)}*/}
+                                                                {/*/>*/}
                                                                 <ChatAction
                                                                     text={Locale.Chat.Actions.Copy}
                                                                     icon={<CopyIcon/>}

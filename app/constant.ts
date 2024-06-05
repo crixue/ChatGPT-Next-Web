@@ -2,6 +2,7 @@ import {nanoid} from "nanoid";
 import {ChatMessage} from "@/app/store";
 import {extraPromptPlaceHolders} from "@/app/utils/common-util";
 import {SupportedModelVO} from "@/app/types/model-vo";
+import Locale from "@/app/locales";
 
 export const OWNER = "RawJayXx";
 export const REPO = "ChatGPT-Next-Web";
@@ -86,7 +87,7 @@ export enum RequestStatusEnum {
 
 //默认的面具配置
 export const DEFAULT_CONFIG = {
-    submitKey: SubmitKey.CtrlEnter as SubmitKey,
+    submitKey: SubmitKey.Enter as SubmitKey,
     avatar: "1f603",
     fontSize: 14,
     theme: Theme.Auto as Theme,
@@ -119,7 +120,7 @@ export const DEFAULT_CONFIG = {
             id: nanoid(8),
             date: Date.now().toLocaleString(),
             role: "system",
-            content: "你是一个乐于助人的AI帮手，请回答用户的问题，如果你不知道答案，请不要编造答案",
+            content: "你是一个AI对话助手，请回复用户的问题。",
         },
         {
             id: nanoid(8),

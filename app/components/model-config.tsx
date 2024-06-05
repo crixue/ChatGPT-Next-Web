@@ -13,7 +13,7 @@ import {
     Switch, Typography
 } from "antd";
 import React from "react";
-import {ModelConfig, Path} from "@/app/constant";
+import {DEFAULT_CONFIG, ModelConfig, Path} from "@/app/constant";
 import {useNavigate} from "react-router-dom";
 import {usePluginsStore} from "@/app/store/plugins";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
@@ -89,7 +89,7 @@ export function ModelConfigList(props: {
 
     const [historyMessageCount, setHistoryMessageCount] = React.useState(currentMask.modelConfig.historyMessageCount);
     const onHistoryMessageCountChange = (value: string) => {
-        const defaultVal = 0;
+        const defaultVal = DEFAULT_CONFIG.modelConfig.historyMessageCount;
         const val = ModalConfigValidator.historyMessageCount(parseInt(value) || defaultVal);
         setHistoryMessageCount(val);
         if (val > 0) {
@@ -108,7 +108,7 @@ export function ModelConfigList(props: {
         if(!checked) {
             onHistoryMessageCountChange("0");
         } else {
-            onHistoryMessageCountChange("4");
+            onHistoryMessageCountChange(String(DEFAULT_CONFIG.modelConfig.historyMessageCount));
         }
     }
     const [streamingMode, setStreamingMode] = React.useState<boolean>(currentMask.modelConfig.streaming ?? true);

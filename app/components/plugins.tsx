@@ -49,8 +49,8 @@ export const PluginListView = (props: {
                         actions={[
                             !onlyView && <Switch
                                 key={"switch-key-"+item.id}
-                                checkedChildren={Locales.Plugins.Switch.Checked}
-                                unCheckedChildren={Locales.Plugins.Switch.Unchecked}
+                                checkedChildren={Locale.Plugins.Switch.Checked}
+                                unCheckedChildren={Locale.Plugins.Switch.Unchecked}
                                 onChange={(checked) => {
                                     if (checked) {
                                         checkedPluginIds.push(item.id);

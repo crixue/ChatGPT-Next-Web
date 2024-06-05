@@ -6,7 +6,7 @@ const isApp = !!getClientConfig()?.isApp;
 const cn = {
     WIP: "该功能仍在开发中……",
     DefaultChatMessages: {
-        systemContent: "你是一个AI对话助手。请用中文回答用户的问题，你的回答可以基于给定的上下文信息，如果你不知道答案，请不要编造答案。",
+        systemContent: "你是一个AI对话助手。请回答用户的问题。",
         userContent: "以下是上下文：{context}\\n 用户问题是: {query}\\n",
     },
     Common: {
