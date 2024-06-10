@@ -103,6 +103,7 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                 onClose={() => props.onClose()}
                 actions={[
                     <Button
+                        key={"apply-mask"}
                         type={"primary"}
                         icon={<RocketOutlined/>}
                         onClick={() => handleOnApplyMask(session.mask)}
