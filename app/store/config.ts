@@ -60,7 +60,6 @@ export const useAppConfig = create<ChatConfigStore>()(
             reset() {
                 set(() => ({...DEFAULT_CONFIG}));
             },
-
             update(updater) {
                 const config = {...get()};
                 updater(config);

@@ -336,6 +336,7 @@ export const useChatStore = create<ChatStore>()(
                         });
                     },
                     onFinish(message, resp?: ChatStreamResponseVO | ChatResponseVO) {
+                        botMessage.date = new Date().toLocaleString();
                         botMessage.streaming = false;
                         if (message) {
                             botMessage.content = message;

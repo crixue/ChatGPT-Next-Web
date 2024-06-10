@@ -127,10 +127,10 @@ export class ChatApi extends BaseApiClient{
                     async onopen(res) {
                         clearTimeout(requestTimeoutId);
                         const contentType = res.headers.get("content-type");
-                        console.log(
-                            "[OpenAI] request response content type: ",
-                            contentType,
-                        );
+                        // console.log(
+                        //     "[OpenAI] request response content type: ",
+                        //     contentType,
+                        // );
 
                         if (contentType?.startsWith("text/plain")) {
                             responseText = await res.clone().text();

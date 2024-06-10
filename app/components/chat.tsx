@@ -1,6 +1,5 @@
 import {useDebouncedCallback} from "use-debounce";
 import React, {Fragment, useEffect, useMemo, useRef, useState,} from "react";
-import BrainIcon from "../icons/brain.svg";
 import EditIcon from "../icons/rename.svg";
 import ReturnIcon from "../icons/return.svg";
 import CopyIcon from "../icons/copy.svg";
@@ -10,7 +9,6 @@ import ResetIcon from "../icons/reload.svg";
 import BreakIcon from "../icons/break.svg";
 import SettingsIcon from "../icons/chat-settings.svg";
 import DeleteIcon from "../icons/clear.svg";
-import PinIcon from "../icons/pin.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CancelIcon from "../icons/cancel.svg";
 import BottomIcon from "../icons/bottom.svg";
@@ -138,11 +136,11 @@ export function SessionConfigModel(props: { onClose: () => void }) {
                 />
             </CustomModal>
             <Modal title={Locale.Settings.MakingLocalVS.Title}
-                 open={isOpenMakingLocalVSModal}
-                 onOk={() => navigate(Path.MakeLocalVSStore)}
-                 okText={Locale.Settings.MakingLocalVS.ButtonContent}
-                 onCancel={() => setIsOpenMakingLocalVSModal(false)}
-                 cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
+                   open={isOpenMakingLocalVSModal}
+                   onOk={() => navigate(Path.MakeLocalVSStore)}
+                   okText={Locale.Settings.MakingLocalVS.ButtonContent}
+                   onCancel={() => setIsOpenMakingLocalVSModal(false)}
+                   cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
             >
                 <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
             </Modal>
@@ -161,20 +159,20 @@ function PromptToast(props: {
 
     return (
         <div className={styles["prompt-toast"]} key="prompt-toast">
-          {/*  {props.showToast && (*/}
-          {/*      <div*/}
-          {/*          className={styles["prompt-toast-inner"] + " clickable"}*/}
-          {/*          role="button"*/}
-          {/*          onClick={() => {*/}
-          {/*              props.setShowModal(true);*/}
-          {/*          }}*/}
-          {/*      >*/}
-          {/*          <BrainIcon/>*/}
-          {/*          <span className={styles["prompt-toast-content"]}>*/}
-          {/*  {Locale.Context.Toast(context.length)}*/}
-          {/*</span>*/}
-          {/*      </div>*/}
-          {/*  )}*/}
+            {/*  {props.showToast && (*/}
+            {/*      <div*/}
+            {/*          className={styles["prompt-toast-inner"] + " clickable"}*/}
+            {/*          role="button"*/}
+            {/*          onClick={() => {*/}
+            {/*              props.setShowModal(true);*/}
+            {/*          }}*/}
+            {/*      >*/}
+            {/*          <BrainIcon/>*/}
+            {/*          <span className={styles["prompt-toast-content"]}>*/}
+            {/*  {Locale.Context.Toast(context.length)}*/}
+            {/*</span>*/}
+            {/*      </div>*/}
+            {/*  )}*/}
             {props.showModal && (
                 <SessionConfigModel onClose={() => {
                     props.setShowModal(false);
@@ -613,8 +611,8 @@ function _Chat() {
     const fontSize = config.fontSize;
 
     let letterLimit = 4000;
-    for(const model of config.supportedModels) {
-        if(session.mask.modelConfig.model_id === model.id) {
+    for (const model of config.supportedModels) {
+        if (session.mask.modelConfig.model_id === model.id) {
             letterLimit = model.context_tokens_limit;
             break;
         }
@@ -715,22 +713,21 @@ function _Chat() {
             return;
         }
         setIsLoading(true);
-        try {
-            await userUsageApi.hasEnoughMoney();
-        } catch (e: any) {
-            if(e instanceof NotHaveEnoughMoneyException) {
-                setShowNotHaveEnoughMoneyAlert(true);
-                return;
-            }
-            console.error("Call check have enough money failed:", e);
-        }
-
         chatStore.onUserInput(userInput).then(() => setIsLoading(false));
         localStorage.setItem(LAST_INPUT_KEY, userInput);
         setUserInput("");
         setPromptHints([]);
         if (!isMobileScreen) inputRef.current?.focus();
         setAutoScroll(true);
+        try {
+            await userUsageApi.hasEnoughMoney();
+        } catch (e: any) {
+            if (e instanceof NotHaveEnoughMoneyException) {
+                setShowNotHaveEnoughMoneyAlert(true);
+                return;
+            }
+            console.error("Call check have enough money failed:", e);
+        }
     };
 
     const onPromptSelect = (prompt: RenderPompt) => {
@@ -777,7 +774,7 @@ function _Chat() {
 
             // auto sync mask config from global config
             if (session.mask.syncGlobalConfig) {
-                console.log("[Mask] syncing from global, name = ", session.mask.name);
+                // console.log("[Mask] syncing from global, name = ", session.mask.name);
                 session.mask.modelConfig = {...config.modelConfig};
             }
         });
@@ -866,6 +863,7 @@ function _Chat() {
             userMessage = message;
             for (let i = resendingIndex; i < session.messages.length; i += 1) {
                 if (session.messages[i].role === "assistant") {
+                    console.log('current message:', session.messages[i]);
                     botMessage = session.messages[i];
                     break;
                 }
@@ -1099,6 +1097,7 @@ function _Chat() {
                     }}
                 >
                     {messages.map((message, i) => {
+                        // console.log("num:", i + " message:", message);
                         const isUser = message.role === "user";
                         const isAssistant = message.role === "assistant";
                         const isContext = i < context.length;
@@ -1109,6 +1108,30 @@ function _Chat() {
                         const showTyping = (message.preview || message.streaming) && isAssistant;
 
                         const shouldShowClearContextDivider = i === clearContextIndex - 1;
+
+                        const assistantAnswerHasSource = () => {
+                            let hasSource = isAssistant && !isContext && !message.isError
+                                && message.contextDocs && message.contextDocs.length > 0;
+                            if(!hasSource) return false;
+                            hasSource = false;
+                            for (const item of message.contextDocs!) {
+                                const metadata = item.metadata;
+                                if (!metadata || !metadata.source_type) continue;
+                                if (metadata.source_type === ("upload_files" || "plain_text" || "speech_recognize_transcript") && metadata.source) {
+                                    const fileName = metadata.source.split("/").pop();
+                                    if (fileName) {
+                                        hasSource = true;
+                                        break;
+                                    }
+                                } else if (metadata.source_type === "web_search" && metadata.url && metadata.url.trim() !== "Nan") {
+                                    console.log("metadata.url:", metadata.url);
+                                    hasSource = true;
+                                    break;
+                                }
+                            }
+                            console.log("hasSource:", hasSource);
+                            return hasSource;
+                        }
 
                         const handleOnCheckSource = (currentMessage: ChatMessage) => {
                             const messageContextDocs: ContextDoc[] = currentMessage.contextDocs ?? [];
@@ -1146,10 +1169,6 @@ function _Chat() {
                             }
                             setShowedDataList(showedDataList);
                             setOpenSourceDrawer(true);
-                        }
-
-                        const ModelAvatar = (props: { mask: Mask, isTyping?: boolean }) => {
-                            return <AssistantAvatar avatar={DEFAULT_MASK_AVATAR} spin={props.isTyping}/>
                         }
 
                         return (
@@ -1266,43 +1285,50 @@ function _Chat() {
                                                 defaultShow={i >= messages.length - 6}
                                             />
                                         </div>
-                                        {isAssistant && !isContext && !message.isError
-                                            && message.contextDocs && message.contextDocs.length > 0 && (
+                                        {assistantAnswerHasSource() && (
                                             <a className={styles["chat-message-action-sources"]}
-                                               onClick={() => handleOnCheckSource(messages[i])}>
-                                                {Locale.Chat.SourceDetail}
-                                            </a>
-                                        )}
+                                         onClick={() => handleOnCheckSource(messages[i])}>
+                                        {Locale.Chat.SourceDetail}
+                                    </a>
+                                    )}
+                                    {isContext && (
                                         <div className={styles["chat-message-action-date"]}>
-                                            {isContext
-                                                ? Locale.Chat.IsContext
-                                                : message.date.toLocaleString()}
+                                            {Locale.Chat.IsContext}
                                         </div>
-                                    </div>
+                                    )}
+                                    {(isUser || (isAssistant && !showTyping)) && (
+                                        <div className={styles["chat-message-action-date"]}>
+                                            {message.date.toLocaleString()}
+                                        </div>
+                                    )}
                                 </div>
-                                <Drawer
-                                    placement={"bottom"}
-                                    closable={false}
-                                    onClose={onSourceDrawerClose}
-                                    open={openSourceDrawer}
-                                    key={"chat-source-detail-drawer"}
-                                >
-                                    <List
-                                        itemLayout={"horizontal"}
-                                        dataSource={showedDataList}
-                                        renderItem={(item, index) => (
-                                            <List.Item>
-                                                <List.Item.Meta
-                                                    title={item.title}
-                                                    description={item.description}
-                                                />
-                                            </List.Item>
-                                        )}
-                                    />
-                                </Drawer>
-                                {shouldShowClearContextDivider && <ClearContextDivider/>}
-                            </Fragment>
-                        );
+                            </div>
+                        <Drawer
+                            placement={"bottom"}
+                            closable={false}
+                            onClose={onSourceDrawerClose}
+                            open={openSourceDrawer}
+                            key={"chat-source-detail-drawer"}
+                        >
+                            <List
+                                itemLayout={"horizontal"}
+                                dataSource={showedDataList}
+                                renderItem={(item, index) => (
+                                    <List.Item>
+                                        <List.Item.Meta
+                                            title={item.title}
+                                            description={item.description}
+                                        />
+                                    </List.Item>
+                                )}
+                            />
+                        </Drawer>
+                    {
+                        shouldShowClearContextDivider && <ClearContextDivider/>
+                    }
+                    </Fragment>
+                    )
+                        ;
                     })}
                 </div>
 
