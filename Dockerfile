@@ -45,7 +45,7 @@ RUN yarn add package.json
 
 COPY . .
 
-RUN yarn build --verbose
+RUN yarn build --debug
 
 FROM deps AS runner
 WORKDIR /app
