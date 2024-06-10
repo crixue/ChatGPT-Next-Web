@@ -1124,12 +1124,12 @@ function _Chat() {
                                         break;
                                     }
                                 } else if (metadata.source_type === "web_search" && metadata.url && metadata.url.trim() !== "Nan") {
-                                    console.log("metadata.url:", metadata.url);
+                                    // console.log("metadata.url:", metadata.url);
                                     hasSource = true;
                                     break;
                                 }
                             }
-                            console.log("hasSource:", hasSource);
+                            // console.log("hasSource:", hasSource);
                             return hasSource;
                         }
 
