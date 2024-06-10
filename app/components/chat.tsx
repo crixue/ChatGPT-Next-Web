@@ -1112,7 +1112,7 @@ function _Chat() {
                         const assistantAnswerHasSource = () => {
                             let hasSource = isAssistant && !isContext && !message.isError
                                 && message.contextDocs && message.contextDocs.length > 0;
-                            if(!hasSource) return false;
+                            if (!hasSource) return false;
                             hasSource = false;
                             for (const item of message.contextDocs!) {
                                 const metadata = item.metadata;
@@ -1148,18 +1148,20 @@ function _Chat() {
                                     const fileName = metadata.source.split("/").pop();
                                     if (showedSourcesSet.has(fileName ?? "")) continue;
                                     if (fileName) showedSourcesSet.add(fileName ?? "");
-                                    showedData['title'] = (<p><span
+                                    showedData['title'] = (<p key={"title-" + fileName}><span
                                         style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromLocalVS}
                                     </p>);
                                     showedData['description'] = (
-                                        <span className={styles["source-description"]}>{fileName}</span>);
+                                        <span key={"description-" + fileName} className={styles["source-description"]}>{fileName}</span>);
                                 } else if (sourceType === "web_search" && metadata.url) {
                                     if (showedSourcesSet.has(metadata.url ?? "")) continue;
                                     if (metadata.url) showedSourcesSet.add(metadata.url ?? "");
-                                    showedData['title'] = (<p><span
+                                    showedData['title'] = (<p key={"title-" + metadata.url}><span
                                         style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromWebSearch}
                                     </p>);
-                                    showedData['description'] = (<Button className={styles["source-description"]}
+                                    showedData['description'] = (<Button
+                                        key={"description-" + metadata.url}
+                                        className={styles["source-description"]}
                                                                          type={"link"}
                                                                          onClick={() => {
                                                                              window.open(metadata.url, "_blank");
@@ -1287,48 +1289,47 @@ function _Chat() {
                                         </div>
                                         {assistantAnswerHasSource() && (
                                             <a className={styles["chat-message-action-sources"]}
-                                         onClick={() => handleOnCheckSource(messages[i])}>
-                                        {Locale.Chat.SourceDetail}
-                                    </a>
-                                    )}
-                                    {isContext && (
-                                        <div className={styles["chat-message-action-date"]}>
-                                            {Locale.Chat.IsContext}
-                                        </div>
-                                    )}
-                                    {(isUser || (isAssistant && !showTyping)) && (
-                                        <div className={styles["chat-message-action-date"]}>
-                                            {message.date.toLocaleString()}
-                                        </div>
-                                    )}
+                                               onClick={() => handleOnCheckSource(messages[i])}>
+                                                {Locale.Chat.SourceDetail}
+                                            </a>
+                                        )}
+                                        {isContext && (
+                                            <div className={styles["chat-message-action-date"]}>
+                                                {Locale.Chat.IsContext}
+                                            </div>
+                                        )}
+                                        {(isUser || (isAssistant && !showTyping)) && (
+                                            <div className={styles["chat-message-action-date"]}>
+                                                {message.date.toLocaleString()}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        <Drawer
-                            placement={"bottom"}
-                            closable={false}
-                            onClose={onSourceDrawerClose}
-                            open={openSourceDrawer}
-                            key={"chat-source-detail-drawer"}
-                        >
-                            <List
-                                itemLayout={"horizontal"}
-                                dataSource={showedDataList}
-                                renderItem={(item, index) => (
-                                    <List.Item>
-                                        <List.Item.Meta
-                                            title={item.title}
-                                            description={item.description}
-                                        />
-                                    </List.Item>
-                                )}
-                            />
-                        </Drawer>
-                    {
-                        shouldShowClearContextDivider && <ClearContextDivider/>
-                    }
-                    </Fragment>
-                    )
-                        ;
+                                <Drawer
+                                    placement={"bottom"}
+                                    closable={false}
+                                    onClose={onSourceDrawerClose}
+                                    open={openSourceDrawer}
+                                    key={"chat-source-detail-drawer"}
+                                >
+                                    <List
+                                        itemLayout={"horizontal"}
+                                        dataSource={showedDataList}
+                                        renderItem={(item, index) => (
+                                            <List.Item>
+                                                <List.Item.Meta
+                                                    title={item.title}
+                                                    description={item.description}
+                                                />
+                                            </List.Item>
+                                        )}
+                                    />
+                                </Drawer>
+                                {
+                                    shouldShowClearContextDivider && <ClearContextDivider/>
+                                }
+                            </Fragment>
+                        );
                     })}
                 </div>
 
