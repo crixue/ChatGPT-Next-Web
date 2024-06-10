@@ -1174,7 +1174,7 @@ function _Chat() {
                         }
 
                         return (
-                            <Fragment key={message.id}>
+                            <Fragment key={"fragment-"+i}>
                                 <div
                                     className={
                                         isUser ? styles["chat-message-user"] : styles["chat-message"]
