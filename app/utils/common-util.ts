@@ -21,3 +21,24 @@ export const isVideoFileType = (fileMimeType: string) => {
 export const isAVFileType = (fileMimeType: string) => {
     return isAudioFileType(fileMimeType) || isVideoFileType(fileMimeType);
 }
+
+export const collectUserDeviceInfo = () => {
+    // 获取浏览器信息
+    var browserInfo = navigator.userAgent;
+    // 获取操作系统信息
+    var platform = navigator.platform;
+    // 获取浏览器语言
+    var language = navigator.language;
+
+    // 获取屏幕宽度和高度
+    var screenWidth = window.screen.width;
+    var screenHeight = window.screen.height;
+
+    const deviceInfoCollector = {
+        channel: 1,  //渠道：1：Web；2：App
+        deviceName: browserInfo,
+        deviceSystemName: platform + '| Screen:' + screenWidth.toString() + '*' + screenHeight.toString(),
+        isPhysicalDevice: false,
+    }
+    return deviceInfoCollector;
+}

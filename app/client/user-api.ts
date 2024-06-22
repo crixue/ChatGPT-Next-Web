@@ -5,7 +5,8 @@ import {UserFolderCreateReqVO, UserFolderUpdateReqVO, UserFolderVo} from "@/app/
 import qs from "qs";
 import {useNavigate} from "react-router-dom";
 import {BaseApiClient} from "@/app/client/base-client";
-import {UserProfileVO} from "@/app/types/user-vo";
+import {CaptchaVerifyRequestVO, UserProfileVO} from "@/app/types/user-vo";
+import {handleAuthServerResponse} from "@/app/client/util";
 
 
 export class UserApiClient extends BaseApiClient {
@@ -106,4 +107,42 @@ export class UserApiClient extends BaseApiClient {
         }
         return handleServerResponse<string>(await res.json());
     }
+
+    async verifyCaptchaAndSendSmsCode(request: CaptchaVerifyRequestVO) {
+        const res = await super.fetchWithRedirect(this.path("/api/user/verify-captcha-and-send-sms-code"), {
+            method: "POST",
+            body: JSON.stringify(request),
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleAuthServerResponse<void>(await res.json());
+    }
+
+    async ableToPopupCaptchaCode(phoneNum: string) {
+        const res = await super.fetchWithRedirect(this.path(`/api/user/able-to-popup-captcha-code?phoneNum=${phoneNum}`), {
+            method: "GET",
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleAuthServerResponse<boolean>(await res.json());
+    }
+
+    async generateCaptchaAppId() {
+        const res = await super.fetchWithRedirect(this.path("/api/user/generate-captcha-app-id"), {
+            method: "GET",
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleAuthServerResponse<string>(await res.json());
+    }
+
 }

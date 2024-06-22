@@ -21,10 +21,28 @@ export interface User {
     lastPasswordResetDate?: string;
 }
 
+export interface UserLoginTransaction {
+    phoneNum?: string;
+    loginType?: number;  //1: 注册；2：登录
+    deviceName?: string;
+    channel?: number;
+    deviceSystemName?: string;
+    isPhysicalDevice?: boolean;
+}
+
+export interface CaptchaVerifyRequestVO {
+    phoneNum: string;
+    ticket: string;
+    randstr?: string;
+}
+
 export interface UserLoginParamVO {
     loginType: LoginTypeEnum;
     loginUser: User;
     smsCode?: string;
+    userLoginTransaction?: UserLoginTransaction;
+    captchaVerifyRequestVO?: CaptchaVerifyRequestVO;
+    useSmsCodeLogin?: boolean;
 }
 
 export interface UserRegisterParamVO {
@@ -32,6 +50,7 @@ export interface UserRegisterParamVO {
     registerUser: User;
     roleIds?: number[];
     smsCode?: string;
+    userLoginTransaction?: UserLoginTransaction;
 }
 
 export interface UserRole {
@@ -59,3 +78,12 @@ export interface UserProfileVO {
     userDesc?: string;
 }
 
+export interface ICaptchaResult {
+    ret: number;
+    ticket: string;
+    randstr: string;
+    CaptchaAppId?: string;
+    bizState?: string;
+    errorCode?: number;
+    errorMessage?: string;
+}

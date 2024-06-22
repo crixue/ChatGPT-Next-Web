@@ -16,32 +16,13 @@ export const getBuildConfig = () => {
   const langchaingPyApiUrl = process.env.DEFAULT_LANGCHAIN_API_HOST ?? "http://localhost:3000";
 
   const emojiPrefixUrl = process.env.EMOJI_PREFIX_URL ?? "https://cdnjs.cloudflare.com/ajax/libs/emoji-datasource-apple/14.0.0";
-
-  const commitInfo = (() => {
-    try {
-      const childProcess = require("child_process");
-      const commitDate: string = childProcess
-        .execSync('git log -1 --format="%at000" --date=unix')
-        .toString()
-        .trim();
-      const commitHash: string = childProcess
-        .execSync('git log --pretty=format:"%H" -n 1')
-        .toString()
-        .trim();
-
-      return { commitDate, commitHash };
-    } catch (e) {
-      console.error("[Build Config] No git or not from git repo.");
-      return {
-        commitDate: "unknown",
-        commitHash: "unknown",
-      };
-    }
-  })();
+  // USER_AGRREMENT_URL=https://www.baidu.com
+  // USER_PRIVACY_URL=https://www.baidu.com
+  const userAgreementUrl = process.env.USER_AGRREMENT_URL ?? "https://www.baidu.com";
+  const userPrivacyUrl = process.env.USER_PRIVACY_URL ?? "https://www.baidu.com";
 
   return {
     version,
-    ...commitInfo,
     buildMode,
     isApp,
     backendCoreApiUrl: backendCoreApiUrl,
@@ -49,6 +30,8 @@ export const getBuildConfig = () => {
     backendPaymentOrderApiUrl,
     defaultOpenAiUrl: langchaingPyApiUrl,
     emojiPrefixUrl,
+    userAgreementUrl,
+    userPrivacyUrl
   };
 };
 

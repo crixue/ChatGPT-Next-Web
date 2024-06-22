@@ -1,8 +1,6 @@
 import {useAccessStore} from "@/app/store";
-import {ServerResponse} from "@/app/common-api";
 import {UserLoginParamVO, UserRegisterFiledCheckParamVO, UserRegisterParamVO, UserShownVO} from "@/app/types/user-vo";
-import {AuthException} from "@/app/exceptions/auth-exception";
-import Locale from "@/app/locales";
+import {handleAuthServerResponse} from "@/app/client/util";
 
 export class AuthApi {
 
@@ -19,35 +17,6 @@ export class AuthApi {
         return headers;
     }
 
-    handleAuthServerResponse = <T>(response: ServerResponse<T>) => {
-        if (response.code !== 0) {
-            console.log("[handleAuthServerResponse] response code:" + response.code);
-            let showMsg = response.msg;
-            switch (response.code) {
-                case 60001:
-                    showMsg = Locale.ShownAlertMsg.UserValidateFailed;
-                    break;
-                case 60002:
-                    showMsg = Locale.ShownAlertMsg.AccountHasBeenRegistered;
-                    break;
-                case 60005:
-                    showMsg = Locale.ShownAlertMsg.UserNameOrPwdIncorrect;
-                    break;
-                case 60006:
-                    showMsg = Locale.ShownAlertMsg.UsernameLengthExceed;
-                    break;
-                case 60013:
-                    showMsg = Locale.ShownAlertMsg.UserPasswordShouldNotBeEmpty;
-                    break;
-                case 60014:
-                    showMsg = Locale.ShownAlertMsg.NotValidRegisterType;
-                    break;
-            }
-            throw new AuthException(showMsg);
-        }
-        return response.data;
-    }
-
     async userLogin(request: UserLoginParamVO) {
         const res = await fetch(this.path("/api/user/login"), {
             method: "POST",
@@ -58,7 +27,7 @@ export class AuthApi {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return this.handleAuthServerResponse<UserShownVO>(await res.json());
+        return handleAuthServerResponse<UserShownVO>(await res.json());
     }
 
     async userRegister(request: UserRegisterParamVO) {
@@ -71,7 +40,7 @@ export class AuthApi {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return this.handleAuthServerResponse<UserShownVO>(await res.json());
+        return handleAuthServerResponse<UserShownVO>(await res.json());
     }
 
     async refreshToken(oldToken: string) {
@@ -83,7 +52,7 @@ export class AuthApi {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return this.handleAuthServerResponse<UserShownVO>(await res.json());
+        return handleAuthServerResponse<UserShownVO>(await res.json());
     }
 
     async validateTokenIsExpired(token: string) {
@@ -95,7 +64,7 @@ export class AuthApi {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return this.handleAuthServerResponse<boolean>(await res.json());
+        return handleAuthServerResponse<boolean>(await res.json());
     }
 
     async checkRegisterFieldExists(request: UserRegisterFiledCheckParamVO) {
@@ -108,7 +77,7 @@ export class AuthApi {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return this.handleAuthServerResponse<boolean>(await res.json());
+        return handleAuthServerResponse<boolean>(await res.json());
     }
 
 }

@@ -1,14 +1,21 @@
-import {Avatar, Button, Divider, Form, Image, Input, message, notification, Tabs} from "antd";
-import {Rule, RuleObject, StoreValue} from "rc-field-form/lib/interface";
-import {useEffect, useState} from "react";
+import {Button, Form, Input, notification, Space} from "antd";
+import {RuleObject, StoreValue} from "rc-field-form/lib/interface";
+import React, {useState} from "react";
 import styles from "./index.module.scss";
-import WechatRegisterIcon from "../../icons/wechat-register.svg";
-import {emailExistsValidator, phoneExistsValidator, userNameExistsValidator} from "./util";
-import {AuthException} from "@/app/exceptions/auth-exception";
+import {
+    emailExistsValidator,
+    phoneExistsValidator,
+    popUpCaptcha,
+    userLoginTransactionRecord,
+    userNameExistsValidator
+} from "./util";
 import {RequestStatusEnum} from "@/app/constant";
 import {LoginTypeEnum} from "@/app/types/user-vo";
 import {useAuthStore} from "@/app/store/auth";
 import Locales from "@/app/locales";
+import {UserAgreementCheckbox} from "@/app/components/unauthenticated/user-agreement";
+import {UserApiClient} from "@/app/client/user-api";
+import {ApiRequestException} from "@/app/exceptions/api-request-exception";
 
 
 export const RegisterScreen = () => {
@@ -17,19 +24,7 @@ export const RegisterScreen = () => {
     return (
         <div className={styles["register-container"]}>
             {isQuickLogin ? <QuickRegisterTags/> : <NormalRegisterTags/>}
-            <Divider>{isQuickLogin ? <span className={styles["login-type-divider-desc"]}>其他方式注册</span>:
-                <span className={styles["login-type-divider-desc"]}>快捷登录</span> }</Divider>
-            <div className={"quick-login-container"}>
-                {
-                    isQuickLogin ?
-                        <div className={"normal-login-wrapper"} onClick={() => setIsQuickLogin(false)}>
-                            <span>密码注册</span>
-                        </div>:
-                        <div className={"quick-login-wechat-icon"} onClick={() => setIsQuickLogin(true)}>
-                            <Avatar src={WechatRegisterIcon} size={34}/>
-                        </div>
-                }
-            </div>
+            <UserAgreementCheckbox/>
         </div>
     )
 }
@@ -48,26 +43,15 @@ const NormalRegisterTags = () => {
     return (
         <>
             {contextHolder}
-            <UserNameRegisterScreen onError={(err) => {
+            <PhoneRegisterScreen onError={(err) => {
                 if (err !== null) {
                     api.error({
                         message: Locales.RegisterFailed,
-                        description: (err as AuthException).message,
+                        description: (err as ApiRequestException).message,
                         duration: 3
                     });
                 }
             }}/>
-            {/*// <Tabs defaultActiveKey={"userName"} centered onChange={handleOnChange} style={{paddingBottom: "8px !important"}}>*/}
-            {/*//         <TabPane tab={"用户名/密码"} key={"userName"}>*/}
-            {/*//             <UserNameRegisterScreen onError={setErr}/>*/}
-            {/*//         </TabPane>*/}
-            {/*//         <TabPane tab={"邮箱/密码"} key={"email"}>*/}
-            {/*//             <EmailRegisterScreen onError={setErr}/>*/}
-            {/*//         </TabPane>*/}
-            {/*//         <TabPane tab={"手机/密码"} key={"phone"}>*/}
-            {/*//             <PhoneRegisterScreen onError={setErr}/>*/}
-            {/*//         </TabPane>*/}
-            {/*//     </Tabs>*/}
         </>
 
     )
@@ -99,12 +83,12 @@ const UserNameRegisterScreen = ({onError} : {
         try {
             await authStore.register(
                 {
-                    registerType: LoginTypeEnum.ALPHA_TEST_1,  //TODO 暂时使用这个
+                    registerType: LoginTypeEnum.USERNAME,
                     registerUser: {
                         username: values.username,
                         password: values.password
                     },
-                    roleIds: [1052]  //TODO 暂时写死
+                    roleIds: [1052]  //暂时写死
 
                 });
             window.location.href = "/";
@@ -227,24 +211,28 @@ const EmailRegisterScreen = ({onError} : {
     </Form>
 }
 
-
 const PhoneRegisterScreen = ({onError} : {
     onError: (error: unknown) => void
 }) => {
+    const phonePattern = /^1[3-9]\d{9}$/;
+    const phonePatternMessage = "请输入正确的手机号";
     const [form] = Form.useForm();
     const authStore = useAuthStore();
     const [requestStatus, setRequestStatus] = useState<RequestStatusEnum>();
+    const [countdown, setCountdown] = useState<number | null>(null);
 
-    const handleSubmit = async (values: {phone: string, password: string, cpassword: string}) => {
+    const handleSubmit = async (values: {phone: string, password: string, cpassword: string, smsCode?: string,}) => {
         setRequestStatus(RequestStatusEnum.isLoading);
         try {
             await authStore.register({
                 registerType: LoginTypeEnum.PHONE,
                 registerUser: {
                     phone: values.phone,
-                    password: values.password
+                    password: values.password,
                 },
-                roleIds: [1052]  //TODO 暂时写死
+                smsCode: values.smsCode,
+                userLoginTransaction: userLoginTransactionRecord(values.phone),
+                roleIds: [1052]  //暂时写死
             });
             window.location.href = "/";
         } catch (e: any) {
@@ -264,13 +252,31 @@ const PhoneRegisterScreen = ({onError} : {
         callback();
     }
 
+    const verifyCaptchaAndSendCode = async (phoneNum: string) => {
+        await popUpCaptcha(phoneNum, async (data) => {
+            const userApiClient = new UserApiClient();
+            try {
+                await userApiClient.verifyCaptchaAndSendSmsCode(data);
+            } catch (e: any) {
+                onError(e);
+            }
+        }, onError);
+        setCountdown(60);
+        const timer = setInterval(() => {
+            setCountdown((prevCountdown) => prevCountdown ? prevCountdown - 1 : null);
+        }, 1000);
+        setTimeout(() => {
+            clearInterval(timer);
+        }, 60000);
+    };
+
     return <Form onFinish={handleSubmit} form={form}>
         <Form.Item name={'phone'}
                    hasFeedback
                    validateTrigger={'onBlur'}
                    rules={[
-                       {required: true, message: "请输入手机号码"},
-                       {pattern: /^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/, message: "手机号码格式不正确"},
+                       {required: true, message: "请输入手机号"},
+                       {pattern: phonePattern, message: phonePatternMessage},
                        {validator: phoneExistsValidator}]}
         >
             <Input placeholder={'手机号码'} type="text" id={'phone'} allowClear/>
@@ -283,7 +289,7 @@ const PhoneRegisterScreen = ({onError} : {
             {validator: rawPwdValidator}
         ]}
         >
-            <Input placeholder={'密码: 须包含字母和数字，长度为8-30'} type="password" id={'password'} allowClear/>
+            <Input placeholder={'密码至少8位且至少有数字和字母组成'} type="password" id={'password'} allowClear/>
         </Form.Item>
         <Form.Item
             name={'cpassword'}
@@ -293,6 +299,21 @@ const PhoneRegisterScreen = ({onError} : {
             {validator: confirmPwdValidator}
         ]}>
             <Input placeholder={'再次确认密码'} type="password" id={'cpassword'} allowClear/>
+        </Form.Item>
+        <Form.Item name={'smsCode'} rules={[
+            {required: true, message: "请输入验证码"},
+        ]}
+        >
+            <Space.Compact style={{width: "100%"}}>
+                <Input placeholder={'请输入验证码'} type="text" id={'smsCode'}/>
+                <Button type={"primary"} disabled={countdown !== null && countdown > 0 }
+                        onClick={() => {
+                            form.validateFields(['phone']);
+                            verifyCaptchaAndSendCode(form.getFieldValue('phone'));
+                        }}>
+                    {(countdown !== null && countdown > 0) ? `${countdown}秒后重新获取` : '获取验证码'}
+                </Button>
+            </Space.Compact>
         </Form.Item>
         <Form.Item className={"register-btn"}>
             <Button style={{width: "100%"}} loading={requestStatus == RequestStatusEnum.isLoading} htmlType="submit" type={"primary"}>注册</Button>

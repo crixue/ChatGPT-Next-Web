@@ -1,3 +1,4 @@
+import {ApiRequestException} from "@/app/exceptions/api-request-exception";
 
 
 export type ServerResponse<T> = {
@@ -11,7 +12,7 @@ export type ServerResponse<T> = {
 export const handleServerResponse = <T>(response: ServerResponse<T>) => {
 
     if (response.code !== 0) {
-        throw new Error(JSON.stringify(response));
+        throw new ApiRequestException(JSON.stringify(response), 200, response.code);
     }
     return response.data;
 }

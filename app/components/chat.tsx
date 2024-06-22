@@ -1005,8 +1005,6 @@ function _Chat() {
 
     const [showPromptModal, setShowPromptModal] = useState(false);
 
-    const clientConfig = useMemo(() => getClientConfig(), []);
-
     const autoFocus = !isMobileScreen; // wont auto focus on mobile screen
 
     useCommand({
