@@ -7,7 +7,7 @@ export const UnauthenticatedApp = () => {
     return (
         <>
             <Helmet>
-                <script src="https://turing.captcha.qcloud.com/TCaptcha.js" />
+                <script async={true} src="https://turing.captcha.qcloud.com/TCaptcha.js" />
             </Helmet>
             <div className={styles["unauthenticated-app-background"]}/>
             <UnauthScreen/>
