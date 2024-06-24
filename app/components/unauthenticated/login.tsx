@@ -289,7 +289,7 @@ const PhoneLoginScreen = ({useSmsLogin, onError}: {
                     {required: true, message: "请输入密码"},
                 ]}
                 >
-                    <Input placeholder={'密码: 包含字母和数字'} type="password" id={'password'} allowClear/>
+                    <Input placeholder={'请输入密码'} type="password" id={'password'} allowClear/>
                 </Form.Item>
         }
 

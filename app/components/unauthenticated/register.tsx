@@ -118,7 +118,7 @@ const UserNameRegisterScreen = ({onError} : {
                     {max: 24, message: "请限制在24个字符以内"},
                     {validator: userNameExistsValidator}]}
         >
-            <Input placeholder={'用户名'} type="text" id={'username'} allowClear/>
+            <Input placeholder={'请输入用户名'} type="text" id={'username'} allowClear/>
         </Form.Item>
         <Form.Item name={'password'}
                    hasFeedback
@@ -127,7 +127,7 @@ const UserNameRegisterScreen = ({onError} : {
             {validator: rawPwdValidator}
         ]}
         >
-            <Input placeholder={'密码: 须包含字母和数字，长度为8-30'} type="password" id={'password'} allowClear/>
+            <Input placeholder={'请输入密码'} type="password" id={'password'} allowClear/>
         </Form.Item>
         <Form.Item name={'cpassword'}
                    hasFeedback
