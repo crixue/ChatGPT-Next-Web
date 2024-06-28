@@ -4,6 +4,7 @@ import {CaptchaVerifyRequestVO, ICaptchaResult, LoginTypeEnum, UserLoginTransact
 import {ApiRequestException} from "@/app/exceptions/api-request-exception";
 import {UserApiClient} from "@/app/client/user-api";
 import {collectUserDeviceInfo} from "@/app/utils/common-util";
+import {getClientConfig} from "@/app/config/client";
 
 const authApi = new AuthApi();
 
@@ -86,7 +87,7 @@ export const popUpCaptcha = async (phoneNum: string, onSuccess?: (data: CaptchaV
         }
         var aidEncrypted =  await userApiClient.generateCaptchaAppId();
         // @ts-ignore
-        const captcha = new TencentCaptcha('192144496',
+        const captcha = new TencentCaptcha(getClientConfig()?.captchaAppId,
             (res: ICaptchaResult) => {
                 console.log('callback:', res);
                 var captchaVerifyRequestVO = {
@@ -98,7 +99,8 @@ export const popUpCaptcha = async (phoneNum: string, onSuccess?: (data: CaptchaV
                     onSuccess(captchaVerifyRequestVO);
                 }
             },
-            {aidEncrypted: aidEncrypted});
+            {aidEncrypted: aidEncrypted}
+        );
         captcha.show();
     } catch (e: any) {
         if (e instanceof ApiRequestException) {

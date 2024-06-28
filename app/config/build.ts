@@ -20,6 +20,7 @@ export const getBuildConfig = () => {
   // USER_PRIVACY_URL=https://www.baidu.com
   const userAgreementUrl = process.env.USER_AGRREMENT_URL ?? "https://www.baidu.com";
   const userPrivacyUrl = process.env.USER_PRIVACY_URL ?? "https://www.baidu.com";
+  const captchaAppId = process.env.CAPTCHA_APP_ID ?? "2040000000";
 
   return {
     version,
@@ -31,7 +32,8 @@ export const getBuildConfig = () => {
     defaultOpenAiUrl: langchaingPyApiUrl,
     emojiPrefixUrl,
     userAgreementUrl,
-    userPrivacyUrl
+    userPrivacyUrl,
+    captchaAppId
   };
 };
 

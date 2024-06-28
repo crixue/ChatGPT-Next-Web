@@ -53,7 +53,6 @@ import {
 import {ContextPrompts, MaskConfig} from "./mask";
 import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
-import {getClientConfig} from "../config/client";
 import {Button, Drawer, List, Modal, notification} from "antd";
 import {ContextDoc} from "@/app/types/chat";
 import {validateMask} from "@/app/utils/mask";
