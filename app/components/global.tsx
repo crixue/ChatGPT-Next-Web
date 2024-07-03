@@ -3,6 +3,7 @@ import React from "react";
 import styles from "@/app/components/global.module.scss";
 import BotIcon from "@/app/icons/bot.svg";
 import LoadingIcon from "@/app/icons/three-dots.svg";
+import {UnauthenticatedApp} from "@/app/components/unauthenticated";
 
 export const GlobalLoading = (props: { showLoading: boolean, noLogo?: boolean }) => {
     if (props.showLoading) {

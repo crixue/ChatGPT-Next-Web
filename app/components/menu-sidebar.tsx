@@ -16,6 +16,7 @@ import PluginIcon from "../icons/plugin.svg";
 import LeftArrowIcon from "../icons/left.svg";
 import RightArrowIcon from "../icons/right.svg";
 import HomeIcon from "../icons/home.svg";
+import MobileTerminalIcon from "../icons/mobile_terminal.svg";
 
 import Locale from "../locales";
 
@@ -25,6 +26,7 @@ import {MENU_MAX_SIDEBAR_WIDTH, MENU_MIN_SIDEBAR_WIDTH, MENU_NARROW_SIDEBAR_WIDT
 
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import {useMobileScreen} from "../utils";
+import {Popconfirm, Popover, Tooltip} from "antd";
 
 
 function useDragSideBar() {
@@ -126,9 +128,17 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.Home)}
                 >
-                    <HomeIcon className={styles["sidebar-bar-primary-box-icon"]}/>
-                    {shouldNarrow ? null :
-                        <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Home.Title}</span>}
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Home.Title}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        > <HomeIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <HomeIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    }
+                    {shouldNarrow
+                        ? null
+                        : <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Home.Title}</span>}
                 </a>
                 <a
                     className={`${(location.pathname != Path.NewChat) ?
@@ -136,7 +146,14 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleNewChatClick()}
                 >
-                    <AddIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Home.NewChat}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <AddIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <AddIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Home.NewChat}</span>}
                 </a>
@@ -146,7 +163,14 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.Masks)}
                 >
-                    <MaskIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Mask.Name}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <MaskIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <MaskIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Mask.Name}</span>}
                 </a>
@@ -156,7 +180,14 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.ManageLocalVectorStore)}
                 >
-                    <PluginIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.LocalVectorStoreName}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <PluginIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <PluginIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.LocalVectorStoreName}</span>}
                 </a>
@@ -167,7 +198,14 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.Wallet)}
                 >
-                    <WalletIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Wallet.Title}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <WalletIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <WalletIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Wallet.Title}</span>}
                 </a>
@@ -177,7 +215,14 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.Usage)}
                 >
-                    <UsageIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Usage.Title}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <UsageIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <UsageIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Usage.Title}</span>}
                 </a>
@@ -187,7 +232,14 @@ export function MenuSideBar(props: { className?: string }) {
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.Settings)}
                 >
-                    <SettingsIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Settings.Title}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <SettingsIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <SettingsIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Settings.Title}</span>}
                 </a>
@@ -201,13 +253,42 @@ export function MenuSideBar(props: { className?: string }) {
                 {/*/>*/}
             </div>
             <div className={styles["sidebar-tail"]}>
+                <Popover
+                    placement="topLeft"
+                    title={"扫码下载 Lingro App"}
+                    content={"正在开发中，敬请期待..."}
+                    trigger={"click"}
+                >
+                    <a
+                        className={styles["sidebar-bar-primary-box"]}
+                    >
+                        {shouldNarrow ?
+                            <Tooltip placement="right" title={Locale.MobileTerminal.Title}
+                                     trigger={["hover"]}
+                                     arrow={true}
+                            >
+                                <MobileTerminalIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                            </Tooltip> :
+                            <MobileTerminalIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
+                        {shouldNarrow ? null :
+                            <span
+                                className={styles["sidebar-bar-primary-box-title"]}>{Locale.MobileTerminal.Title}</span>}
+                    </a>
+                </Popover>
                 <a
                     className={`${(location.pathname != Path.Personal) ?
                         styles["sidebar-bar-primary-box"] :
                         styles["sidebar-bar-primary-box-active-menu-item"]}`}
                     onClick={() => handleClick(Path.Personal)}
                 >
-                    <PersonalIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                    {shouldNarrow ?
+                        <Tooltip placement="right" title={Locale.Profile.SideBarTitle}
+                                 trigger={["hover"]}
+                                 arrow={true}
+                        >
+                            <PersonalIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                        </Tooltip> :
+                        <PersonalIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
                     {shouldNarrow ? null :
                         <span className={styles["sidebar-bar-primary-box-title"]}>{Locale.Profile.SideBarTitle}</span>}
                 </a>

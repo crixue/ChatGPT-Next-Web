@@ -1,21 +1,18 @@
 import styles from './wallet.module.scss'
 
 import Locale from "@/app/locales";
-import {IconButton} from "@/app/components/button";
-import CloseIcon from "@/app/icons/close.svg";
-import {Path} from "@/app/constant";
 import {ErrorBoundary} from "@/app/components/error";
-import {useNavigate} from "react-router-dom";
 import {
-    Button, Col, Divider,
-    Input, InputNumber,
+    Button,
+    Divider,
+    InputNumber,
     List,
-    Modal, notification,
+    Modal,
+    notification,
     Radio,
-    RadioChangeEvent, Row,
+    RadioChangeEvent,
     Skeleton,
-    Space, Statistic,
-    StatisticProps,
+    Statistic,
     Tabs,
     TabsProps
 } from "antd";
@@ -27,12 +24,16 @@ import WeChatPayIcon from "@/app/icons/wechat_pay.svg";
 import RmbIcon from "@/app/icons/rmb.svg";
 
 import {
-    PaymentToolDescEnum, PaymentToolEnum,
+    PaymentToolDescEnum,
+    PaymentToolEnum,
     RefundableTxnResponseVO,
-    WalletChargeTxnRequestVO, WalletPaymentTransaction
+    WalletChargeTxnRequestVO,
+    WalletPaymentTransaction, WapOrderResponseVO
 } from "@/app/types/payment-order-vo";
 import {PaymentOderApi} from "@/app/client/payment-oder-api";
 import dayjs from "dayjs";
+import {WechatPay} from "@/app/components/third-party-pay";
+import ChatGptIcon from "@/app/icons/chatgpt.svg";
 
 
 const userUsageApi = new UserUsageApi();
@@ -44,6 +45,7 @@ const Balance = () => {
     const [open, setOpen] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
     const [openNotifyToPayModal, setOpenNotifyToPayModal] = useState(false);
+    const [wechatPayModalVisible, setWechatPayModalVisible] = useState(false);
     const [expireTime, setExpireTime] = useState<string | undefined>(undefined);
     const [refresh, setRefresh] = useState(false);
     const [openApplyToRefundModal, setOpenApplyToRefundModal] = useState(false);
@@ -54,15 +56,48 @@ const Balance = () => {
     const [chargeAmount, setChargeAmount] = useState<number | null>(null);
     const [openConfirmToRefundModal, setOpenConfirmToRefundModal] = useState(false);
     const [confirmApplyToRefundLoading, setConfirmApplyToRefundLoading] = useState(false);
+    const [orderInfo, setOrderInfo] = useState<WapOrderResponseVO | undefined>(undefined);
+    const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         // fetch balance
         (async () => {
             const balanceInfoVO = await userUsageApi.simpleShowUserBalance();
             setBalance(balanceInfoVO.balance.toString());
+            setChargeAmount(null)
         })();
     }, [refresh]);
 
+    useEffect(() => {
+        if (wechatPayModalVisible) {
+            let startTime = Date.now();
+            const intervalId = setInterval(async () => {
+                const response = await paymentOrderApi.queryWalletPaymentTransaction(orderInfo!.txnId);
+                if (response.tradeStatus === 1 || Date.now() - startTime >= 15 * 60 * 1000) {
+                    clearInterval(intervalId);
+                    setWechatPayModalVisible(false);
+                    setOrderInfo(undefined);
+                    setRefresh(!refresh);
+                    response.tradeStatus === 1 && notify.success({
+                        message: "支付成功",
+                        duration: 3
+                    },);
+                }
+            }, 15 * 1000);
+            setTimerId(intervalId);
+        } else if (timerId) {
+            clearInterval(timerId);
+            setTimerId(null);
+        }
+    }, [wechatPayModalVisible, refresh, orderInfo?.txnId]);
+
+    const closeAllModal = () => {
+        setOpen(false);
+        setWechatPayModalVisible(false);
+        setOpenNotifyToPayModal(false);
+        setOpenApplyToRefundModal(false);
+        setOpenConfirmToRefundModal(false);
+    }
 
     const handlePaymentSelectedOnChange = (e: RadioChangeEvent) => {
         const paymentTool = e.target.value;
@@ -70,7 +105,8 @@ const Balance = () => {
     }
 
     function closeChargeModal() {
-        setOpen(false);
+        // setOpen(false);
+        closeAllModal();
         setChargeAmount(null);
     }
 
@@ -87,19 +123,23 @@ const Balance = () => {
             paymentTool: paymentSelected,
         } as WalletChargeTxnRequestVO;
         setConfirmLoading(true);
-        paymentOrderApi.createPcPaymentOrder(request)
-            .then((res) => {
-                setExpireTime(res.expireTime);
-                window.open(res.aliPayRedirectUrl);
-            }).catch((e) => {
-            console.error(e);
-        }).finally(
-            () => {
-                setConfirmLoading(false);
-                closeChargeModal();
+
+        try {
+            const res = await paymentOrderApi.createPcPaymentOrder(request);
+            setOrderInfo(res);
+            setExpireTime(res.expireTime);
+            closeAllModal();
+            if (paymentSelected === PaymentToolDescEnum.WECHAT_PAY) {
+                setWechatPayModalVisible(true);
+            } else if (paymentSelected === PaymentToolDescEnum.ALI_PAY) {
                 setOpenNotifyToPayModal(true);
+                window.open(res.aliPayRedirectUrl);
             }
-        );
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setConfirmLoading(false);
+        }
     }
 
     const chargeInputChange = (value: number | null) => {
@@ -108,12 +148,14 @@ const Balance = () => {
     }
 
     function closeNotifyToPayModal() {
-        setOpenNotifyToPayModal(false);
+        closeAllModal();
+        // setOpenNotifyToPayModal(false);
         setRefresh(!refresh);
     }
 
     function closeRefundModal() {
-        setOpenApplyToRefundModal(false);
+        closeAllModal();
+        // setOpenApplyToRefundModal(false);
         setRefresh(!refresh);
     }
 
@@ -154,8 +196,9 @@ const Balance = () => {
     }
 
     function closeConfirmToRefund() {
-        setOpenConfirmToRefundModal(false);
-        setOpenApplyToRefundModal(false);
+        // setOpenConfirmToRefundModal(false);
+        // setOpenApplyToRefundModal(false);
+        closeAllModal();
     }
 
     const title = (
@@ -185,6 +228,7 @@ const Balance = () => {
                         退款
                     </Button>
                 </div>
+                {/*零钱充值Modal*/}
                 <Modal
                     title="零钱充值"
                     open={open}
@@ -241,6 +285,23 @@ const Balance = () => {
                         <Button type={"link"}>用户充值协议</Button>
                     </div>
                 </Modal>
+                {/*零钱充值Modal end*/}
+                <Modal
+                    title={
+                        <div className={styles["wallet-cashier-modal-box"]}>
+                            <ChatGptIcon/>
+                            <span style={{paddingLeft: "12px"}}>收银台</span>
+                        </div>
+                    }
+                    open={wechatPayModalVisible}
+                    cancelText={"取消"}
+                    onCancel={() => setWechatPayModalVisible(false)}
+                    okText={"已完成支付"}
+                    onOk={() => setWechatPayModalVisible(false)}
+                >
+                    <WechatPay orderInfo={orderInfo}/>
+                </Modal>
+                {/*支付提醒Modal start*/}
                 <Modal
                     title={"请完成支付"}
                     open={openNotifyToPayModal}
@@ -253,6 +314,7 @@ const Balance = () => {
                         <p>正在请求支付中，请您在 {expireTime} 前完成支付,如您已支付完成请点击 <b>知道了</b> 按钮</p>
                     </div>
                 </Modal>
+                {/*退款Modal start*/}
                 <Modal
                     width={850}
                     title={"零钱退款"}
@@ -320,6 +382,7 @@ const Balance = () => {
                         <p>请确认是否申请退款?</p>
                     </div>
                 </Modal>
+                {/*退款Modal end*/}
             </div>
         </>
 
@@ -335,8 +398,7 @@ const WalletTransactionList = () => {
     useEffect(() => {
         // fetch balance
         (async () => {
-            const data = await paymentOrderApi.listAllTxnsByUserId(pageNum);
-            setWalletTxnList(data);
+            onLoadMore();
         })();
     }, []);
 

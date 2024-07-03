@@ -299,37 +299,37 @@ export function Settings() {
                         </CustomSelect>
                     </CustomListItem>
 
-                    <CustomListItem title={Locale.Settings.Theme}>
-                        <CustomSelect
-                            value={config.theme}
-                            onChange={(e) => {
-                                updateConfig(
-                                    (config) => (config.theme = e.target.value as any as Theme),
-                                );
-                            }}
-                        >
-                            {Object.values(Theme).map((v) => (
-                                <option value={v} key={v}>
-                                    {v}
-                                </option>
-                            ))}
-                        </CustomSelect>
-                    </CustomListItem>
+                    {/*<CustomListItem title={Locale.Settings.Theme}>*/}
+                    {/*    <CustomSelect*/}
+                    {/*        value={config.theme}*/}
+                    {/*        onChange={(e) => {*/}
+                    {/*            updateConfig(*/}
+                    {/*                (config) => (config.theme = e.target.value as any as Theme),*/}
+                    {/*            );*/}
+                    {/*        }}*/}
+                    {/*    >*/}
+                    {/*        {Object.values(Theme).map((v) => (*/}
+                    {/*            <option value={v} key={v}>*/}
+                    {/*                {v}*/}
+                    {/*            </option>*/}
+                    {/*        ))}*/}
+                    {/*    </CustomSelect>*/}
+                    {/*</CustomListItem>*/}
 
-                    <CustomListItem title={Locale.Settings.Lang.Name}>
-                        <CustomSelect
-                            value={getLang()}
-                            onChange={(e) => {
-                                changeLang(e.target.value as any);
-                            }}
-                        >
-                            {AllLangs.map((lang) => (
-                                <option value={lang} key={lang}>
-                                    {ALL_LANG_OPTIONS[lang]}
-                                </option>
-                            ))}
-                        </CustomSelect>
-                    </CustomListItem>
+                    {/*<CustomListItem title={Locale.Settings.Lang.Name}>*/}
+                    {/*    <CustomSelect*/}
+                    {/*        value={getLang()}*/}
+                    {/*        onChange={(e) => {*/}
+                    {/*            changeLang(e.target.value as any);*/}
+                    {/*        }}*/}
+                    {/*    >*/}
+                    {/*        {AllLangs.map((lang) => (*/}
+                    {/*            <option value={lang} key={lang}>*/}
+                    {/*                {ALL_LANG_OPTIONS[lang]}*/}
+                    {/*            </option>*/}
+                    {/*        ))}*/}
+                    {/*    </CustomSelect>*/}
+                    {/*</CustomListItem>*/}
 
                     <CustomListItem
                         title={Locale.Settings.FontSize.Title}

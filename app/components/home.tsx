@@ -1,7 +1,6 @@
 "use client";
 
 
-import {GlobalLoading} from "@/app/components/global";
 import React, {useEffect, useState} from "react";
 
 import styles from "./home.module.scss";
@@ -24,9 +23,7 @@ import {getClientConfig} from "../config/client";
 import {useMaskStore} from "../store";
 import {useAuthStore} from "@/app/store/auth";
 import {MenuSideBar} from "@/app/components/menu-sidebar";
-import {Wallet} from "@/app/components/wallet";
-import {UserUsage} from "@/app/components/user-usage";
-import {PersonalProfile} from "@/app/components/personal-profile";
+import {UnauthenticatedApp} from "@/app/components/unauthenticated";
 
 
 require("../polyfill");
@@ -39,10 +36,6 @@ export function Loading(props: { noLogo?: boolean }) {
         </div>
     );
 }
-
-const Auth = dynamic(async () => (await import("./unauthenticated/index")).UnauthenticatedApp, {
-    loading: () => <Loading noLogo/>,
-});
 
 const Settings = dynamic(async () => (await import("./settings")).Settings, {
     loading: () => <Loading noLogo/>,
@@ -83,7 +76,6 @@ const UsagePage = dynamic(async () => (await import("./user-usage")).UserUsage, 
 const PersonalProfilePage = dynamic(async () => (await import("./personal-profile")).PersonalProfile, {
     loading: () => <Loading noLogo/>,
 });
-
 
 export function useSwitchTheme() {
     const config = useAppConfig();
@@ -167,49 +159,47 @@ function Screen() {
         loadAsyncGoogleFont();
     }, []);
 
-    useEffect(() => {
-        if(needAuth) {
-            window.location.href = "/#"+Path.Auth;
-        }
-    }, [needAuth]);
-
     return (
-        <div
-            className={
-                ` ${
-                    (config.tightBorder && !isMobileScreen) || needAuth
-                        ? styles["tight-container"]
-                        : styles.container
-                }`
-            }
-        >
-            {needAuth ? (
+        <div className={styles["main-container"]}>
+            <div
+                className={
+                    ` ${(config.tightBorder && !isMobileScreen) || needAuth ? styles["tight-container"] : styles.container}`
+                }>
                 <>
-                    <Routes>
-                        <Route path={Path.Auth} element={<Auth/>}/>
-                    </Routes>
-                </>
-            ) : (
-                <>
-                     <MenuSideBar className={isHome ? styles["sidebar-show"] : ""}/>
+                    {needAuth ? (
+                        <div style={{display: "flex"}}>
+                            <div className={styles["overlay"]}>
+                                <UnauthenticatedApp/>
+                            </div>
+                        </div>
+                    ) : null}
+                    <MenuSideBar className={isHome ? styles["sidebar-show"] : ""}/>
                     {showHistoryMenuBar ? <HistorySidebar className={isHome ? styles["sidebar-show"] : ""}/> : null}
-                    <div className={styles["window-content"]} id={SlotID.AppBody}>
-                        <Routes>
-                            <Route path={Path.Home} element={<Chat/>}/>
-                            <Route path={Path.NewChat} element={<NewChat/>}/>
-                            <Route path={Path.Masks} element={<MaskPage/>}/>
-                            <Route path={Path.Chat} element={<Chat/>}/>
-                            <Route path={Path.Settings} element={<Settings/>}/>
-                            <Route path={Path.MakeLocalVSStore} element={<MakeLocalVectorStorePage/>}/>
-                            <Route path={Path.ManageLocalVectorStore} element={<ManageLocalVectorStorePage/>}/>
-                            <Route path={Path.Plugins} element={<PluginsPage/>}/>
-                            <Route path={Path.Wallet} element={<WalletPage/>}/>
-                            <Route path={Path.Usage} element={<UsagePage/>}/>
-                            <Route path={Path.Personal} element={<PersonalProfilePage/>}/>
-                        </Routes>
+                    <div className={styles["window-main-container"]}>
+                        <div className={styles["window-content"]} id={SlotID.AppBody}>
+                            <Routes>
+                                <Route path={Path.Home} element={<Chat/>}/>
+                                <Route path={Path.NewChat} element={<NewChat/>}/>
+                                <Route path={Path.Masks} element={<MaskPage/>}/>
+                                <Route path={Path.Chat} element={<Chat/>}/>
+                                <Route path={Path.Settings} element={<Settings/>}/>
+                                <Route path={Path.MakeLocalVSStore} element={<MakeLocalVectorStorePage/>}/>
+                                <Route path={Path.ManageLocalVectorStore} element={<ManageLocalVectorStorePage/>}/>
+                                <Route path={Path.Plugins} element={<PluginsPage/>}/>
+                                <Route path={Path.Wallet} element={<WalletPage/>}/>
+                                <Route path={Path.Usage} element={<UsagePage/>}/>
+                                <Route path={Path.Personal} element={<PersonalProfilePage/>}/>
+                            </Routes>
+                        </div>
                     </div>
                 </>
-            )}
+            </div>
+            <div className={styles["window-footer"]}>
+                <p>© 2024 Lingro CopyRight |
+                    <a href="https://beian.miit.gov.cn/" target="_blank">蜀ICP备2024083320号</a>
+                    | <span>安全举报：Lingro001@163.com</span>
+                </p>
+            </div>
         </div>
     );
 }
@@ -227,7 +217,7 @@ export function useRefreshToken() {
     useEffect(() => {
         (async () => {
             const token = useAuthStore.getState().token;
-            if(!token|| token === "") {
+            if (!token || token === "") {
                 return;
             }
             await useAuthStore.getState().refreshToken(token);

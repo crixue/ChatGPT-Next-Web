@@ -21,7 +21,7 @@
 
 .login-container {
   .login-type-divider {
-    margin-top: 120px;
+    margin-top: 60px;
   }
   .login-type-divider-desc {
     box-sizing: border-box;
@@ -61,9 +61,9 @@
 
   .unauth-card{
     width: 40rem;
-    min-height: 48rem;
-    padding: 3.2rem 4rem;
-    border-radius: 0.3rem;
+    min-height: 38rem;
+    padding: 2rem 4rem;
+    border-radius: 0.4rem;
     box-sizing: border-box; /*规定两个并排的带边框的框*/
     box-shadow: rgba(0, 0, 0, 0.1) 0 0 10px;
     text-align: center;

@@ -115,12 +115,17 @@
 }
 
 .sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
-  padding-top: 20px;
-  padding-bottom: 20px;
+  padding-top: 14px;
+  padding-bottom: 18px;
+  border-bottom: rgba(0, 0, 0, 0.1) 1px solid;
 }
 
 .sidebar-body {
+  margin-top: 20px;
   width: 200px;
   flex: 1;
   overflow: auto;
@@ -128,8 +133,9 @@
 }
 
 .sidebar-sub-title {
-  color: rgba(0, 0, 0, 0.45);
+  padding-left: 12px;
+  color: rgba(0, 0, 0, 0.55);
   font-size: 14px;
-  font-weight: 400;
+  font-weight: 450;
   animation: slide-in ease 0.3s;
 }

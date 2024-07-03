@@ -664,6 +664,12 @@ const cn = {
         UserDesc: "用户简介",
     },
     GoToCharge: "去充值",
+    MobileTerminal: {
+        Title: "移动端",
+        SubTitle: "扫码下载移动端",
+        Android: "安卓",
+        Ios: "iOS",
+    },
 };
 
 type DeepPartial<T> = T extends object

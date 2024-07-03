@@ -5,7 +5,7 @@ import styles from "./history-sidebar.module.scss";
 import {IconButton} from "./button";
 import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
-import CloseIcon from "../icons/close.svg";
+import HistoryMsgIcon from "../icons/history-messages.svg";
 
 import Locale from "../locales";
 
@@ -55,6 +55,7 @@ export function HistorySidebar(props: { className?: string }) {
       className={styles["history-sidebar"]}
     >
       <div className={styles["sidebar-header"]}>
+        <HistoryMsgIcon/>
         <span className={styles["sidebar-sub-title"]}>历史消息记录</span>
       </div>
       <div

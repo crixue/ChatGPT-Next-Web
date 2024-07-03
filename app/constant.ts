@@ -20,7 +20,7 @@ export enum Path {
     MakeLocalVSStore = "/make-local-vector-store",
     ManageLocalVectorStore = "/manage-local-vector-store",
     Plugins= "/plugins",
-    Wallet = "/wallet/*",
+    Wallet = "/wallet",
     Usage = "/usage",
     Personal = "/personal",
 }

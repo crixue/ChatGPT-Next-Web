@@ -62,7 +62,7 @@ export function assembleSaveOrUpdateMaskRequest(mask: Mask){
     const maskCreationRequestVO = {
         mask,
         serializePromptRequest: serializePromptRequestVO,
-        requiredPermIds: [632, 633]  //TODO 暂时写死
+        requiredPermIds: [632, 633]
     } as MaskCreationRequestVO;
     // console.log(JSON.stringify(maskCreationRequestVO));
     return maskCreationRequestVO;

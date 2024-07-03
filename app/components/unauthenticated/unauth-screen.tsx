@@ -5,7 +5,6 @@ import {Button, Card, Checkbox, Radio} from "antd";
 import {LoginScreen} from "@/app/components/unauthenticated/login";
 import {RegisterScreen} from "@/app/components/unauthenticated/register";
 import styles from "./index.module.scss";
-import {useAuthStore} from "@/app/store/auth";
 
 
 export const UnauthScreen = () => {

@@ -29,11 +29,15 @@ export interface WapOrderResponseVO {
     expireMinutes: number;
     expireTime: string;
     aliPayRedirectUrl?: string;
+    wechatPayQrCodeUrl?: string;
+    orderAmount: number;
+    productName?: string;
+
 }
 
 export interface WalletChargeTxnTradeStatusVO {
     txnId: string;
-    chargeTradeStatus: number;
+    tradeStatus: number;
 }
 
 export interface RefundableTxnDetailBO {

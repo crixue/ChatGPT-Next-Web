@@ -162,7 +162,7 @@ const EmailRegisterScreen = ({onError} : {
                     email: values.email,
                     password: values.password
                 },
-                roleIds: [1052]  //TODO 暂时写死
+                roleIds: [1052]
             });
             window.location.href = "/";
         } catch (e: any) {
