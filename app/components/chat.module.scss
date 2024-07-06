@@ -400,7 +400,7 @@
   max-width: 100%;
   margin-top: 10px;
   border-radius: 10px;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--second-opacity);
   padding: 10px;
   font-size: 14px;
   user-select: text;
@@ -456,7 +456,7 @@
 }
 
 .chat-message-user > .chat-message-container > .chat-message-item {
-  background-color: var(--second);
+  background-color: rgba(0, 0, 0, 0.05);
 
   &:hover {
     min-width: 0;

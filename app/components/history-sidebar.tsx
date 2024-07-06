@@ -3,7 +3,6 @@ import {useEffect} from "react";
 import styles from "./history-sidebar.module.scss";
 
 import {IconButton} from "./button";
-import ChatGptIcon from "../icons/chatgpt.svg";
 import AddIcon from "../icons/add.svg";
 import HistoryMsgIcon from "../icons/history-messages.svg";
 

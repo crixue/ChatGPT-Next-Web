@@ -92,7 +92,7 @@ export const PersonalProfile = () => {
                             <div className={styles["avatar-img-box"]}>
                                 <Image src={userAvatarUrl}
                                        preview={false}
-                                       style={{borderRadius: "20%"}}
+                                       style={{borderRadius: "50%"}}
                                        width={96} height={96}/>
                                 <div className={styles["avatar-refresh-btn"]}>
                                     <Button loading={retrieveAvatarLoading}

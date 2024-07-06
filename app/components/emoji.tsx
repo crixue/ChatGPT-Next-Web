@@ -4,10 +4,8 @@ import EmojiPicker, {
   Theme as EmojiTheme,
 } from "emoji-picker-react";
 
-import BotIcon from "../icons/bot.svg";
-import BlackBotIcon from "../icons/black-bot.svg";
+import BlackBotIcon from "../icons/lingro-block-bot-circle.svg";
 import {getClientConfig} from "@/app/config/client";
-import {Image} from "antd";
 
 
 export function getEmojiUrl(unified: string, style: EmojiStyle) {

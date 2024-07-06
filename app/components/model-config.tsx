@@ -90,10 +90,12 @@ export function ModelConfigList(props: {
     const [historyMessageCount, setHistoryMessageCount] = React.useState(currentMask.modelConfig.historyMessageCount);
     const onHistoryMessageCountChange = (value: string) => {
         const defaultVal = DEFAULT_CONFIG.modelConfig.historyMessageCount;
-        const val = ModalConfigValidator.historyMessageCount(parseInt(value) || defaultVal);
+        const val = ModalConfigValidator.historyMessageCount(parseInt(value));
         setHistoryMessageCount(val);
         if (val > 0) {
             setContainHistory(true);
+        } else {
+            setContainHistory(false);
         }
         props.updateConfig(
             (config) =>
@@ -104,7 +106,6 @@ export function ModelConfigList(props: {
     const [containHistory, setContainHistory] = React.useState<boolean>((currentMask.modelConfig?.historyMessageCount ?? 0) != 0);
     const onContainHistoryChange = (checked: boolean) => {
         // console.log("containHistory now:" + checked);
-        setContainHistory(checked);
         if(!checked) {
             onHistoryMessageCountChange("0");
         } else {

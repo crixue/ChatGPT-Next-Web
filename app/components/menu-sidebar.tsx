@@ -7,7 +7,7 @@ import PersonalIcon from "../icons/personal.svg";
 import SettingsIcon from "../icons/settings.svg";
 import WalletIcon from "../icons/wallet.svg";
 import UsageIcon from "../icons/usage.svg";
-import ChatGptIcon from "../icons/chatgpt.svg";
+import ChatGptIcon from "../icons/lingro-logo.svg";
 import AddIcon from "../icons/add.svg";
 import CloseIcon from "../icons/close.svg";
 import MaskIcon from "../icons/mask.svg";
