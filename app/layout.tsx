@@ -6,8 +6,8 @@ import { getClientConfig } from "./config/client";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "ChatGPT Next Web",
-  description: "Your personal ChatGPT Chat Bot.",
+  title: "Lingro",
+  description: "探索个性化AI助手！使用私有数据驱动的深度学习技术生成独特知识库，让你的AI对话伙伴更精准解答问题，提高问题解决效率，满足专属需求！",
   viewport: {
     width: "device-width",
     initialScale: 1,
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     { media: "(prefers-color-scheme: dark)", color: "#151515" },
   ],
   appleWebApp: {
-    title: "ChatGPT Next Web",
+    title: "Lingro",
     statusBarStyle: "default",
   },
 };
