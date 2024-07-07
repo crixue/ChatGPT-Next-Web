@@ -59,6 +59,28 @@
   min-height: 100vh;
   justify-content: center;
 
+  .unauth-card-logo-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+
+    h1 {
+      font-weight: 600;
+      //color: rgb(94, 108, 132);
+      padding-left: 1.2rem;
+      background: linear-gradient(to right, red, blue);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+
+  .unauth-card-logo-desc {
+    font-size: 14px;
+    margin-bottom: 0.5rem;
+    color: rgb(94, 108, 132);
+  }
+
   .unauth-card{
     width: 40rem;
     min-height: 38rem;
@@ -73,7 +95,7 @@
     }
 
     .unauth-card-title {
-      margin-bottom: 1.6rem;
+      margin-bottom: 0.8rem;
       color: rgb(94, 108, 132);
     }
 

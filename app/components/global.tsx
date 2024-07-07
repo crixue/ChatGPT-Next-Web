@@ -12,7 +12,9 @@ export const GlobalLoading = (props: { showLoading: boolean, noLogo?: boolean })
                 <div className={styles["overlay"]}>
                     <div className={styles["loading-content"] + " no-dark"}>
                         {!props.noLogo && <BotIcon/>}
-                        <LoadingIcon/>
+                        <div style={{marginTop: "24px"}}>
+                            <LoadingIcon/>
+                        </div>
                     </div>
                 </div>
             </div>

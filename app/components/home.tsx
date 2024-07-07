@@ -32,7 +32,9 @@ export function Loading(props: { noLogo?: boolean }) {
     return (
         <div className={styles["loading-content"] + " no-dark"}>
             {!props.noLogo && <BotIcon/>}
-            <LoadingIcon/>
+            <div style={{marginTop: "24px"}}>
+                <LoadingIcon/>
+            </div>
         </div>
     );
 }

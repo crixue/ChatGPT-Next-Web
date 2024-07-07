@@ -20,6 +20,8 @@ export const getBuildConfig = () => {
   // USER_PRIVACY_URL=https://www.baidu.com
   const userAgreementUrl = process.env.USER_AGRREMENT_URL ?? "https://www.baidu.com";
   const userPrivacyUrl = process.env.USER_PRIVACY_URL ?? "https://www.baidu.com";
+  const productBillingInstructionUrl = process.env.PRODUCT_BILLING_INSTRUCTION_URL ?? "https://www.baidu.com";
+  const userChargeAgreementUrl = process.env.USER_CHARGE_AGREEMENT_URL ?? "https://www.baidu.com";
   const captchaAppId = process.env.CAPTCHA_APP_ID ?? "2040000000";
 
   return {
@@ -33,6 +35,8 @@ export const getBuildConfig = () => {
     emojiPrefixUrl,
     userAgreementUrl,
     userPrivacyUrl,
+    productBillingInstructionUrl,
+    userChargeAgreementUrl,
     captchaAppId
   };
 };

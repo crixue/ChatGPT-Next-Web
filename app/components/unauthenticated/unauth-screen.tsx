@@ -1,7 +1,8 @@
 "use client";
 
+import LogoIcon from '@/app/icons/lingro-logo-48px-round.svg';
 import React, {useState} from "react";
-import {Button, Card, Checkbox, Radio} from "antd";
+import {Button, Card, Checkbox, Image, Radio} from "antd";
 import {LoginScreen} from "@/app/components/unauthenticated/login";
 import {RegisterScreen} from "@/app/components/unauthenticated/register";
 import styles from "./index.module.scss";
@@ -18,7 +19,18 @@ export const UnauthScreen = () => {
     // useDocumentTitle("登陆/注册");
     return (
         <div className={styles["unauth-card-container"]}>
-            <Card className={styles["unauth-card"]}>
+            <Card
+                title={
+                <div>
+                    <div className={styles["unauth-card-logo-box"]}>
+                        <LogoIcon/>
+                        <h1>Lingro</h1>
+                    </div>
+                    <div className={styles["unauth-card-logo-desc"]}>
+                        做您的个性化AI助手
+                    </div>
+                </div>}
+                className={styles["unauth-card"]}>
                 <h2 className={styles["unauth-card-title"]}>
                     {isRegistered ? "请登录" : "请注册"}
                 </h2>

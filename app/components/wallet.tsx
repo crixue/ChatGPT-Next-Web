@@ -3,7 +3,7 @@ import styles from './wallet.module.scss'
 import Locale from "@/app/locales";
 import {ErrorBoundary} from "@/app/components/error";
 import {
-    Button,
+    Button, Checkbox,
     Divider,
     InputNumber,
     List,
@@ -16,7 +16,7 @@ import {
     Tabs,
     TabsProps
 } from "antd";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {UserUsageApi} from "@/app/client/user-usage-api";
 // import DragIcon from "../icons/drag.svg";
 import AliPayIcon from "@/app/icons/ali_pay.svg";
@@ -33,13 +33,15 @@ import {
 import {PaymentOderApi} from "@/app/client/payment-oder-api";
 import dayjs from "dayjs";
 import {WechatPay} from "@/app/components/third-party-pay";
-import ChatGptIcon from "@/app/icons/chatgpt.svg";
+import ChatGptIcon from "@/app/icons/lingro-logo-36px-round.svg";
+import {getClientConfig} from "@/app/config/client";
 
 
 const userUsageApi = new UserUsageApi();
 const paymentOrderApi = new PaymentOderApi();
 
 const Balance = () => {
+    const defaultChargeAmount: number = 20;
     const [notify, contextHolder] = notification.useNotification();
     const [balance, setBalance] = useState('查询中');
     const [open, setOpen] = useState(false);
@@ -52,19 +54,22 @@ const Balance = () => {
     const [queryRefundListLoading, setQueryRefundListLoading] = useState(false);
     const [refundInfo, setRefundInfo] = useState<RefundableTxnResponseVO | undefined>(undefined);
     const [paymentSelected, setPaymentSelected] =
-        useState<PaymentToolDescEnum>(PaymentToolDescEnum.ALI_PAY);
-    const [chargeAmount, setChargeAmount] = useState<number | null>(null);
+        useState<PaymentToolDescEnum>(PaymentToolDescEnum.WECHAT_PAY);  //TODO 改换成 PaymentToolDescEnum.ALI_PAY
+    const [chargeAmount, setChargeAmount] = useState<number | null>(defaultChargeAmount);
     const [openConfirmToRefundModal, setOpenConfirmToRefundModal] = useState(false);
     const [confirmApplyToRefundLoading, setConfirmApplyToRefundLoading] = useState(false);
     const [orderInfo, setOrderInfo] = useState<WapOrderResponseVO | undefined>(undefined);
     const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
+
+    const clientConfig = useMemo(() => getClientConfig(), []);
+    const [agreeChargeTerm, setAgreeChargeTerm] = useState(true);
 
     useEffect(() => {
         // fetch balance
         (async () => {
             const balanceInfoVO = await userUsageApi.simpleShowUserBalance();
             setBalance(balanceInfoVO.balance.toString());
-            setChargeAmount(null)
+            setChargeAmount(defaultChargeAmount);
         })();
     }, [refresh]);
 
@@ -111,7 +116,14 @@ const Balance = () => {
     }
 
     async function chargeNow() {
-        if(!chargeAmount) {
+        if(!agreeChargeTerm) {
+            notify.warning({
+                message: "请先同意充值协议",
+                duration: 3
+            });
+            return;
+        }
+        if(chargeAmount === null) {
             notify.error({
                 message: "请输入充值金额",
                 duration: 3
@@ -237,6 +249,7 @@ const Balance = () => {
                     confirmLoading={confirmLoading}
                     cancelText={"取消"}
                     onCancel={closeChargeModal}
+                    maskClosable={false}
                 >
                     <div>
                         <h2>充值金额</h2>
@@ -257,6 +270,7 @@ const Balance = () => {
                             max={1000}
                             precision={2}
                             controls={false}
+                            defaultValue={defaultChargeAmount}
                             value={chargeAmount}
                             onChange={chargeInputChange}/>
                     </div>
@@ -265,10 +279,11 @@ const Balance = () => {
                         <h2>选择支付方式</h2>
                         <Radio.Group onChange={handlePaymentSelectedOnChange} value={paymentSelected}>
                             <div className={styles["payment-tool-radio-group-wrapper"]}>
-                                <Radio value={PaymentToolDescEnum.ALI_PAY}>
+                                <Radio value={PaymentToolDescEnum.ALI_PAY} disabled={true}>
                                     <div className={styles["charge-pay-tool-box"]}>
                                         <AliPayIcon/>
-                                        <span>支付宝</span>
+                                        {/*TODO 处理！*/}
+                                        <span>支付宝(开发中...)</span>
                                     </div>
                                 </Radio>
 
@@ -281,9 +296,15 @@ const Balance = () => {
                             </div>
                         </Radio.Group>
                     </div>
-                    <div className={styles["user-charge-term-box"]}>
-                        <Button type={"link"}>用户充值协议</Button>
-                    </div>
+                    <Checkbox defaultChecked={true} className={styles["user-charge-term-box"]} onChange={
+                        (e) => {
+                            setAgreeChargeTerm(e.target.checked);
+                        }
+                    }>
+                        同意<a href={clientConfig!.productBillingInstructionUrl} target={"_blank"}>《产品计费说明》</a>
+                        和
+                        <a href={clientConfig!.userChargeAgreementUrl} target={"_blank"}>《用户充值协议》</a>
+                    </Checkbox>
                 </Modal>
                 {/*零钱充值Modal end*/}
                 <Modal
@@ -298,6 +319,7 @@ const Balance = () => {
                     onCancel={() => setWechatPayModalVisible(false)}
                     okText={"已完成支付"}
                     onOk={() => setWechatPayModalVisible(false)}
+                    maskClosable={false}
                 >
                     <WechatPay orderInfo={orderInfo}/>
                 </Modal>
