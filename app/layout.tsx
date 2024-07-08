@@ -6,8 +6,8 @@ import { getClientConfig } from "./config/client";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "最先进的人工智能助手 | 多种大语言模型基座 | 个性化AI助手| 打造企业或个人专属知识库或网络引擎搜索，提升问题解决效率 | 灵格若",
-  description: "使用私有数据驱动的人工智能技术生成独家知识库，让你的AI对话伙伴精准且有创意的回复，满足专属需求。开始对话，探索个性化AI助手！",
+  title: "个性化AI助手 | 打造专属知识库，私有数据驱动人工智能 | 网络引擎搜索 | 多种大语言模型基座 | 最先进的人工智能助手 | 灵格若",
+  description: "上传文档、音视频使用人工智能技术打造专属知识库，智能网络引擎搜索最新信息，用数据驱动人工智能，让你的AI对话伙伴精准且有创意的回复，满足专属需求。开始对话，探索个性化AI助手！",
   viewport: {
     width: "device-width",
     initialScale: 1,
