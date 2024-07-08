@@ -24,7 +24,7 @@ export const UnauthScreen = () => {
                 <div>
                     <div className={styles["unauth-card-logo-box"]}>
                         <LogoIcon/>
-                        <h1>Lingro</h1>
+                        <h1>灵格若</h1>
                     </div>
                     <div className={styles["unauth-card-logo-desc"]}>
                         做您的个性化AI助手
