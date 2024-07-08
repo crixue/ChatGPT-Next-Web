@@ -6,6 +6,15 @@
     margin: 12px auto 0 auto;
 }
 
+.refund-alert-box {
+    margin-top: 8px;
+    margin-bottom: 12px;
+    .refund-alert-box-alert {
+        color: rgba(0, 0, 0, 0.45);
+        font-size: 14px;
+    }
+}
+
 .refund-content-box {
     $padding: 80px;
     height: calc(100vh - 240px);

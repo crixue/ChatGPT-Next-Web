@@ -3,6 +3,7 @@ import styles from './wallet.module.scss'
 import Locale from "@/app/locales";
 import {ErrorBoundary} from "@/app/components/error";
 import {
+    Alert,
     Button, Checkbox,
     Divider,
     InputNumber,
@@ -14,7 +15,7 @@ import {
     Skeleton,
     Statistic,
     Tabs,
-    TabsProps
+    TabsProps, Typography
 } from "antd";
 import React, {useEffect, useMemo, useState} from "react";
 import {UserUsageApi} from "@/app/client/user-usage-api";
@@ -36,6 +37,7 @@ import {WechatPay} from "@/app/components/third-party-pay";
 import ChatGptIcon from "@/app/icons/lingro-logo-36px-round.svg";
 import {getClientConfig} from "@/app/config/client";
 import {useAuthStore} from "@/app/store/auth";
+import {WarningOutlined} from "@ant-design/icons";
 
 
 const userUsageApi = new UserUsageApi();
@@ -364,8 +366,12 @@ const Balance = () => {
                     onOk={() => setOpenConfirmToRefundModal(true)}
                 >
                     <div>
+                        <div className={styles["refund-alert-box"]}>
+                            <Alert className={styles["refund-alert-box-alert"]} message="退款将收取一定比例的服务费，实际退款金额请以到账金额为准！" type="warning"
+                                   showIcon closable/>
+                        </div>
                         <div>
-                            <Statistic title="可退款总金额(元)" value={refundInfo?.refundableTotalAmount}
+                            <Statistic title="可申请退款总金额(元)" value={refundInfo?.refundableTotalAmount}
                                        precision={2}/>
                             {/*<p>可退款总金额(元)</p>*/}
                             {/*<p>{refundInfo?.refundableTotalAmount}</p>*/}
