@@ -54,7 +54,7 @@ const Balance = () => {
     const [queryRefundListLoading, setQueryRefundListLoading] = useState(false);
     const [refundInfo, setRefundInfo] = useState<RefundableTxnResponseVO | undefined>(undefined);
     const [paymentSelected, setPaymentSelected] =
-        useState<PaymentToolDescEnum>(PaymentToolDescEnum.WECHAT_PAY);  //TODO 改换成 PaymentToolDescEnum.ALI_PAY
+        useState<PaymentToolDescEnum>(PaymentToolDescEnum.ALI_PAY);
     const [chargeAmount, setChargeAmount] = useState<number | null>(defaultChargeAmount);
     const [openConfirmToRefundModal, setOpenConfirmToRefundModal] = useState(false);
     const [confirmApplyToRefundLoading, setConfirmApplyToRefundLoading] = useState(false);
@@ -279,11 +279,10 @@ const Balance = () => {
                         <h2>选择支付方式</h2>
                         <Radio.Group onChange={handlePaymentSelectedOnChange} value={paymentSelected}>
                             <div className={styles["payment-tool-radio-group-wrapper"]}>
-                                <Radio value={PaymentToolDescEnum.ALI_PAY} disabled={true}>
+                                <Radio value={PaymentToolDescEnum.ALI_PAY} disabled={false}>
                                     <div className={styles["charge-pay-tool-box"]}>
                                         <AliPayIcon/>
-                                        {/*TODO 处理！*/}
-                                        <span>支付宝(开发中...)</span>
+                                        <span>支付宝</span>
                                     </div>
                                 </Radio>
 
