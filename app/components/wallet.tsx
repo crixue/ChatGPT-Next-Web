@@ -35,6 +35,7 @@ import dayjs from "dayjs";
 import {WechatPay} from "@/app/components/third-party-pay";
 import ChatGptIcon from "@/app/icons/lingro-logo-36px-round.svg";
 import {getClientConfig} from "@/app/config/client";
+import {useAuthStore} from "@/app/store/auth";
 
 
 const userUsageApi = new UserUsageApi();
@@ -42,6 +43,8 @@ const paymentOrderApi = new PaymentOderApi();
 
 const Balance = () => {
     const defaultChargeAmount: number = 20;
+    const authStore = useAuthStore();
+
     const [notify, contextHolder] = notification.useNotification();
     const [balance, setBalance] = useState('查询中');
     const [open, setOpen] = useState(false);
@@ -295,6 +298,21 @@ const Balance = () => {
                             </div>
                         </Radio.Group>
                     </div>
+                    <Divider/>
+                    <div className={styles["payment-info-confirm-container"]}>
+                        <h2>订单信息</h2>
+                        <div>
+                            <p>产品名称：<b>Lingro 虚拟钱包充值</b></p>
+                            <p>充值金额：<b>{chargeAmount ?? 0}</b> 元</p>
+                            <p>支付方式：<b>{paymentSelected === PaymentToolDescEnum.ALI_PAY ? "支付宝" : "微信支付"}</b></p>
+                            <p>收货人：<b>{authStore.user?.user.username}</b> </p>
+                            <p>收货方式：钱包充值</p>
+                            <p>
+                                下单时间：<b>{dayjs().format("YYYY年MM月DD日 HH:mm:ss")}</b>
+                            </p>
+                        </div>
+                    </div>
+                    <Divider/>
                     <Checkbox defaultChecked={true} className={styles["user-charge-term-box"]} onChange={
                         (e) => {
                             setAgreeChargeTerm(e.target.checked);
