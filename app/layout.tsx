@@ -30,12 +30,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-        <meta name="config" content={JSON.stringify(getClientConfig())} />
-        <link rel="manifest" href="/site.webmanifest"></link>
-        <script src="/serviceWorkerRegister.js" defer></script>
-      </head>
-      <body>{children}</body>
+    <head>
+      <meta name="config" content={JSON.stringify(getClientConfig())}/>
+      <meta name="google-site-verification" content="BNJzpXR7xJdj-8AT0nUjbIIHeXWBxBtBF3xYPqGl81E"/>
+      <meta name="keywords" content="个性化AI助手，构建专属知识库驱动人工智能，网络引擎搜索驱动人工智能，RAG，多种大语言模型基座，最佳的生活、学习、工作效率搭子"/>
+      <link rel="manifest" href="/site.webmanifest"></link>
+      <script src="/serviceWorkerRegister.js" defer></script>
+    </head>
+    <body>{children}</body>
     </html>
   );
 }

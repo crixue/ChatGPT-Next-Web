@@ -197,7 +197,7 @@ function Screen() {
                 </>
             </div>
             <div className={styles["window-footer"]}>
-                <p>© 2024 Lingro CopyRight |
+                <p>© 2024 灵格若 CopyRight |
                     <a href="https://beian.miit.gov.cn/" target="_blank">蜀ICP备2024083320号</a>
                     | <span>安全举报：Lingro001@163.com</span>
                 </p>
