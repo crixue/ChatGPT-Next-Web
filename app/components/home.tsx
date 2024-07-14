@@ -199,6 +199,7 @@ function Screen() {
             <div className={styles["window-footer"]}>
                 <p>© 2024 灵格若 CopyRight |
                     <a href="https://beian.miit.gov.cn/" target="_blank">蜀ICP备2024083320号</a>
+                    | <a href="https://beian.mps.gov.cn/#/query/webSearch" target="_blank">川公网安备51010702043135号</a>
                     | <span>安全举报：Lingro001@163.com</span>
                 </p>
             </div>
