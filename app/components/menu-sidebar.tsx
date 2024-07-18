@@ -17,6 +17,7 @@ import LeftArrowIcon from "../icons/left.svg";
 import RightArrowIcon from "../icons/right.svg";
 import HomeIcon from "../icons/home.svg";
 import MobileTerminalIcon from "../icons/mobile_terminal.svg";
+import FeedbackIcon from "../icons/feedback.svg";
 
 import Locale from "../locales";
 
@@ -253,6 +254,33 @@ export function MenuSideBar(props: { className?: string }) {
                 {/*/>*/}
             </div>
             <div className={styles["sidebar-tail"]}>
+                <Popover
+                    placement="topLeft"
+                    title={"意见反馈"}
+                    content={
+                        <div>
+                            <p>请在微信中搜索并关注公众号【灵格若科技】进行反馈</p>
+                            <p>感谢您使用我们的产品，您的意见对我们非常重要！</p>
+                        </div>
+                    }  //"请在微信中搜索并关注公众号【灵格若科技】进行反馈\\n\\n感谢您使用我们的产品，您的意见对我们非常重要！"
+                    trigger={"click"}
+                >
+                    <a
+                        className={styles["sidebar-bar-primary-box"]}
+                    >
+                        {shouldNarrow ?
+                            <Tooltip placement="right" title={"意见反馈"}
+                                     trigger={["hover"]}
+                                     arrow={true}
+                            >
+                                <FeedbackIcon className={styles["sidebar-bar-primary-box-icon"]}/>
+                            </Tooltip> :
+                            <FeedbackIcon className={styles["sidebar-bar-primary-box-icon"]}/>}
+                        {shouldNarrow ? null :
+                            <span
+                                className={styles["sidebar-bar-primary-box-title"]}>{"意见反馈"}</span>}
+                    </a>
+                </Popover>
                 <Popover
                     placement="topLeft"
                     title={"扫码下载 Lingro App"}
