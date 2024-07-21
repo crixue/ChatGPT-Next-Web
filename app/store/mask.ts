@@ -58,7 +58,7 @@ export const createEmptyMask = () =>
         id: nanoid(6),
         avatar: DEFAULT_MASK_AVATAR,
         name: DEFAULT_TOPIC,
-        hideContext: false,
+        hideContext: true,
         isChineseText: true,
         haveContext: false,
         relevantSearchOptions: DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
