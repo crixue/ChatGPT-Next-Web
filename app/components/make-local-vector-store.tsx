@@ -476,7 +476,7 @@ const UserFolderSelection = (props: {
                                     message: Locale.MakeLocalVSStore.Rules.PleaseInputLocalVSName
                                 },
                                 {
-                                    pattern: /^[a-zA-Z0-9_-]+([a-zA-Z0-9_ -]*[a-zA-Z0-9_-]+)*$/,
+                                    pattern: /^[\u4e00-\u9fa5a-zA-Z0-9_-]+([\u4e00-\u9fa5a-zA-Z0-9_ -]*[\u4e00-\u9fa5a-zA-Z0-9_-]+)*$/,
                                     message: Locale.MakeLocalVSStore.Rules.Rule1,
                                 },
                             ]}
