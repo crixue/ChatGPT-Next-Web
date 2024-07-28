@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <title>Document</title>
+</head>
+<body>
+<header>
+    <a href="#" class="brand">
+        <img src="favicon.ico">
+        <span class="brand-name">灵格若 / Lingro</span></a>
+    <div class="menu-btn"></div>
+    <div class="navigation">
+        <div class="navigation-items">
+            <a href="/index.html">主页</a>
+            <a href="/contact-us.html">联系我们</a>
+        </div>
+    </div>
+</header>
+<section class="home">
+    <div class="image-slide active" style="background-image: url('home1-1.png');"></div>
+    <div class="image-slide" style="background-image: url('home2-1.png');"></div>
+
+    <div class="content active">
+        <h1>创新无限，AI随心定制</h1>
+        <p>欢迎来到 灵格若 / Lingro 平台，我们为您打造的不仅是AI，而是一个贴心的生活、学习、工作伙伴！</p>
+        <p>在这里，您可以随心所欲地创造个性化AI助手，通过设计独特的“面具”，上传个人文件构建私人知识库，亦或是利用联网搜索功能，让您得到更准确、更贴近您需求的答案，让AI拥有专属于您的智慧。同时我们提供不同的超大规模的模型库基座，为您量身定做更贴合您需求的AI。</p>
+        <p>与我们携手，让效率提升不止一个档次，让 灵格若 / Lingro 平台 成为您生活、学习、工作最佳的效率搭子！让AI的力量，因您而定制，因您而卓越！</p>
+        <div><a href="/">开始聊天</a></div>
+    </div>
+
+<!--    <div class="content">-->
+<!--        <h1>美丽大海<br><span>最美丽的大海</span></h1>-->
+<!--        <p>If our time is usefully employed, it will either turn out some useful and important piece of work which will fetch its price in the market, or it will add to our experience and increase our capacities so as to enable us to earn money when the proper opportunity comes. Let those, who think nothing of wasting time, remember this.</p>-->
+<!--        <a href="#">  Read More</a>-->
+<!--    </div>-->
+
+<!--    <div class="media-icons">-->
+<!--        <a href="#"><i class="fab fa-facebook-f"></i></a>-->
+<!--        <a href="#"><i class="fab fa-instagram"></i></a>-->
+<!--        <a href="#"><i class="fab fa-twitter"></i></a>-->
+<!--    </div>-->
+
+<!--    <div class="slider-navigation">-->
+<!--        <div class="nav-btn active"></div>-->
+<!--        <div class="nav-btn"></div>-->
+<!--    </div>-->
+</section>
+
+<script>
+    const menuBtn = document.querySelector(".menu-btn")
+    const navigation = document.querySelector(".navigation")
+
+    menuBtn.addEventListener("click",()=>{
+        menuBtn.classList.toggle("active");
+        navigation.classList.toggle("active");
+    });
+
+    const btns = document.querySelectorAll(".nav-btn")
+    const slides = document.querySelectorAll(".image-slide")
+    const contents = document.querySelectorAll(".content")
+
+    var sliderNav= function(manual){
+        btns.forEach((btn) => {
+            btn.classList.remove("active")
+
+        })
+
+        slides.forEach((slide) => {
+            slide.classList.remove("active")
+        })
+
+        contents.forEach((content) => {
+            content.classList.remove("active")
+        })
+
+        btns[manual].classList.add("active")
+        slides[manual].classList.add("active")
+        contents[manual].classList.add("active")
+
+    }
+
+    btns.forEach((btn,i)=>{
+        btn.addEventListener("click",()=>{
+            sliderNav(i)
+        })
+    });
+
+
+</script>
+
+</body>
+
+
+</html>

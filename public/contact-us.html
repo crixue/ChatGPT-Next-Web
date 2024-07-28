@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"/>
+    <title>Document</title>
+</head>
+<body class="contact-us-container">
+<header>
+    <a href="#" class="brand">
+        <img src="favicon.ico">
+        <span class="brand-name">灵格若 / Lingro</span></a>
+    <div class="menu-btn"></div>
+    <div class="navigation">
+        <div class="navigation-items">
+            <a href="/index.html">主页</a>
+            <a href="/contact-us.html">联系我们</a>
+        </div>
+    </div>
+</header>
+<section class="home">
+    <div class="image-slide " style="background-image: url('home1-1.png');"></div>
+    <div class="image-slide active" style="background-image: url('home2-1.png');"></div>
+
+    <div class="content active">
+        <h2>微信公众号：搜索【灵格若科技】或是 扫码关注</h2>
+        <div style="padding-left: 10%">
+            <img src="qrcode_for_gh_23ed59751376_258.jpg" alt="wechat">
+        </div>
+        <br/>
+        <br/>
+        <h2>邮箱：lingro001@163.com</h2>
+    </div>
+
+<!--    <div class="content">-->
+<!--        <h1>美丽大海<br><span>最美丽的大海</span></h1>-->
+<!--        <p>If our time is usefully employed, it will either turn out some useful and important piece of work which will fetch its price in the market, or it will add to our experience and increase our capacities so as to enable us to earn money when the proper opportunity comes. Let those, who think nothing of wasting time, remember this.</p>-->
+<!--        <a href="#">  Read More</a>-->
+<!--    </div>-->
+
+<!--    <div class="media-icons">-->
+<!--        <a href="#"><i class="fab fa-facebook-f"></i></a>-->
+<!--        <a href="#"><i class="fab fa-instagram"></i></a>-->
+<!--        <a href="#"><i class="fab fa-twitter"></i></a>-->
+<!--    </div>-->
+
+<!--    <div class="slider-navigation">-->
+<!--        <div class="nav-btn active"></div>-->
+<!--        <div class="nav-btn"></div>-->
+<!--    </div>-->
+</section>
+
+<script>
+    const menuBtn = document.querySelector(".menu-btn")
+    const navigation = document.querySelector(".navigation")
+
+    menuBtn.addEventListener("click",()=>{
+        menuBtn.classList.toggle("active");
+        navigation.classList.toggle("active");
+    });
+
+    const btns = document.querySelectorAll(".nav-btn")
+    const slides = document.querySelectorAll(".image-slide")
+    const contents = document.querySelectorAll(".content")
+
+    var sliderNav= function(manual){
+        btns.forEach((btn) => {
+            btn.classList.remove("active")
+
+        })
+
+        slides.forEach((slide) => {
+            slide.classList.remove("active")
+        })
+
+        contents.forEach((content) => {
+            content.classList.remove("active")
+        })
+
+        btns[manual].classList.add("active")
+        slides[manual].classList.add("active")
+        contents[manual].classList.add("active")
+
+    }
+
+    btns.forEach((btn,i)=>{
+        btn.addEventListener("click",()=>{
+            sliderNav(i)
+        })
+    });
+
+
+</script>
+
+</body>
+
+
+</html>
