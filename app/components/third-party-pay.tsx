@@ -1,9 +1,9 @@
 import styles from "./third-party-pay.module.scss";
 
 import {WapOrderResponseVO} from "@/app/types/payment-order-vo";
-import QRCodeCanvas from "qrcode.react";
 import WeChatPayIcon from "@/app/icons/wechat_pay.svg";
 import React from "react";
+import {QRCode} from "antd";
 
 
 export const WechatPay = (props: {
@@ -25,8 +25,8 @@ export const WechatPay = (props: {
                     <div style={{paddingLeft: "6px"}}><WeChatPayIcon/></div>
                     <span style={{paddingLeft: "8px"}}>微信支付</span>
                 </div>
-                <QRCodeCanvas
-                    value={orderInfo?.wechatPayQrCodeUrl ?? ""}
+                <QRCode
+                    value={orderInfo?.wechatPayH5Url ?? ""}
                     size={200}
                     fgColor="#000000"
                 />

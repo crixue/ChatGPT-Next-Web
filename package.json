@@ -21,7 +21,7 @@
     "@types/qs": "^6.9.10",
     "@types/react-helmet": "^6.1.11",
     "@vercel/analytics": "^0.1.11",
-    "antd": "5.13.2",
+    "antd": "5.19.3",
     "emoji-picker-react": "^4.4.7",
     "fuse.js": "^6.6.2",
     "html-to-image": "^1.11.11",

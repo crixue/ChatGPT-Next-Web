@@ -649,7 +649,7 @@ const cn = {
         MonthlyStatistics: "月度统计",
     },
     Profile: {
-        SideBarTitle: "我",
+        SideBarTitle: "我的",
         Title: "个人资料",
         SubTitle: "查看/修改个人资料",
         RetrieveNewAvatar: "换一个",

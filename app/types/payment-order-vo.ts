@@ -29,7 +29,7 @@ export interface WapOrderResponseVO {
     expireMinutes: number;
     expireTime: string;
     aliPayRedirectUrl?: string;
-    wechatPayQrCodeUrl?: string;
+    wechatPayH5Url?: string;
     orderAmount: number;
     productName?: string;
 

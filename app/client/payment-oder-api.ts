@@ -78,4 +78,16 @@ export class PaymentOderApi extends BaseApiClient{
         return handleServerResponse<void>(await res.json());
     }
 
+    async applyReferralCode(referralCode: string) {
+        const res = await super.fetchWithRedirect(this.path(`/api/referral-code/apply/${referralCode}`), {
+            method: "POST",
+            headers: getBackendApiHeaders(),
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<string>(await res.json());
+    }
+
 }
