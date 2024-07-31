@@ -1,7 +1,6 @@
-import QRCodeCanvas from "qrcode.react";
 // import {useWebsocket} from "../data/webscoket";
 // import {v4 as uuidv4} from "uuid";
-// import {useEffect, useRef} from "react";
+import {useEffect, useRef} from "react";
 // import {Avatar, Card, message} from "antd";
 // import WechatRegisterIcon from "@assets/icons/wechat-register.svg";
 // import "./index.less"
