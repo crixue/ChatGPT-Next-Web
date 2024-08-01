@@ -41,7 +41,7 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED=0
 # 在安装依赖之前禁用 yarn 的 SSL 证书验证
 RUN yarn config set strict-ssl false
 
-RUN yarn add package.json
+RUN yarn install
 
 COPY . .
 
