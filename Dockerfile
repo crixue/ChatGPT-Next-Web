@@ -29,7 +29,7 @@ RUN dpkg-reconfigure --frontend noninteractive tzdata
 RUN apt-get install -y --no-install-recommends curl software-properties-common git proxychains
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
-RUN npm install -g yarn
+RUN npm install -g yarn --registry=https://registry.npmmirror.com
 
 WORKDIR /app
 
