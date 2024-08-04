@@ -153,8 +153,10 @@ export const UploadVectorStoreOriFilesPage = (props: {
                 });
 
             if (preCheckVectorestoreLimitResponseVO.haveExceededLimit) {
+                setFileList([]);
                 setUpgradeProducts(preCheckVectorestoreLimitResponseVO.upgradeProducts);
                 setOpenUpgradeModelVisible(true);
+                // 移除所有上传文件
                 // @ts-ignore
                 option.onError(Locale.MakeLocalVSStore.Upload.UploadFileFailed, file);
                 return;
