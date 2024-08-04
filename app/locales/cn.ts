@@ -670,6 +670,7 @@ const cn = {
         Android: "安卓",
         Ios: "iOS",
     },
+    Error1: "💔💔💔 网络异常 💔💔💔，请您稍后重试 ",
 };
 
 type DeepPartial<T> = T extends object

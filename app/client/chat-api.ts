@@ -158,7 +158,8 @@ export class ChatApi extends BaseApiClient{
 
                             responseText = responseTexts.join("\n\n");
 
-                            throw new Error("Request failed, Please contact admin to check the backend service.");
+                            console.error("[Request] failed to make a chat request", responseText);
+                            throw new Error(Locale.Error1);
                             // return finish();
                         }
                     },
@@ -188,7 +189,8 @@ export class ChatApi extends BaseApiClient{
                         finish();
                     },
                     onerror(e) {
-                        options.onError?.(e);
+                        console.error("[Request] error", e);
+                        options.onError?.(new Error(Locale.Error1));
                         throw e;
                     },
                     openWhenHidden: true,
@@ -198,7 +200,8 @@ export class ChatApi extends BaseApiClient{
 
                 const res = await super.fetchWithRedirect(chatPath, chatPayload);
                 if (!res.ok) {
-                    throw new Error("Request failed, Please contact admin to check the backend service.");
+                    console.error("[Request] failed to make a chat request", res);
+                    throw new Error(Locale.Error1);
                 }
                 clearTimeout(requestTimeoutId);
 
