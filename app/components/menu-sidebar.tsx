@@ -450,6 +450,7 @@ const DownloadAppTag = () => {
                 style={{
                     display: "flex",
                     justifyContent: "center",
+                    padding: "20px",
                 }}
             >
                 <QRCode
@@ -466,16 +467,26 @@ const DownloadAppTag = () => {
                 style={{
                     display: "flex",
                     justifyContent: "center",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    padding: "20px",
                 }}
             >
-                <span>正在开发中，敬请期待...</span>
+                <div>
+                    <p>苹果商店搜索<b>"Lingro AI"</b> 或者 扫码下载</p>
+                </div>
+                <div>
+                    <QRCode
+                        errorLevel="H"
+                        value="https://apps.apple.com/cn/app/lingro-ai-%E4%B8%AA%E6%80%A7%E5%8C%96ai%E5%8A%A9%E6%89%8B/id6572294816"/>
+                </div>
             </div>
         );
     }
 
     return (
         <>
-            <Tabs
+        <Tabs
                 defaultActiveKey="1"
                 items={
                     [
