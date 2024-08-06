@@ -473,7 +473,7 @@ const DownloadAppTag = () => {
                 }}
             >
                 <div>
-                    <p>苹果商店搜索<b>"Lingro AI"</b> 或者 扫码下载</p>
+                    <p>苹果商店搜索<b>Lingro AI</b> 或者 扫码下载</p>
                 </div>
                 <div>
                     <QRCode
