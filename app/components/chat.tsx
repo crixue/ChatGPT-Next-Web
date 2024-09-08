@@ -4,14 +4,8 @@ import EditIcon from "../icons/rename.svg";
 import ReturnIcon from "../icons/return.svg";
 import CopyIcon from "../icons/copy.svg";
 import LoadingIcon from "../icons/three-dots.svg";
-import MaskIcon from "../icons/mask.svg";
 import ResetIcon from "../icons/reload.svg";
-import BreakIcon from "../icons/break.svg";
-import SettingsIcon from "../icons/chat-settings.svg";
 import DeleteIcon from "../icons/clear.svg";
-import ConfirmIcon from "../icons/confirm.svg";
-import CancelIcon from "../icons/cancel.svg";
-import BottomIcon from "../icons/bottom.svg";
 import StopIcon from "../icons/pause.svg";
 
 import {
@@ -20,12 +14,9 @@ import {
     createMessage,
     DEFAULT_MASK_AVATAR,
     DEFAULT_TOPIC,
-    Mask,
-    ModelType,
     useAccessStore,
     useAppConfig,
     useChatStore,
-    useMaskStore,
 } from "../store";
 
 import {autoGrowTextArea, copyToClipboard, selectOrCopy, useMobileScreen,} from "../utils";
@@ -33,572 +24,40 @@ import {autoGrowTextArea, copyToClipboard, selectOrCopy, useMobileScreen,} from 
 import dynamic from "next/dynamic";
 
 import {ChatControllerPool} from "../client/controller";
-import {Prompt, usePromptStore} from "../store/prompt";
+import {usePromptStore} from "../store/prompt";
 import Locale from "../locales";
 
 import {IconButton} from "./button";
 import styles from "./chat.module.scss";
 
-import {CustomListItem, CustomModal, Selector, showPrompt, showToast,} from "./ui-lib";
+import {showPrompt, showToast,} from "./ui-lib";
 import {useNavigate} from "react-router-dom";
-import {
-    CHAT_PAGE_SIZE,
-    LAST_INPUT_KEY,
-    Path,
-    REQUEST_TIMEOUT_MS,
-    SubmitKey,
-    Theme,
-    UNFINISHED_INPUT,
-} from "../constant";
-import {ContextPrompts, MaskConfig} from "./mask";
+import {CHAT_PAGE_SIZE, LAST_INPUT_KEY, Path, REQUEST_TIMEOUT_MS, UNFINISHED_INPUT,} from "../constant";
 import {ChatCommandPrefix, useChatCommand, useCommand} from "../command";
 import {prettyObject} from "../utils/format";
-import {Button, Drawer, List, Modal, notification} from "antd";
+import {Button, Drawer, List, Modal} from "antd";
 import {ContextDoc} from "@/app/types/chat";
-import {validateMask} from "@/app/utils/mask";
-import {RocketOutlined, SendOutlined} from "@ant-design/icons";
+import {SendOutlined} from "@ant-design/icons";
 import {useInitSupportedFunctions} from "@/app/components/plugins";
-import {UserUsageApi} from "@/app/client/user-usage-api";
 import {NotHaveEnoughMoneyException} from "@/app/exceptions/not-have-enough-money-exception";
 import {useAuthStore} from "@/app/store/auth";
 import {AssistantAvatar, UserAvatar} from "@/app/components/avtars";
+import {
+    ChatAction,
+    ChatActions,
+    ClearContextDivider,
+    EditMessageModal,
+    PromptHints,
+    PromptToast,
+    RenderPompt,
+    useScrollToBottom,
+    useSubmitHandler
+} from "@/app/components/chat-utils";
+import {UserUsageApi} from "@/app/client/user-usage-api";
 
 const Markdown = dynamic(async () => (await import("./markdown")).Markdown, {
     loading: () => <LoadingIcon/>,
 });
-
-export function SessionConfigModel(props: { onClose: () => void }) {
-    const maskStore = useMaskStore();
-    const chatStore = useChatStore();
-    const session = chatStore.currentSession();
-    const [notify, contextHolder] = notification.useNotification();
-    const navigate = useNavigate();
-    const [isOpenMakingLocalVSModal, setIsOpenMakingLocalVSModal] = useState(false);
-
-    const handleOnApplyMask = (mask: Mask) => {
-        const applyMask = {...mask};
-        // console.log("CurrentMask:"+JSON.stringify(applyMask));
-        try {
-            validateMask(applyMask);
-        } catch (e: any) {
-            console.log("validate mask failed", e);
-            maskStore.setShowUserPromptError(true);
-            notify['error']({
-                message: e.message,
-                duration: 10,
-            });
-            return;
-        }
-        chatStore.updateCurrentSession((item) => (item.mask = applyMask));
-        // console.log("[Mask] apply mask", JSON.stringify(session.mask));
-        props.onClose();
-    }
-
-    return (
-        <div className="modal-mask">
-            {contextHolder}
-            <CustomModal
-                title={Locale.Context.Edit}
-                onClose={() => props.onClose()}
-                actions={[
-                    <Button
-                        key={"apply-mask"}
-                        type={"primary"}
-                        icon={<RocketOutlined/>}
-                        onClick={() => handleOnApplyMask(session.mask)}
-                    >{Locale.Mask.Config.ApplyMask}</Button>,
-                    // <Button
-                    //     icon={<ResetIcon/>}
-                    //     onClick={async () => {
-                    //         if (await showConfirm(Locale.Memory.ResetConfirm)) {
-                    //             chatStore.updateCurrentSession(
-                    //                 (session) => (session.memoryPrompt = ""),
-                    //             );
-                    //         }
-                    //     }}
-                    // >
-                    //     {Locale.Chat.Config.Reset}
-                    // </Button>
-                ]}
-            >
-                <MaskConfig
-                    mask={session.mask}
-                    updateMask={(updater) => {
-                        const mask = {...session.mask};
-                        updater(mask);
-                        chatStore.updateCurrentSession((session) => {
-                            session.mask = mask;
-                            session.topic = mask.name;
-                        });
-                    }}
-                    onGoToMakeLocalVS={(val) => setIsOpenMakingLocalVSModal(val)}
-                    shouldSyncFromGlobal
-                />
-            </CustomModal>
-            <Modal title={Locale.Settings.MakingLocalVS.Title}
-                   open={isOpenMakingLocalVSModal}
-                   onOk={() => navigate(Path.MakeLocalVSStore)}
-                   okText={Locale.Settings.MakingLocalVS.ButtonContent}
-                   onCancel={() => setIsOpenMakingLocalVSModal(false)}
-                   cancelText={Locale.Settings.MakingLocalVS.CancelButtonContent}
-            >
-                <p>{Locale.Settings.MakingLocalVS.GoToMakeLocalVS}</p>
-            </Modal>
-        </div>
-    );
-}
-
-function PromptToast(props: {
-    showToast?: boolean;
-    showModal?: boolean;
-    setShowModal: (_: boolean) => void;
-}) {
-    const chatStore = useChatStore();
-    const session = chatStore.currentSession();
-    const context = session.mask.context;
-
-    return (
-        <div className={styles["prompt-toast"]} key="prompt-toast">
-            {/*  {props.showToast && (*/}
-            {/*      <div*/}
-            {/*          className={styles["prompt-toast-inner"] + " clickable"}*/}
-            {/*          role="button"*/}
-            {/*          onClick={() => {*/}
-            {/*              props.setShowModal(true);*/}
-            {/*          }}*/}
-            {/*      >*/}
-            {/*          <BrainIcon/>*/}
-            {/*          <span className={styles["prompt-toast-content"]}>*/}
-            {/*  {Locale.Context.Toast(context.length)}*/}
-            {/*</span>*/}
-            {/*      </div>*/}
-            {/*  )}*/}
-            {props.showModal && (
-                <SessionConfigModel onClose={() => {
-                    props.setShowModal(false);
-                }}/>
-            )}
-        </div>
-    );
-}
-
-function useSubmitHandler() {
-    const config = useAppConfig();
-    const submitKey = config.submitKey;
-    const isComposing = useRef(false);
-
-    useEffect(() => {
-        const onCompositionStart = () => {
-            isComposing.current = true;
-        };
-        const onCompositionEnd = () => {
-            isComposing.current = false;
-        };
-
-        window.addEventListener("compositionstart", onCompositionStart);
-        window.addEventListener("compositionend", onCompositionEnd);
-
-        return () => {
-            window.removeEventListener("compositionstart", onCompositionStart);
-            window.removeEventListener("compositionend", onCompositionEnd);
-        };
-    }, []);
-
-    const shouldSubmit = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key !== "Enter") return false;
-        if (e.key === "Enter" && (e.nativeEvent.isComposing || isComposing.current))
-            return false;
-        return (
-            (config.submitKey === SubmitKey.AltEnter && e.altKey) ||
-            (config.submitKey === SubmitKey.CtrlEnter && e.ctrlKey) ||
-            (config.submitKey === SubmitKey.ShiftEnter && e.shiftKey) ||
-            (config.submitKey === SubmitKey.MetaEnter && e.metaKey) ||
-            (config.submitKey === SubmitKey.Enter &&
-                !e.altKey &&
-                !e.ctrlKey &&
-                !e.shiftKey &&
-                !e.metaKey)
-        );
-    };
-
-    return {
-        submitKey,
-        shouldSubmit,
-    };
-}
-
-export type RenderPompt = Pick<Prompt, "title" | "content">;
-
-export function PromptHints(props: {
-    prompts: RenderPompt[];
-    onPromptSelect: (prompt: RenderPompt) => void;
-}) {
-    const noPrompts = props.prompts.length === 0;
-    const [selectIndex, setSelectIndex] = useState(0);
-    const selectedRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        setSelectIndex(0);
-    }, [props.prompts.length]);
-
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (noPrompts || e.metaKey || e.altKey || e.ctrlKey) {
-                return;
-            }
-            // arrow up / down to select prompt
-            const changeIndex = (delta: number) => {
-                e.stopPropagation();
-                e.preventDefault();
-                const nextIndex = Math.max(
-                    0,
-                    Math.min(props.prompts.length - 1, selectIndex + delta),
-                );
-                setSelectIndex(nextIndex);
-                selectedRef.current?.scrollIntoView({
-                    block: "center",
-                });
-            };
-
-            if (e.key === "ArrowUp") {
-                changeIndex(1);
-            } else if (e.key === "ArrowDown") {
-                changeIndex(-1);
-            } else if (e.key === "Enter") {
-                const selectedPrompt = props.prompts.at(selectIndex);
-                if (selectedPrompt) {
-                    props.onPromptSelect(selectedPrompt);
-                }
-            }
-        };
-
-        window.addEventListener("keydown", onKeyDown);
-
-        return () => window.removeEventListener("keydown", onKeyDown);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.prompts.length, selectIndex]);
-
-    if (noPrompts) return null;
-    return (
-        <div className={styles["prompt-hints"]}>
-            {props.prompts.map((prompt, i) => (
-                <div
-                    ref={i === selectIndex ? selectedRef : null}
-                    className={
-                        styles["prompt-hint"] +
-                        ` ${i === selectIndex ? styles["prompt-hint-selected"] : ""}`
-                    }
-                    key={prompt.title + i.toString()}
-                    onClick={() => props.onPromptSelect(prompt)}
-                    onMouseEnter={() => setSelectIndex(i)}
-                >
-                    <div className={styles["hint-title"]}>{prompt.title}</div>
-                    <div className={styles["hint-content"]}>{prompt.content}</div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-function ClearContextDivider() {
-    const chatStore = useChatStore();
-
-    return (
-        <div
-            className={styles["clear-context"]}
-            onClick={() =>
-                chatStore.updateCurrentSession(
-                    (session) => (session.clearContextIndex = undefined),
-                )
-            }
-        >
-            <div className={styles["clear-context-tips"]}>{Locale.Context.Clear}</div>
-            <div className={styles["clear-context-revert-btn"]}>
-                {Locale.Context.Revert}
-            </div>
-        </div>
-    );
-}
-
-function ChatAction(props: {
-    text: string;
-    icon: JSX.Element;
-    onClick: () => void;
-}) {
-    const iconRef = useRef<HTMLDivElement>(null);
-    const textRef = useRef<HTMLDivElement>(null);
-    const [width, setWidth] = useState({
-        full: 16,
-        icon: 16,
-    });
-
-    function updateWidth() {
-        if (!iconRef.current || !textRef.current) return;
-        const getWidth = (dom: HTMLDivElement) => dom.getBoundingClientRect().width;
-        const textWidth = getWidth(textRef.current);
-        const iconWidth = getWidth(iconRef.current);
-        setWidth({
-            full: textWidth + iconWidth,
-            icon: iconWidth,
-        });
-    }
-
-    return (
-        <div
-            className={`${styles["chat-input-action"]} clickable`}
-            onClick={() => {
-                props.onClick();
-                setTimeout(updateWidth, 1);
-            }}
-            onMouseEnter={updateWidth}
-            onTouchStart={updateWidth}
-            style={
-                {
-                    "--icon-width": `${width.icon}px`,
-                    "--full-width": `${width.full}px`,
-                } as React.CSSProperties
-            }
-        >
-            <div ref={iconRef} className={styles["icon"]}>
-                {props.icon}
-            </div>
-            <div className={styles["text"]} ref={textRef}>
-                {props.text}
-            </div>
-        </div>
-    );
-}
-
-function useScrollToBottom() {
-    // for auto-scroll
-    const scrollRef = useRef<HTMLDivElement>(null);
-    const [autoScroll, setAutoScroll] = useState(true);
-
-    function scrollDomToBottom() {
-        const dom = scrollRef.current;
-        if (dom) {
-            requestAnimationFrame(() => {
-                setAutoScroll(true);
-                dom.scrollTo(0, dom.scrollHeight);
-            });
-        }
-    }
-
-    // auto scroll
-    useEffect(() => {
-        if (autoScroll) {
-            scrollDomToBottom();
-        }
-    });
-
-    return {
-        scrollRef,
-        autoScroll,
-        setAutoScroll,
-        scrollDomToBottom,
-    };
-}
-
-export function ChatActions(props: {
-    showPromptModal: () => void;
-    scrollToBottom: () => void;
-    showPromptHints: () => void;
-    hitBottom: boolean;
-}) {
-    const config = useAppConfig();
-    const navigate = useNavigate();
-    const chatStore = useChatStore();
-
-    // switch themes
-    const theme = config.theme;
-
-    function nextTheme() {
-        const themes = [Theme.Auto, Theme.Light, Theme.Dark];
-        const themeIndex = themes.indexOf(theme);
-        const nextIndex = (themeIndex + 1) % themes.length;
-        const nextTheme = themes[nextIndex];
-        config.update((config) => (config.theme = nextTheme));
-    }
-
-    // stop all responses
-    const couldStop = ChatControllerPool.hasPending();
-    const stopAll = () => ChatControllerPool.stopAll();
-
-    // switch model
-    const models = config.supportedModels;
-    const currentModel = chatStore.currentSession().mask.modelConfig.model_id;
-    const [showModelSelector, setShowModelSelector] = useState(false);
-
-    return (
-        <div className={styles["chat-input-actions"]}>
-            {couldStop && (
-                <ChatAction
-                    onClick={stopAll}
-                    text={Locale.Chat.InputActions.Stop}
-                    icon={<StopIcon/>}
-                />
-            )}
-            {!props.hitBottom && (
-                <ChatAction
-                    onClick={props.scrollToBottom}
-                    text={Locale.Chat.InputActions.ToBottom}
-                    icon={<BottomIcon/>}
-                />
-            )}
-            {props.hitBottom && (
-                <ChatAction
-                    onClick={props.showPromptModal}
-                    text={Locale.Chat.InputActions.Settings}
-                    icon={<SettingsIcon/>}
-                />
-            )}
-
-            {/*<ChatAction*/}
-            {/*    onClick={nextTheme}*/}
-            {/*    text={Locale.Chat.InputActions.Theme[theme]}*/}
-            {/*    icon={*/}
-            {/*        <>*/}
-            {/*            {theme === Theme.Auto ? (*/}
-            {/*                <AutoIcon/>*/}
-            {/*            ) : theme === Theme.Light ? (*/}
-            {/*                <LightIcon/>*/}
-            {/*            ) : theme === Theme.Dark ? (*/}
-            {/*                <DarkIcon/>*/}
-            {/*            ) : null}*/}
-            {/*        </>*/}
-            {/*    }*/}
-            {/*/>*/}
-
-            {/*<ChatAction*/}
-            {/*    onClick={props.showPromptHints}*/}
-            {/*    text={Locale.Chat.InputActions.Prompt}*/}
-            {/*    icon={<PromptIcon/>}*/}
-            {/*/>*/}
-
-            <ChatAction
-                onClick={() => {
-                    navigate(Path.Masks);
-                }}
-                text={Locale.Chat.InputActions.Masks}
-                icon={<MaskIcon/>}
-            />
-
-            <ChatAction
-                text={Locale.Chat.InputActions.Clear}
-                icon={<BreakIcon/>}
-                onClick={() => {
-                    chatStore.updateCurrentSession((session) => {
-                        if (session.clearContextIndex === session.messages.length) {
-                            session.clearContextIndex = undefined;
-                        } else {
-                            session.clearContextIndex = session.messages.length;
-                            session.memoryPrompt = ""; // will clear memory
-                        }
-                    });
-                }}
-            />
-
-            {/*<ChatAction*/}
-            {/*    onClick={() => setShowModelSelector(true)}*/}
-            {/*    text={currentModel}*/}
-            {/*    icon={<RobotIcon/>}*/}
-            {/*/>*/}
-
-            {showModelSelector && (
-                <Selector
-                    defaultSelectedValue={currentModel}
-                    items={models.map((m) => ({
-                        title: m.alias,
-                        value: m.name,
-                    }))}
-                    onClose={() => setShowModelSelector(false)}
-                    onSelection={(s) => {
-                        if (s.length === 0) return;
-                        chatStore.updateCurrentSession((session) => {
-                            session.mask.modelConfig.model_id = s[0] as ModelType;
-                            session.mask.syncGlobalConfig = false;
-                        });
-                        showToast(s[0]);
-                    }}
-                />
-            )}
-        </div>
-    );
-}
-
-export function EditMessageModal(props: { onClose: () => void }) {
-    const chatStore = useChatStore();
-    const session = chatStore.currentSession();
-    const mask = session.mask;
-    const [context, setContext] = useState(mask.context ?? []);
-    const [fewShotMessages, setFewShotMessages] = useState(mask.fewShotContext);
-
-    return (
-        <div className="modal-mask">
-            <CustomModal
-                title={Locale.Chat.EditMessage.Title}
-                onClose={props.onClose}
-                actions={[
-                    <IconButton
-                        text={Locale.UI.Cancel}
-                        icon={<CancelIcon/>}
-                        key="cancel"
-                        onClick={() => {
-                            props.onClose();
-                        }}
-                    />,
-                    <IconButton
-                        type="primary"
-                        text={Locale.UI.Confirm}
-                        icon={<ConfirmIcon/>}
-                        key="ok"
-                        onClick={() => {
-                            chatStore.updateCurrentSession(
-                                (session) => {
-                                    session.messages = context;
-                                },
-                            );
-                            props.onClose();
-                        }}
-                    />,
-                ]}
-            >
-                <List>
-                    <CustomListItem
-                        title={Locale.Chat.EditMessage.Topic.Title}
-                        subTitle={Locale.Chat.EditMessage.Topic.SubTitle}
-                    >
-                        <input
-                            type="text"
-                            value={session.topic}
-                            onInput={(e) =>
-                                chatStore.updateCurrentSession(
-                                    (session) => (
-                                        session.topic = e.currentTarget.value
-                                    ),
-                                )
-                            }
-                        ></input>
-                    </CustomListItem>
-                </List>
-                <ContextPrompts
-                    context={context}
-                    updateContext={(updater) => {
-                        const newMessages = context.slice();
-                        updater(newMessages);
-                        setContext(newMessages);
-                    }}
-                    fewShotMessages={fewShotMessages}
-                    updateFewShotMessages={(updater) => {
-                        const newFewShotMessages = {...fewShotMessages};
-                        updater(newFewShotMessages);
-                        setFewShotMessages(newFewShotMessages);
-                    }}
-                />
-            </CustomModal>
-        </div>
-    );
-}
 
 const userUsageApi = new UserUsageApi();
 
@@ -766,7 +225,7 @@ function _Chat() {
                         m.isError = true;
                         m.content = prettyObject({
                             error: true,
-                            message: "empty response",
+                            message: Locale.Error2,
                         });
                     }
                 }
@@ -1150,7 +609,8 @@ function _Chat() {
                                         style={{fontWeight: "bolder"}}>{Locale.Chat.SourceText}</span>{Locale.Chat.SourceFromLocalVS}
                                     </p>);
                                     showedData['description'] = (
-                                        <span key={"description-" + fileName} className={styles["source-description"]}>{fileName}</span>);
+                                        <span key={"description-" + fileName}
+                                              className={styles["source-description"]}>{fileName}</span>);
                                 } else if (sourceType === "web_search" && metadata.url) {
                                     if (showedSourcesSet.has(metadata.url ?? "")) continue;
                                     if (metadata.url) showedSourcesSet.add(metadata.url ?? "");
@@ -1160,10 +620,10 @@ function _Chat() {
                                     showedData['description'] = (<Button
                                         key={"description-" + metadata.url}
                                         className={styles["source-description"]}
-                                                                         type={"link"}
-                                                                         onClick={() => {
-                                                                             window.open(metadata.url, "_blank");
-                                                                         }}>{metadata.url}</Button>);
+                                        type={"link"}
+                                        onClick={() => {
+                                            window.open(metadata.url, "_blank");
+                                        }}>{metadata.url}</Button>);
                                 }
                                 showedDataList.push(showedData);
                             }
@@ -1172,7 +632,7 @@ function _Chat() {
                         }
 
                         return (
-                            <Fragment key={"fragment-"+i}>
+                            <Fragment key={"fragment-" + i}>
                                 <div
                                     className={
                                         isUser ? styles["chat-message-user"] : styles["chat-message"]

@@ -1,6 +1,7 @@
 import {create} from "zustand";
 import {UploadFile} from "antd";
 import {MakeLocalVSConfig} from "@/app/types/mask-vo";
+import {DEFAULT_MAKE_LOCAL_VS_CONFIG} from "@/app/constant";
 
 
 type UploadFileStore = {
@@ -19,12 +20,7 @@ export const useUploadFileStore = create<UploadFileStore>((set, get) => ({
     uploadFileList: [],
     uploadPlainTextItems: [],
     selectedLang: "zh",
-    makeLocalVSConfig: {
-        cnChunkSize: 400,
-        cnChunkOverlap: 10,
-        enChunkSize: 500,
-        enChunkOverlap: 10,
-    },
+    makeLocalVSConfig: DEFAULT_MAKE_LOCAL_VS_CONFIG,
     setUploadFileList: (uploadFileList: UploadFile[]) => {
         set(() => ({
             uploadFileList: uploadFileList,

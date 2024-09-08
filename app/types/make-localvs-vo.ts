@@ -1,6 +1,7 @@
 import {PageInfo} from "@/app/types/common-type";
 import {MakeLocalVSConfig} from "@/app/types/mask-vo";
 import {Product} from "@/app/types/product-vo";
+import {UploadFile} from "antd";
 
 
 export interface MakeLocalVSRequestVO {
@@ -45,4 +46,13 @@ export interface PreCheckVectorestoreLimitResponseVO {
     upgradeProducts: Product[];
 }
 
+export type CustomUploadFile = UploadFile & {
+    taskId?: string;
+    uploadType?: 'DEFAULT' | 'AUDIO_OR_VIDEO'
+}
 
+export interface MakeLocalVSOption {
+    onUpdate?: (process: number) => void;
+    onDone?: (taskId: string, process?: number) => void;
+    onFail?: (taskId: string, reason: string, process?: number) => void;
+}

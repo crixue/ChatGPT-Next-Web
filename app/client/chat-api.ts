@@ -1,34 +1,20 @@
-import {ChatMessage, ChatSession, Mask, useAccessStore, useChatStore} from "@/app/store";
-import {ChatOptions, getBackendApiHeaders, LangchainRelevantDocsSearchOptions, RequestMessage} from "@/app/client/api";
-import {
-    DEFAULT_CONFIG,
-    DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
-    PromptTemplate,
-    REQUEST_TIMEOUT_MS,
-    transformToPromptTemplate
-} from "@/app/constant";
+import {ChatOptions, ChatSession, Mask, useAccessStore, useChatStore} from "@/app/store";
+import {getBackendApiHeaders, LangchainRelevantDocsSearchOptions, RequestMessage} from "@/app/client/api";
+import {DEFAULT_CONFIG, REQUEST_TIMEOUT_MS} from "@/app/constant";
 import {prettyObject} from "@/app/utils/format";
 import Locale from "@/app/locales";
 import {StartupMaskRequestVO} from "@/app/types/model-vo";
 import {handleServerResponse} from "@/app/common-api";
-import {
-    ChatRequestVO,
-    RelevantDocsResponseVO,
-    ChatStreamResponseVO, ChatResponseVO
-} from "@/app/types/chat";
-import {
-    EventStreamContentType,
-    fetchEventSource,
-} from "@fortaine/fetch-event-source";
+import {ChatRequestVO, ChatResponseVO, ChatStreamResponseVO} from "@/app/types/chat";
+import {EventStreamContentType, fetchEventSource,} from "@fortaine/fetch-event-source";
 import {filterHistoryMessages} from "@/app/utils/chat";
 import {usePluginsStore} from "@/app/store/plugins";
 import {BaseApiClient} from "@/app/client/base-client";
 
 export class ChatApi extends BaseApiClient{
     path(path: string): string {
-        let openaiUrl = useAccessStore.getState().openaiUrl;
-        // console.log("openaiUrl:" + openaiUrl)
-        return [openaiUrl, path].join("/");
+        let baseUrl = useAccessStore.getState().openaiUrl;
+        return [baseUrl, path].join("/");
     }
 
     extractMessage(res: ChatResponseVO) {
@@ -114,6 +100,7 @@ export class ChatApi extends BaseApiClient{
                 let finished = false;
 
                 const finish = () => {
+                    clearTimeout(requestTimeoutId);
                     if (!finished) {
                         options.onFinish(responseText);
                         finished = true;
@@ -125,7 +112,6 @@ export class ChatApi extends BaseApiClient{
                 fetchEventSource(chatPath, {
                     ...chatPayload,
                     async onopen(res) {
-                        clearTimeout(requestTimeoutId);
                         const contentType = res.headers.get("content-type");
                         // console.log(
                         //     "[OpenAI] request response content type: ",

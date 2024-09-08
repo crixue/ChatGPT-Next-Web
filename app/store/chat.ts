@@ -9,7 +9,7 @@ import {
     ModelConfig, StoreKey,
 } from "../constant";
 import {
-    ChatOptions,
+    ChatOptionsLLMConfig,
     LangchainRelevantDocsSearchOptions,
     RequestMessage
 } from "../client/api";
@@ -21,6 +21,7 @@ import {ChatApi} from "@/app/client/chat-api";
 import {ChatResponseVO, ChatStreamResponseVO, ContextDoc} from "@/app/types/chat";
 import {FunctionPlugin} from "@/app/types/plugins";
 import {usePluginsStore} from "@/app/store/plugins";
+import {CustomUploadFile} from "@/app/types/make-localvs-vo";
 
 export type ChatMessage = RequestMessage & {
     date: string;
@@ -48,6 +49,12 @@ export interface ChatStat {
     charCount: number;
 }
 
+export interface ChatSingleLocalVectorStore {
+    attachment: CustomUploadFile;
+    taskId?: string;
+    progress?: number;
+}
+
 export interface ChatSession {
     id: string;
     topic: string;
@@ -57,8 +64,17 @@ export interface ChatSession {
     lastUpdate: number;
     lastSummarizeIndex: number;
     clearContextIndex?: number;
-
+    singleLocalVectorStore?: ChatSingleLocalVectorStore;
     mask: Mask;
+}
+
+export interface ChatOptions {
+    messages: ChatMessage[];
+    config: ChatOptionsLLMConfig;
+    onUpdate?: (message: string, chunk?: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
+    onFinish: (message: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
+    onError?: (err: Error) => void;
+    onController?: (controller: AbortController) => void;
 }
 
 // export const DEFAULT_TOPIC = Locale.Store.DefaultTopic;
@@ -87,7 +103,7 @@ function createEmptySession(): ChatSession {
     };
 }
 
-interface ChatStore {
+export interface ChatStore {
     sessions: ChatSession[];
     currentSessionIndex: number;
     clearSessions: () => void;

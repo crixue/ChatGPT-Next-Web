@@ -38,6 +38,7 @@ import {useGlobalSettingStore} from "@/app/store/global-setting";
 import TextArea from "antd/es/input/TextArea";
 import {VectorstorePaymentTransactionApi} from "@/app/client/vectorestore-payment-transaction-api";
 import {GlobalLoading} from "@/app/components/global";
+import {useUpgradePlanStore} from "@/app/store/upgrade-plan";
 
 const userService = new UserApiClient();
 const uploadService = new UploadApi();
@@ -82,8 +83,9 @@ export const MakeLocalVectorStorePage = () => {
     const haveAddedPlainTextItemsLength = haveAddedPlainTextItems.length;
     const selectedLang = uploadFileStore.selectedLang;
 
+    const upgradePlanStore = useUpgradePlanStore();
+
     const [showLoading, setShowLoading] = useState<boolean>(false);
-    const [currentProductId, setCurrentProductId] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (current == 0 && (!fstFormFolderName || fstFormFolderName === "")) {
@@ -118,7 +120,6 @@ export const MakeLocalVectorStorePage = () => {
             description: Locale.MakeLocalVSStore.Steps.SecondStep.Descriptions,
             content: <UploadVectorStoreOriFilesPage
                 uploadFolderId={currentSelectedFolderId ?? ""}
-                currentUserProductId={currentProductId}
             />,
         },
         {
@@ -136,7 +137,7 @@ export const MakeLocalVectorStorePage = () => {
 
         try {
             const currentUserVSOrder = await vectorstorePaymentTransactionApi.createAnDefaultFreeVectorstoreOrder();
-            setCurrentProductId(currentUserVSOrder.productId);
+            upgradePlanStore.setCurrentUserProductId(currentUserVSOrder.productId);
         } catch (e: any) {
             console.log("[handleSubmitFstForm] create default free vs order failed:", e);
         }

@@ -3,6 +3,7 @@ import {ChatMessage} from "@/app/store";
 import {extraPromptPlaceHolders} from "@/app/utils/common-util";
 import {SupportedModelVO} from "@/app/types/model-vo";
 import Locale from "@/app/locales";
+import {MakeLocalVSConfig} from "@/app/types/mask-vo";
 
 export const OWNER = "RawJayXx";
 export const REPO = "ChatGPT-Next-Web";
@@ -36,12 +37,9 @@ export enum FileName {
 
 export enum StoreKey {
     Chat = "chat-next-web-store",
-    Access = "access-control",
     Config = "app-config",
     Mask = "mask-store",
     Prompt = "prompt-store",
-    Update = "chat-update",
-    Sync = "sync",
     Auth = "auth-storage",
     Plugin = "plugin-store",
 }
@@ -53,7 +51,7 @@ export const MENU_NARROW_SIDEBAR_WIDTH = 80;
 export const LAST_INPUT_KEY = "last-input";
 export const UNFINISHED_INPUT = (id: string) => "unfinished-input-" + id;
 
-export const REQUEST_TIMEOUT_MS = 180000;
+export const REQUEST_TIMEOUT_MS = 75000;
 
 export const LangchainBackendPath = {
     UsagePath: "dashboard/billing/usage",
@@ -181,3 +179,10 @@ export type ChatConfigStore = ChatConfig & {
 };
 
 export type ModelConfig = ChatConfig["modelConfig"];
+
+export const DEFAULT_MAKE_LOCAL_VS_CONFIG: MakeLocalVSConfig = {
+    cnChunkSize: 400,
+    cnChunkOverlap: 100,
+    enChunkSize: 600,
+    enChunkOverlap: 150,
+}

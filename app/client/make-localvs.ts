@@ -5,7 +5,7 @@ import {
     PreCheckVectorestoreLimitRequestVO, PreCheckVectorestoreLimitResponseVO
 } from "@/app/types/make-localvs-vo";
 import qs from "qs";
-import {getBackendApiHeaders} from "@/app/client/api";
+import {getBackendApiHeaders, getBaseApiHeaders} from "@/app/client/api";
 import {handleServerResponse} from "@/app/common-api";
 import {BaseApiClient} from "@/app/client/base-client";
 
@@ -138,6 +138,42 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
             throw new Error(await res.text());
         }
         return handleServerResponse<MakeLocalVectorstoreTaskRecords>(await res.json());
+    }
+
+    async singleFileUploadAndMakeLocalVectorStore(data: { chatSessionId: string, isChineseText: boolean, file: File }) {
+        const backendApiHeaders = getBaseApiHeaders();
+
+        const formData = new FormData();
+        formData.append('file', data.file);
+        const res = await super.fetchWithRedirect(
+            this.path(`/api/local-vector-store/single-file-upload-and-make?${qs.stringify(data)}`), {
+            method: "POST",
+            body: formData,
+            headers: {
+                ...backendApiHeaders,
+            },
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<string>(await res.json());
+    }
+
+    async deleteSingleFileAndIndex(data: { makeLocalVsTaskId: string }) {
+        const res = await super.fetchWithRedirect(this.path(
+                `/api/local-vector-store/delete-single-file-and-index?${qs.stringify(data)}`),
+            {
+                method: "DELETE",
+                headers: {
+                    ...getBackendApiHeaders()
+                },
+            });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<void>(await res.json());
     }
 
 }

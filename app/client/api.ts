@@ -1,6 +1,7 @@
 import {ChatMessage} from "../store";
 import {ChatResponseVO, ChatStreamResponseVO} from "@/app/types/chat";
 import {useAuthStore} from "@/app/store/auth";
+import {Record} from "immutable";
 
 export const ROLES = ["system", "user", "assistant"] as const;
 export type MessageRole = (typeof ROLES)[number];
@@ -19,14 +20,6 @@ export interface ChatOptionsLLMConfig {
     frequency_penalty?: number;
 }
 
-export interface ChatOptions {
-    messages: ChatMessage[];
-    config: ChatOptionsLLMConfig;
-    onUpdate?: (message: string, chunk?: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
-    onFinish: (message: string, resp?: ChatStreamResponseVO | ChatResponseVO) => void;
-    onError?: (err: Error) => void;
-    onController?: (controller: AbortController) => void;
-}
 
 export interface LangchainBackendBaseLLMConfig {
     model_id?: string;
@@ -64,10 +57,16 @@ export interface LangchainRelevantDocsSearchOptions {
 }
 
 export function getBackendApiHeaders() {
+    let headers = getBaseApiHeaders();
+    headers["Content-Type"] = "application/json";
+    headers["x-requested-with"] = "XMLHttpRequest";
+    return headers;
+}
+
+export function getBaseApiHeaders() {
     const authStore = useAuthStore.getState();
+    // @ts-ignore
     let headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        "x-requested-with": "XMLHttpRequest",
     };
     const token = authStore.token;
     if(token) {
