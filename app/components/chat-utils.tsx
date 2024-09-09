@@ -18,13 +18,13 @@ import {CustomUploadFile, MakeLocalVSRequestVO} from "@/app/types/make-localvs-v
 import styles from "@/app/components/chat.module.scss";
 import {getBaseApiHeaders} from "@/app/client/api";
 import {useNavigate} from "react-router-dom";
-import {Path, SubmitKey, Theme} from "@/app/constant";
+import {DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS, Path, SubmitKey, Theme} from "@/app/constant";
 import {ChatControllerPool} from "@/app/client/controller";
 import StopIcon from "@/app/icons/pause.svg";
 import BottomIcon from "@/app/icons/bottom.svg";
 import SettingsIcon from "@/app/icons/chat-settings.svg";
-import BreakIcon from "@/app/icons/break.svg";
-import AttachmentIcon from "@/app/icons/attachment.svg";
+import ClearIcon from "@/app/icons/clear.svg";
+import UploadFileIcon from "@/app/icons/upload.svg";
 import {CustomListItem, CustomModal, Selector, showToast} from "@/app/components/ui-lib";
 import {validateMask} from "@/app/utils/mask";
 import {RocketOutlined} from "@ant-design/icons";
@@ -457,7 +457,7 @@ export function ChatActions(props: {
 
             <ChatAction
                 text={Locale.Chat.InputActions.Clear}
-                icon={<BreakIcon/>}
+                icon={<ClearIcon/>}
                 onClick={() => {
                     chatStore.updateCurrentSession((session) => {
                         if (session.clearContextIndex === session.messages.length) {
@@ -471,7 +471,7 @@ export function ChatActions(props: {
             />
             <UploadChatAction
                 text={Locale.Chat.InputActions.UploadFile}
-                icon={<AttachmentIcon/>}
+                icon={<UploadFileIcon/>}
                 chatStore={chatStore}
             />
 
@@ -564,13 +564,11 @@ export function UploadChatAction(props: {
     const chatStore = props.chatStore;
     const currentSession: ChatSession = chatStore.currentSession();
     const singleLocalVectorStoreItem = currentSession.singleLocalVectorStore;
-    console.log("singleLocalVectorStoreItem:", singleLocalVectorStoreItem);
     const [fileList, setFileList] =
         useState<CustomUploadFile[]>(singleLocalVectorStoreItem?.attachment ? [singleLocalVectorStoreItem?.attachment] : []);
     const [showLoading, setShowLoading] = useState<boolean>(false);
     const [singleMakeLocalVSProgress, setSingleMakeLocalVSProgress] =
         useState<number>(singleLocalVectorStoreItem?.progress ?? 0);
-    // console.log("singleMakeLocalVSProgress:", singleMakeLocalVSProgress + ",now:", dayjs().format("YYYY-MM-DD HH:mm:ss"));
 
     const handleUpload: UploadProps['customRequest'] = async (option) => {
         const file = option.file as RcFile;
@@ -614,26 +612,26 @@ export function UploadChatAction(props: {
             chatSessionId: currentSession.id,
             isChineseText: currentSession.mask.isChineseText ?? true,
             file,
-        }).then((taskId) => {
+        }).then((taskRecord) => {
             // @ts-ignore
-            option.onSuccess(taskId, uploadItem);
+            option.onSuccess(taskRecord, uploadItem);
             setSingleMakeLocalVSProgress(50);
-            uploadItem = {...uploadItem, 'status': 'done', taskId, 'percent': 100};
+            uploadItem = {...uploadItem, 'status': 'done', taskId: taskRecord.id, 'percent': 100};
             chatStore.updateCurrentSession((session) => {
                 session.singleLocalVectorStore = {
                     attachment: uploadItem,
-                    taskId,
+                    taskRecord,
                     progress: 50,
                 }
             });
             setFileList([uploadItem]);
-            sseClient.makeLocalVSProgress(taskId, {
+            sseClient.makeLocalVSProgress(taskRecord.id!, {
                 onUpdate: (process: number) => {
                     setSingleMakeLocalVSProgress(process);
                     chatStore.updateCurrentSession((session) => {
                         session.singleLocalVectorStore = {
                             attachment: uploadItem,
-                            taskId,
+                            taskRecord,
                             progress: process,
                         }
                     });
@@ -643,19 +641,60 @@ export function UploadChatAction(props: {
                     chatStore.updateCurrentSession((session) => {
                         session.singleLocalVectorStore = {
                             attachment: uploadItem,
-                            taskId,
+                            taskRecord,
                             progress: process!,
+                        };
+
+                        session.mask = {
+                            ...session.mask,
+                            haveContext: true,
+                            relevantSearchOptions: {
+                                ...session.mask.relevantSearchOptions,
+                                retriever_type: 'local_vector_stores',
+                                user_folder_id: taskRecord.userFolderId,
+                                local_vs_folder_name: taskRecord.localVSFolderName,
+                            },
                         }
                     });
                 }
             });
         }).catch((error) => {
-            // @ts-ignore
-            option.onError(Locale.MakeLocalVSStore.Upload.UploadFileFailed, file);
+            const errInfo = JSON.parse(error.message);
+            _removeFileListAndMarkStatus(false);
+            if (errInfo.code === 63001) {
+                notify['error']({
+                    message: `上传失败，请限制上传的文件大小在20M以内`,
+                    duration: 10,
+                },);
+                return;
+            }
             notify['error']({
                 message: `${file.name} ${Locale.MakeLocalVSStore.Upload.UploadFileFailed}`,
+                duration: 10,
             });
         }).finally(() => {
+        });
+    }
+
+    const _removeFileListAndMarkStatus = (needUpdateMaskConfig: boolean) => {
+        sseClient.closeEvent();
+        setFileList([]);
+        setSingleMakeLocalVSProgress(0);
+        chatStore.updateCurrentSession((session) => {
+            const taskId = session.singleLocalVectorStore?.taskRecord?.id;
+            if(taskId)
+                makeLocalVectorStoreApi.deleteSingleFileAndIndex({makeLocalVsTaskId: taskId});
+            session.singleLocalVectorStore = undefined;
+            if(needUpdateMaskConfig) {
+                session.mask = {
+                    ...session.mask,
+                    haveContext: false,
+                    relevantSearchOptions: {
+                        ...session.mask.relevantSearchOptions,
+                        ...DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS,
+                    },
+                }
+            }
         });
     }
 
@@ -672,21 +711,21 @@ export function UploadChatAction(props: {
 
     const handleOnChange = (info: UploadChangeParam) => {
         if (info.file.status === 'error') {
-            // console.log(`${info.file.name} file upload failed.`);
+            console.log(`${info.file.name} file upload failed.`);
         } else if (info.file.status === 'removed') {
-            sseClient.closeEvent();
-            setFileList([]);
-            setSingleMakeLocalVSProgress(0);
-            chatStore.updateCurrentSession((session) => {
-                const taskId = session.singleLocalVectorStore?.taskId;
-                if(taskId)
-                    makeLocalVectorStoreApi.deleteSingleFileAndIndex({makeLocalVsTaskId: taskId});
-                session.singleLocalVectorStore = undefined;
-            });
+            _removeFileListAndMarkStatus(true);
         }
     }
 
     const beforeUpload = (file: RcFile) => {
+        const fileSize = file.size;
+        if (fileSize > 20 * 1024 * 1024) {
+            notify.error({
+                message: `上传失败，请限制上传的文件大小在20M以内`,
+                duration: 10,
+            });
+            return Upload.LIST_IGNORE;
+        }
         const ifIsSupportedUploadFileType = checkIfIsSupportedUploadFileType(file);
         if (!ifIsSupportedUploadFileType) {
             const fileExt = file.name.split('.').pop();

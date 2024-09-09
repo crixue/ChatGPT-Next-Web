@@ -157,7 +157,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
         if (!res.ok) {
             throw new Error(await res.text());
         }
-        return handleServerResponse<string>(await res.json());
+        return handleServerResponse<MakeLocalVSRequestVO>(await res.json());
     }
 
     async deleteSingleFileAndIndex(data: { makeLocalVsTaskId: string }) {

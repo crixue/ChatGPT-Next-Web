@@ -21,7 +21,7 @@ import {ChatApi} from "@/app/client/chat-api";
 import {ChatResponseVO, ChatStreamResponseVO, ContextDoc} from "@/app/types/chat";
 import {FunctionPlugin} from "@/app/types/plugins";
 import {usePluginsStore} from "@/app/store/plugins";
-import {CustomUploadFile} from "@/app/types/make-localvs-vo";
+import {CustomUploadFile, MakeLocalVSRequestVO} from "@/app/types/make-localvs-vo";
 
 export type ChatMessage = RequestMessage & {
     date: string;
@@ -51,7 +51,7 @@ export interface ChatStat {
 
 export interface ChatSingleLocalVectorStore {
     attachment: CustomUploadFile;
-    taskId?: string;
+    taskRecord?: MakeLocalVSRequestVO;
     progress?: number;
 }
 
@@ -290,15 +290,10 @@ export const useChatStore = create<ChatStore>()(
 
             async onUserInput(content) {
                 const session = get().currentSession();
-                // console.log("[User Input] before template: ", session)
                 const currentMask = session.mask;
                 const modelConfig = currentMask.modelConfig;
                 const relevantSearchOptions = currentMask.relevantSearchOptions;
                 const haveContext = currentMask.haveContext;
-
-                // const userContent = fillTemplateWith(content, modelConfig);
-                // console.log("[User Input] after template: ", userContent);
-                // console.log("[User Input] current mask: ", JSON.stringify(currentMask));
 
                 const userMessage: ChatMessage = createMessage({
                     role: "user",
@@ -328,7 +323,7 @@ export const useChatStore = create<ChatStore>()(
                 });
 
                 const streamingMode = modelConfig.streaming;
-                let chatRequest = {
+                let chatOptions = {
                     messages: sendMessages,
                     config: {...modelConfig, stream: streamingMode},
                     onUpdate(message, chunk, resp) {
@@ -407,7 +402,7 @@ export const useChatStore = create<ChatStore>()(
                 const initRetrieverRequest = {
                     ...relevantSearchOptions,
                 } as LangchainRelevantDocsSearchOptions;
-                chatApi.chat(chatRequest, initRetrieverRequest);
+                chatApi.chat(chatOptions, initRetrieverRequest);
             },
 
             getMemoryPrompt() {

@@ -15,7 +15,7 @@ import DragIcon from "../icons/drag.svg";
 
 import {DEFAULT_MASK_AVATAR, Mask, useMaskStore} from "../store/mask";
 import {
-    ChatMessage, createMessage, ModalConfigValidator,
+    ChatMessage, ChatSession, createMessage, ModalConfigValidator,
     useAppConfig,
     useChatStore, useUserFolderStore,
 } from "../store";
@@ -178,12 +178,10 @@ export function MaskConfig(props: {
 
     const Tag1 = () => {
         // const maskConfigStore = useMaskConfigStore();
-
         let currentMask = {...props.mask};
         const [needRetrieveUserLocalVSFolders, setNeedRetrieveUserLocalVSFolders] = useState(true);
         // const relevantSearchOptions = props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS;
         // console.log("currentMask:" + JSON.stringify(currentMask));
-        const [isAdvancedConfig, setIsAdvancedConfig] = useState(true);
         const [haveContext, setHaveContext] = useState(currentMask.haveContext);
         const [searchContextNums, setSearchContextNums] =
             useState(currentMask.relevantSearchOptions?.search_top_k ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.search_top_k);
@@ -192,6 +190,11 @@ export function MaskConfig(props: {
             currentMask.relevantSearchOptions?.web_search_results_count ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS.web_search_results_count);
         const [contextSourcesOptions, setContextSourcesOptions] =
             useState((props.mask.relevantSearchOptions ?? DEFAULT_RELEVANT_DOCS_SEARCH_OPTIONS).retriever_type);
+        const chatStore = useChatStore();
+        const currentSession: ChatSession = chatStore.currentSession();
+        const singleLocalVectorStoreItem = currentSession.singleLocalVectorStore;
+        const [chatSessionLocalVSOverride, setChatSessionLocalVSOverride] =
+            useState<boolean>(singleLocalVectorStoreItem != undefined);
 
         const userFolderStore = useUserFolderStore();
         const navigate = useNavigate();
@@ -308,10 +311,17 @@ export function MaskConfig(props: {
 
         return (
             <>
-                {/*<Button type={"link"} onClick={() => setIsAdvancedConfig(!isAdvancedConfig)}>*/}
-                {/*    {isAdvancedConfig ? Locale.Mask.Config.SwitchSingleConfig: Locale.Mask.Config.SwitchAdvancedConfig}*/}
-                {/*</Button>*/}
                 <CustomList>
+                    <CustomListItem
+                        title={Locale.Mask.Config.IsChineseText.Title}
+                        subTitle={Locale.Mask.Config.IsChineseText.SubTitle}
+                    >
+                        <Switch
+                            checkedChildren={<CheckOutlined/>}
+                            unCheckedChildren={<CloseOutlined/>}
+                            defaultChecked={props.mask.isChineseText}
+                            onChange={onIsChineseTextChange}/>
+                    </CustomListItem>
                     <CustomListItem
                         title={Locale.Mask.Config.HaveContext.Title}
                         subTitle={Locale.Mask.Config.HaveContext.SubTitle}
@@ -325,49 +335,116 @@ export function MaskConfig(props: {
                     {
                         haveContext ? (
                             <>
-                                <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
-                                    <Select
-                                        value={contextSourcesOptions ?? "web_search"}
-                                        options={[
-                                            {
-                                                label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch,
-                                                value: "web_search"
-                                            },
-                                            {
-                                                label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores,
-                                                value: "local_vector_stores"
-                                            },
-                                            {
-                                                label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed,
-                                                value: "fixed"
-                                            },
-                                        ]}
-                                        onChange={(value) => onContextSourceChange(value)}
-                                        style={{width: 130}}
-                                    />
-                                </CustomListItem>
                                 {
-                                    (contextSourcesOptions === "web_search" || contextSourcesOptions === "fixed") && isAdvancedConfig && (
-                                        <CustomListItem
-                                            title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
-                                            subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
-                                        >
-                                            <Col span={4}>
-                                                <InputNumber
-                                                    min={1}
-                                                    max={9}
-                                                    step={1}
-                                                    style={{margin: '0 4px'}}
-                                                    defaultValue={webSearchResultsCount}
-                                                    onChange={onWebSearchResultsCountChange}
-                                                    onBlur={event => onWebSearchResultsCountBlur(Number(event.target.value ?? 5))}
-                                                />
-                                            </Col>
+                                    chatSessionLocalVSOverride && (
+                                        <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
+                                            <Select
+                                                disabled={true}
+                                                value={"当前会话上传的文件"}
+                                                style={{width: 180}}
+                                            />
                                         </CustomListItem>
                                     )
                                 }
                                 {
-                                    isAdvancedConfig && (
+                                    !chatSessionLocalVSOverride && (
+                                        <>
+                                            <CustomListItem title={Locale.Mask.Config.HaveContext.ContextSources.Title}>
+                                                <Select
+                                                    value={contextSourcesOptions ?? "web_search"}
+                                                    options={[
+                                                        {
+                                                            label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.WebSearch,
+                                                            value: "web_search"
+                                                        },
+                                                        {
+                                                            label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores,
+                                                            value: "local_vector_stores"
+                                                        },
+                                                        {
+                                                            label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed,
+                                                            value: "fixed"
+                                                        },
+                                                    ]}
+                                                    onChange={(value) => onContextSourceChange(value)}
+                                                    style={{width: 130}}
+                                                />
+                                            </CustomListItem>
+                                            {
+                                                (contextSourcesOptions === "web_search" || contextSourcesOptions === "fixed") && (
+                                                    <CustomListItem
+                                                        title={Locale.Mask.Config.HaveContext.WebSearchNums.Title}
+                                                        subTitle={Locale.Mask.Config.HaveContext.WebSearchNums.SubTitle}
+                                                    >
+                                                        <Col span={4}>
+                                                            <InputNumber
+                                                                min={1}
+                                                                max={9}
+                                                                step={1}
+                                                                style={{margin: '0 4px'}}
+                                                                defaultValue={webSearchResultsCount}
+                                                                onChange={onWebSearchResultsCountChange}
+                                                                onBlur={event => onWebSearchResultsCountBlur(Number(event.target.value ?? 5))}
+                                                            />
+                                                        </Col>
+                                                    </CustomListItem>
+                                                )
+                                            }
+                                            {
+                                                contextSourcesOptions === "local_vector_stores"
+                                                || contextSourcesOptions === "fixed" ? (
+                                                    <>
+                                                        {
+                                                            localVSFoldersOptions.length > 0 ? (
+                                                                <CustomListItem
+                                                                    title={Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.Title}
+                                                                    subTitle={
+                                                                        <>
+                                                                            <Button
+                                                                                style={{padding: "0px 4px", fontSize: "12px"}}
+                                                                                onClick={() => navigate(Path.MakeLocalVSStore)}
+                                                                                type="link"
+                                                                            >
+                                                                                {Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.SubTitle}
+                                                                            </Button>
+                                                                            <span>{Locale.Common.Or}</span>
+                                                                            <Button
+                                                                                style={{padding: "0px 4px", fontSize: "12px"}}
+                                                                                onClick={() => navigate(Path.ManageLocalVectorStore)}
+                                                                                type="link"
+                                                                            >
+                                                                                {Locale.Mask.Config.HaveContext.ManageLocalVSFolder.SubTitle}
+                                                                            </Button>
+                                                                        </>
+
+                                                                    }
+                                                                >
+                                                                    <Select
+                                                                        options={localVSFoldersOptions}
+                                                                        defaultValue={props.mask.relevantSearchOptions.user_folder_id ?? localVSFoldersOptions[0].value}
+                                                                        onChange={onSelectedUserFolderChange}
+                                                                    >
+                                                                    </Select>
+                                                                </CustomListItem>
+                                                            ) : (() => {
+                                                                props.updateMask((mask) => {  //先设置默认值，后续再修改
+                                                                    mask.relevantSearchOptions.retriever_type = "web_search";
+                                                                    mask.relevantSearchOptions.local_vs_folder_name = "web_search";
+                                                                });
+                                                                if (props.onGoToMakeLocalVS != null) {
+                                                                    props.onGoToMakeLocalVS(true);
+                                                                }
+                                                                // setIsOpenMakingLocalVSModal(true);
+                                                            })
+                                                        }
+                                                    </>
+                                                ) : null
+                                            }
+                                        </>
+                                    )
+                                }
+                                {
+                                    (
                                         <CustomListItem
                                             title={Locale.Mask.Config.HaveContext.SearchedContextNums.Title}
                                             subTitle={Locale.Mask.Config.HaveContext.SearchedContextNums.SubTitle}
@@ -388,139 +465,11 @@ export function MaskConfig(props: {
                                         </CustomListItem>
                                     )
                                 }
-                                {
-                                    contextSourcesOptions === "local_vector_stores"
-                                    || contextSourcesOptions === "fixed" ? (
-                                        <>
-                                            {
-                                                localVSFoldersOptions.length > 0 ? (
-                                                    <CustomListItem
-                                                        title={Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.Title}
-                                                        subTitle={
-                                                            <>
-                                                                <Button
-                                                                    style={{padding: "0px 4px", fontSize: "12px"}}
-                                                                    onClick={() => navigate(Path.MakeLocalVSStore)}
-                                                                    type="link"
-                                                                >
-                                                                    {Locale.Mask.Config.HaveContext.ChooseLocalVSFolder.SubTitle}
-                                                                </Button>
-                                                                <span>{Locale.Common.Or}</span>
-                                                                <Button
-                                                                    style={{padding: "0px 4px", fontSize: "12px"}}
-                                                                    onClick={() => navigate(Path.ManageLocalVectorStore)}
-                                                                    type="link"
-                                                                >
-                                                                    {Locale.Mask.Config.HaveContext.ManageLocalVSFolder.SubTitle}
-                                                                </Button>
-                                                            </>
 
-                                                        }
-                                                    >
-                                                        <Select
-                                                            options={localVSFoldersOptions}
-                                                            defaultValue={props.mask.relevantSearchOptions.user_folder_id ?? localVSFoldersOptions[0].value}
-                                                            onChange={onSelectedUserFolderChange}
-                                                        >
-                                                        </Select>
-                                                    </CustomListItem>
-                                                ) : (() => {
-                                                    props.updateMask((mask) => {  //先设置默认值，后续再修改
-                                                        mask.relevantSearchOptions.retriever_type = "web_search";
-                                                        mask.relevantSearchOptions.local_vs_folder_name = "web_search";
-                                                    });
-                                                    if (props.onGoToMakeLocalVS != null) {
-                                                        props.onGoToMakeLocalVS(true);
-                                                    }
-                                                    // setIsOpenMakingLocalVSModal(true);
-                                                })
-                                            }
-                                        </>
-                                    ) : null
-                                }
                             </>
                         ) : null
                     }
-                    {
-                        isAdvancedConfig ? (
-                            <>
-                                <CustomListItem
-                                    title={Locale.Mask.Config.HideContext.Title}
-                                    subTitle={Locale.Mask.Config.HideContext.SubTitle}
-                                >
-                                    <Switch
-                                        checkedChildren={<CheckOutlined/>}
-                                        unCheckedChildren={<CloseOutlined/>}
-                                        defaultChecked={props.mask.hideContext}
-                                        onChange={onHideContextChange}/>
-                                </CustomListItem>
-                            </>
-                        ) : null
-                    }
-                    <CustomListItem
-                        title={Locale.Mask.Config.IsChineseText.Title}
-                        subTitle={Locale.Mask.Config.IsChineseText.SubTitle}
-                    >
-                        <Switch
-                            checkedChildren={<CheckOutlined/>}
-                            unCheckedChildren={<CloseOutlined/>}
-                            defaultChecked={props.mask.isChineseText}
-                            onChange={onIsChineseTextChange}/>
-                    </CustomListItem>
-                    {/*{!props.shouldSyncFromGlobal ? (*/}
-                    {/*    <ListItem*/}
-                    {/*        title={Locale.Mask.Config.Share.Title}*/}
-                    {/*        subTitle={Locale.Mask.Config.Share.SubTitle}*/}
-                    {/*    >*/}
-                    {/*        <IconButton*/}
-                    {/*            icon={<CopyIcon/>}*/}
-                    {/*            text={Locale.Mask.Config.Share.Action}*/}
-                    {/*            onClick={copyMaskLink}*/}
-                    {/*        />*/}
-                    {/*    </ListItem>*/}
-                    {/*) : null}*/}
-
-                    {/*{props.shouldSyncFromGlobal ? (*/}
-                    {/*    <CustomListItem*/}
-                    {/*        title={Locale.Mask.Config.Sync.Title}*/}
-                    {/*        subTitle={Locale.Mask.Config.Sync.SubTitle}*/}
-                    {/*    >*/}
-                    {/*        <Switch*/}
-                    {/*            checkedChildren={<CheckOutlined/>}*/}
-                    {/*            unCheckedChildren={<CloseOutlined/>}*/}
-                    {/*            defaultChecked={props.mask.syncGlobalConfig}*/}
-                    {/*            onChange={async (checked) => {*/}
-                    {/*                if (*/}
-                    {/*                    checked &&*/}
-                    {/*                    (await showConfirm(Locale.Mask.Config.Sync.Confirm))*/}
-                    {/*                ) {*/}
-                    {/*                    props.updateMask((mask) => {*/}
-                    {/*                        mask.syncGlobalConfig = checked;*/}
-                    {/*                        mask.modelConfig = {...globalConfig.modelConfig};*/}
-                    {/*                    });*/}
-                    {/*                } else if (!checked) {*/}
-                    {/*                    props.updateMask((mask) => {*/}
-                    {/*                        mask.syncGlobalConfig = checked;*/}
-                    {/*                    });*/}
-                    {/*                }*/}
-                    {/*            }}/>*/}
-                    {/*    </CustomListItem>*/}
-                    {/*) : null}*/}
                 </CustomList>
-                {/*<CustomList>*/}
-                {/*    <ModelConfigList*/}
-                {/*        modelConfig={props.mask.modelConfig}*/}
-                {/*        updateConfig={(updater) => {*/}
-                {/*            const modelConfig = {...props.mask.modelConfig};*/}
-                {/*            updater(modelConfig);*/}
-                {/*            props.updateMask((mask) => {*/}
-                {/*                mask.modelConfig = modelConfig;*/}
-                {/*                mask.syncGlobalConfig = false;*/}
-                {/*            });*/}
-                {/*        }}*/}
-                {/*        isAdvancedConfig={isAdvancedConfig}*/}
-                {/*    />*/}
-                {/*</CustomList>*/}
             </>
         );
     }

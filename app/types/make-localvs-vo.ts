@@ -5,6 +5,7 @@ import {UploadFile} from "antd";
 
 
 export interface MakeLocalVSRequestVO {
+    id?: string;
     makeLocalVSType: 'DEFAULT' | 'CONTENT_STRING' | 'URL' | 'SPEECH_RECOGNIZE_TRANSCRIPT';
     isChineseText: boolean;
     userFolderId: string;
