@@ -625,7 +625,7 @@ export function UploadChatAction(props: {
                 }
             });
             setFileList([uploadItem]);
-            sseClient.makeLocalVSProgress(taskRecord.id!, {
+            sseClient.listenMakeLocalVSProgress(taskRecord.id!, {
                 onUpdate: (process: number) => {
                     setSingleMakeLocalVSProgress(process);
                     chatStore.updateCurrentSession((session) => {
