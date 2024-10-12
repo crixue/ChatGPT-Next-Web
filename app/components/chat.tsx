@@ -173,6 +173,11 @@ function _Chat() {
         }
         setIsLoading(true);
         chatStore.onUserInput(userInput).then(() => setIsLoading(false));
+        localStorage.setItem(LAST_INPUT_KEY, userInput);
+        setUserInput("");
+        setPromptHints([]);
+        if (!isMobileScreen) inputRef.current?.focus();
+        setAutoScroll(true);
         try {
             await userUsageApi.hasEnoughMoney();
         } catch (e: any) {
@@ -182,12 +187,6 @@ function _Chat() {
             }
             console.error("Call check have enough money failed:", e);
         }
-        localStorage.setItem(LAST_INPUT_KEY, userInput);
-        setUserInput("");
-        setPromptHints([]);
-        if (!isMobileScreen) inputRef.current?.focus();
-        setAutoScroll(true);
-
     };
 
     const onPromptSelect = (prompt: RenderPompt) => {
