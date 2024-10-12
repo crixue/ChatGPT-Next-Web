@@ -31,6 +31,7 @@ export class ChatApi extends BaseApiClient{
         const messages = options.messages;
         let promptTemplate: string | undefined;
         const streamingMode = !!options.config.stream;
+        const ABORT_REQUEST_TIMEOUT_MS = 300 * 1000;  //超时停止输出消息的时间
 
         let historyMessages: RequestMessage[] = [];
         const systemMessage = messages.at(0) ?? {
@@ -90,7 +91,7 @@ export class ChatApi extends BaseApiClient{
             // make a fetch request
             const requestTimeoutId = setTimeout(
                 () => controller.abort(),
-                REQUEST_TIMEOUT_MS,
+                ABORT_REQUEST_TIMEOUT_MS,
             );
 
             if (streamingMode) {  // Streaming mode!

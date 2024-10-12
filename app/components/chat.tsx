@@ -173,11 +173,6 @@ function _Chat() {
         }
         setIsLoading(true);
         chatStore.onUserInput(userInput).then(() => setIsLoading(false));
-        localStorage.setItem(LAST_INPUT_KEY, userInput);
-        setUserInput("");
-        setPromptHints([]);
-        if (!isMobileScreen) inputRef.current?.focus();
-        setAutoScroll(true);
         try {
             await userUsageApi.hasEnoughMoney();
         } catch (e: any) {
@@ -187,6 +182,12 @@ function _Chat() {
             }
             console.error("Call check have enough money failed:", e);
         }
+        localStorage.setItem(LAST_INPUT_KEY, userInput);
+        setUserInput("");
+        setPromptHints([]);
+        if (!isMobileScreen) inputRef.current?.focus();
+        setAutoScroll(true);
+
     };
 
     const onPromptSelect = (prompt: RenderPompt) => {
@@ -280,16 +281,6 @@ function _Chat() {
     };
 
     const onResend = async (message: ChatMessage) => {
-        try {
-            await userUsageApi.hasEnoughMoney();
-        } catch (e: any) {
-            if (e instanceof NotHaveEnoughMoneyException) {
-                setShowNotHaveEnoughMoneyAlert(true);
-                return;
-            }
-            console.error("Call check have enough money failed:", e);
-        }
-
         // when it is resending a message
         // 1. for a user's message, find the next bot response
         // 2. for a bot's message, find the last user's input
@@ -341,6 +332,15 @@ function _Chat() {
         // resend the message
         setIsLoading(true);
         chatStore.onUserInput(userMessage.content).then(() => setIsLoading(false));
+        try {
+            await userUsageApi.hasEnoughMoney();
+        } catch (e: any) {
+            if (e instanceof NotHaveEnoughMoneyException) {
+                setShowNotHaveEnoughMoneyAlert(true);
+                return;
+            }
+            console.error("Call check have enough money failed:", e);
+        }
         inputRef.current?.focus();
     };
 

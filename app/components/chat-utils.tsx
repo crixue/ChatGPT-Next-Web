@@ -756,7 +756,7 @@ export function UploadChatAction(props: {
         } else if(progress < 0) {
             return '制作失败，请稍后重试！';
         } else {
-            return '构建完成';
+            return '构建完成，正在使用此文档 ';
         }
     }
 
