@@ -1,5 +1,3 @@
-import {ChatMessage} from "../store";
-import {ChatResponseVO, ChatStreamResponseVO} from "@/app/types/chat";
 import {useAuthStore} from "@/app/store/auth";
 import {Record} from "immutable";
 
@@ -37,7 +35,7 @@ export type MemoryTypeName =
     | "ConversationBufferWindowMemory"
     | "ConversationSummaryBufferMemory"
 
-type RetrieverType = "local_vector_stores" | "web_search" | "fixed"
+type RetrieverType = "local_vector_stores" | "web_search" | "fixed" | "knowledge_graph"
 
 export interface LangchainRelevantDocsSearchOptions {
     query?: string;
@@ -73,7 +71,7 @@ export function getBaseApiHeaders() {
         headers["Authorization"] = `Bearer ${token}`;
     }
 
-    // headers["userid"] = "yr8zsNIV"; //TODO mock a user id
+    headers["userid"] = "92040b49"; //TODO mock a user user_folder_id,仅用于测试！
 
     return headers;
 }

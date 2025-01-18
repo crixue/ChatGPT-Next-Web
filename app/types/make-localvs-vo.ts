@@ -13,6 +13,7 @@ export interface MakeLocalVSRequestVO {
     referSpeechRecognizeTaskId?: string;
     oriFilePath?: string;
     makeVsConfig?: MakeLocalVSConfig;
+    makeKbProductId?: string;
 }
 
 export interface MakeLocalVectorstoreTaskRecords {

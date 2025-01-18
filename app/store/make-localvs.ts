@@ -1,5 +1,5 @@
 import {MakeFolderLocalVSTaskRecordsVO} from "@/app/types/make-localvs-vo";
-import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
+import {MakeKnowledgeBaseStoreApi} from "@/app/client/make-kb";
 import {create} from "zustand";
 
 
@@ -9,7 +9,7 @@ type MakeLocalVSStore = {
     getMakeFolderLocalVSTaskRecordsView: (folderId: string, pageNum?: number, pageSize?: number) => Promise<void>;
 }
 
-const makeLocalVSService = new MakeLocalVectorStoreApi();
+const makeLocalVSService = new MakeKnowledgeBaseStoreApi();
 
 export const useMakeLocalVSStore = create<MakeLocalVSStore>((set, get) => ({
     makeFolderLocalVSTaskRecordsView: null,

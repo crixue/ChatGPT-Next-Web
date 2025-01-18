@@ -27,7 +27,7 @@ import styles from "./make-local-vector-store.module.scss";
 import {UploadVectorStoreOriFilesPage} from "@/app/components/upload-vector-store-ori-files";
 import {useUploadFileStore} from "@/app/store/upload-file";
 import {UploadApi} from "@/app/client/upload";
-import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
+import {MakeKnowledgeBaseStoreApi} from "@/app/client/make-kb";
 import {MakeLocalVectorstoreTaskRecords, MakeLocalVSRequestVO} from "@/app/types/make-localvs-vo";
 import {ColumnsType} from "antd/es/table";
 import dayjs from "dayjs";
@@ -42,7 +42,7 @@ import {useUpgradePlanStore} from "@/app/store/upgrade-plan";
 
 const userService = new UserApiClient();
 const uploadService = new UploadApi();
-const makeLocalVSService = new MakeLocalVectorStoreApi();
+const makeLocalVSService = new MakeKnowledgeBaseStoreApi();
 const vectorstorePaymentTransactionApi = new VectorstorePaymentTransactionApi();
 
 export const useInitUserFolders = (reload: Boolean | undefined) => {
@@ -185,6 +185,7 @@ export const MakeLocalVectorStorePage = () => {
             folderName: values.folderName,
             folderDesc: values.folderDesc,
             folderType: "LOCAL_VECTOR_STORE_FOLDER",
+            makeKnowledgeBaseTool: "KNOWLEDGE_GRAPH",  //TODO 制作工具的选择设置
             requiredPermissions: [  //这里暂时写死默认的读写权限
                 {
                     permissionId: 636,
@@ -241,7 +242,8 @@ export const MakeLocalVectorStorePage = () => {
                     userFolderId: currentSelectedFolderId ?? "",
                     localVSFolderName: currentSelectedFolder?.folderName,
                     oriFilePath: savedServerPath,
-                    makeVsConfig: makeLocalVSConfig
+                    makeVsConfig: makeLocalVSConfig,
+                    makeKbProductId: "MODEL-0002",  //TODO 制作知识库使用的模型产品id 提供设置给用户选择
                 } as MakeLocalVSRequestVO;
                 makeLocalVSRequests.push(item);
             }
@@ -258,7 +260,8 @@ export const MakeLocalVectorStorePage = () => {
                     userFolderId: currentSelectedFolderId ?? "",
                     localVSFolderName: currentSelectedFolder?.folderName,
                     oriFilePath: resp.filePath,
-                    makeVsConfig: makeLocalVSConfig
+                    makeVsConfig: makeLocalVSConfig,
+                    makeKbProductId: "MODEL-0002",  //TODO 制作知识库使用的模型产品id 提供设置给用户选择
                 } as MakeLocalVSRequestVO;
                 makeLocalVSRequests.push(item);
             } else if (resp.uploadType === "AUDIO_OR_VIDEO") {
@@ -268,7 +271,8 @@ export const MakeLocalVectorStorePage = () => {
                     userFolderId: currentSelectedFolderId ?? "",
                     localVSFolderName: currentSelectedFolder?.folderName,
                     referSpeechRecognizeTaskId: resp.taskId,
-                    makeVsConfig: makeLocalVSConfig
+                    makeVsConfig: makeLocalVSConfig,
+                    makeKbProductId: "MODEL-0002",  //TODO 制作知识库使用的模型产品id 提供设置给用户选择
                 } as MakeLocalVSRequestVO;
                 makeLocalVSRequests.push(item);
                 speechRecognizeTaskIds.push(resp.taskId);
@@ -276,7 +280,8 @@ export const MakeLocalVectorStorePage = () => {
         }
 
         try {
-            await makeLocalVSService.doMakeLocalVS(makeLocalVSRequests);
+            //TODO 制作工具的选择设置
+            await makeLocalVSService.doMakeLocalVS('GRAPH_DB', makeLocalVSRequests);
             if (speechRecognizeTaskIds.length > 0) {
                 await makeLocalVSService.executeSpeechRecognize({speechRecognizeTaskIds});
             }

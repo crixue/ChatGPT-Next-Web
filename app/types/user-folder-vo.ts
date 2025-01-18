@@ -10,12 +10,12 @@ export interface UserFolderVo {
 
 
 export interface UserFolderCreateReqVO {
-
     userId?: string;
     folderName: string;
     folderDesc?: string;
     folderType: 'PROMPT_FOLDER' | 'LOCAL_VECTOR_STORE_FOLDER';
     requiredPermissions?: Permission[];
+    makeKnowledgeBaseTool?: 'LOCAL_VECTOR_STORE' | 'KNOWLEDGE_GRAPH';
 }
 
 export interface UserFolderUpdateReqVO extends UserFolderCreateReqVO  {

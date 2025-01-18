@@ -10,16 +10,16 @@ import {handleServerResponse} from "@/app/common-api";
 import {BaseApiClient} from "@/app/client/base-client";
 
 
-export class MakeLocalVectorStoreApi extends BaseApiClient {
+export class MakeKnowledgeBaseStoreApi extends BaseApiClient {
     path(path: string): string {
         let baseUrl = useAccessStore.getState().backendCoreApiUrl;
 
         return [baseUrl, path].join("");
     }
 
-    async doMakeLocalVS(data: MakeLocalVSRequestVO[]) {
+    async doMakeLocalVS(makeTool: 'LOCAL_VECTOR_STORE' | 'GRAPH_DB', data: MakeLocalVSRequestVO[]) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/do-make`),
+                `/api/knowledge-base/do-make?makeTool=${makeTool}`),
             {
                 method: "POST",
                 body: JSON.stringify(data),
@@ -36,7 +36,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
 
     async getMakeRecordsByFolderId(data: { folderId: string, pageNum?: number, pageSize?: number }) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/get-make-records?${qs.stringify(data)}`),
+                `/api/knowledge-base/get-make-records?${qs.stringify(data)}`),
             {
                 method: "GET",
                 headers: {
@@ -52,7 +52,23 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
 
     async deleteIndexInLocalVS(taskId: string) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/delete-index-in-local-vs?makeLocalVsTaskId=${taskId}`),
+                `/api/knowledge-base/delete-index-in-local-vs?makeLocalVsTaskId=${taskId}`),
+            {
+                method: "DELETE",
+                headers: {
+                    ...getBackendApiHeaders()
+                },
+            });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+        return handleServerResponse<void>(await res.json());
+    }
+
+    async dropAllKnowledgeBase(data: { userFolderId: string }) {
+        const res = await super.fetchWithRedirect(this.path(
+                `/api/knowledge-base/drop-all-knowledge-base?${qs.stringify(data)}`),
             {
                 method: "DELETE",
                 headers: {
@@ -85,7 +101,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
 
     async preCheckUserIfExceedVectorstoreLimitSize(data: PreCheckVectorestoreLimitRequestVO) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/pre-check-user-if-exceed-vectorstore-limit-size`),
+                `/api/knowledge-base/pre-check-user-if-exceed-vectorstore-limit-size`),
             {
                 method: "POST",
                 body: JSON.stringify(data),
@@ -102,7 +118,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
 
     async getSpeechRecognizeResult(data: { makeLocalVSId: string }) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/get-speech-recognize-result?${qs.stringify(data)}`),
+                `/api/knowledge-base/get-speech-recognize-result?${qs.stringify(data)}`),
             {
                 method: "GET",
                 headers: {
@@ -126,7 +142,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
 
     async getSomeRecordDetail(data: { makeLocalVsTaskId: string }) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/get-some-record-detail?${qs.stringify(data)}`),
+                `/api/knowledge-base/get-some-record-detail?${qs.stringify(data)}`),
             {
                 method: "GET",
                 headers: {
@@ -146,7 +162,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
         const formData = new FormData();
         formData.append('file', data.file);
         const res = await super.fetchWithRedirect(
-            this.path(`/api/local-vector-store/single-file-upload-and-make?${qs.stringify(data)}`), {
+            this.path(`/api/knowledge-base/single-file-upload-and-make?${qs.stringify(data)}`), {
             method: "POST",
             body: formData,
             headers: {
@@ -162,7 +178,7 @@ export class MakeLocalVectorStoreApi extends BaseApiClient {
 
     async deleteSingleFileAndIndex(data: { makeLocalVsTaskId: string }) {
         const res = await super.fetchWithRedirect(this.path(
-                `/api/local-vector-store/delete-single-file-and-index?${qs.stringify(data)}`),
+                `/api/knowledge-base/delete-single-file-and-index?${qs.stringify(data)}`),
             {
                 method: "DELETE",
                 headers: {

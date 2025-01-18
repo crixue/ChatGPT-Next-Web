@@ -17,9 +17,11 @@ import {MakeLocalVectorTaskRecordsView} from "@/app/components/make-local-vector
 import LeftIcon from "@/app/icons/left.svg";
 import {useGlobalSettingStore} from "@/app/store/global-setting";
 import {GlobalLoading} from "@/app/components/global";
+import {MakeKnowledgeBaseStoreApi} from "@/app/client/make-kb";
 
 
 const userService = new UserApiClient();
+const makeKnowledgeBaseStoreApi = new MakeKnowledgeBaseStoreApi();
 
 export const useInitUserFolders = (reload: Boolean | undefined) => {
     useEffect(() => {
@@ -50,7 +52,7 @@ export const ManageLocalVectorStorePage = () => {
     const DeleteItem = ({record}: { record: UserFolderVo }) => {
         const handleDelete = (record: UserFolderVo) => {
             setShowLoading(true);
-            userService.deleteUserFolder({userFolderId: record.id})
+            makeKnowledgeBaseStoreApi.dropAllKnowledgeBase({userFolderId: record.id})
                 .then((res) => {
                     notify.success({
                         message: Locale.Common.OperateSuccess,

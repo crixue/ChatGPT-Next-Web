@@ -55,22 +55,6 @@ export class UserApiClient extends BaseApiClient {
         return handleServerResponse<UserFolderVo>(await res.json());
     }
 
-    async deleteUserFolder(data: {userFolderId: string}) {
-        const res = await super.fetchWithRedirect(this.path(
-                `/api/user-folder/delete-user-folder?${qs.stringify(data)}`),
-            {
-                method: "DELETE",
-                headers: {
-                    ...getBackendApiHeaders()
-                }
-            });
-
-        if (!res.ok) {
-            throw new Error(await res.text());
-        }
-        return handleServerResponse<void>(await res.json());
-    }
-
     async getUserProfile() {
         const res = await super.fetchWithRedirect(this.path("/api/user-profile/get"), {
             method: "GET",

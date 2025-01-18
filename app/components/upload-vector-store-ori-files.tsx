@@ -9,7 +9,7 @@ import {isAVFileType} from "@/app/utils/common-util";
 import styles from "./upload.module.scss";
 import {CustomListItem} from "@/app/components/ui-lib";
 import Locale from "@/app/locales";
-import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
+import {MakeKnowledgeBaseStoreApi} from "@/app/client/make-kb";
 import {GlobalLoading} from "@/app/components/global";
 import {VectorestorePlanProductEnum} from "@/app/types/vectorestore-payment-txn-vo";
 import {VectorstorePaymentTransactionApi} from "@/app/client/vectorestore-payment-transaction-api";
@@ -18,7 +18,7 @@ import {useUpgradePlanStore} from "@/app/store/upgrade-plan";
 import {CustomUploadFile} from "@/app/types/make-localvs-vo";
 
 const uploadService = new UploadApi();
-const makeLocalVectorStoreApi = new MakeLocalVectorStoreApi();
+const makeLocalVectorStoreApi = new MakeKnowledgeBaseStoreApi();
 const vectorstorePaymentTransactionApi = new VectorstorePaymentTransactionApi();
 
 export const UploadVectorStoreOriFilesPage = (props: {

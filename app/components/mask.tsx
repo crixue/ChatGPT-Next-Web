@@ -260,7 +260,7 @@ export function MaskConfig(props: {
                 props.updateMask((mask) => {
                     mask.relevantSearchOptions.local_vs_folder_name = "web_search";
                 });
-            } else if (value === "fixed" || value === "local_vector_stores") {
+            } else if (value === "fixed" || value === "knowledge_graph") {
                 const userFolders = userFolderStore.userFolders;
                 if (userFolders.length === 0) {
                     props.updateMask((mask) => {  //先设置默认值，后续再修改
@@ -359,7 +359,8 @@ export function MaskConfig(props: {
                                                         },
                                                         {
                                                             label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.LocalVectorStores,
-                                                            value: "local_vector_stores"
+                                                            // value: "local_vector_stores"
+                                                            value: "knowledge_graph"
                                                         },
                                                         {
                                                             label: Locale.Mask.Config.HaveContext.ContextSources.RetrieverType.Fixed,
@@ -391,7 +392,7 @@ export function MaskConfig(props: {
                                                 )
                                             }
                                             {
-                                                contextSourcesOptions === "local_vector_stores"
+                                                contextSourcesOptions === "knowledge_graph"
                                                 || contextSourcesOptions === "fixed" ? (
                                                     <>
                                                         {

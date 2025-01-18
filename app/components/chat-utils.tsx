@@ -1,4 +1,4 @@
-import {MakeLocalVectorStoreApi} from "@/app/client/make-localvs";
+import {MakeKnowledgeBaseStoreApi} from "@/app/client/make-kb";
 import {
     ChatSession,
     ChatStore,
@@ -41,7 +41,7 @@ import {UploadChangeParam} from "antd/es/upload/interface";
 import dayjs from "dayjs";
 
 
-const makeLocalVectorStoreApi = new MakeLocalVectorStoreApi();
+const makeLocalVectorStoreApi = new MakeKnowledgeBaseStoreApi();
 
 export function SessionConfigModel(props: { onClose: () => void }) {
     const maskStore = useMaskStore();
